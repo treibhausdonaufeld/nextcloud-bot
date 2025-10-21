@@ -74,10 +74,35 @@ st.set_page_config(page_title=title, page_icon="🏡", layout="wide")
 menu()
 load_user_data()
 
+db = couchdb()
+
+
 if "user_data" in st.session_state:
     title = get_greeting() + ", " + st.session_state.user_data["name"]
 
 st.title(title)
+
+view_result = db.query("mentions/by_user", group=True)
+
+distinct_users = []
+for row in view_result:
+    distinct_users.append({"username": row["key"], "total_mentions": row["value"]})
+
+st.dataframe(distinct_users)
+
+user = st.selectbox("Select a user", options=[u["username"] for u in distinct_users])
+st.write(user)
+
+if user:
+    user_view_result = db.query(
+        "mentions/by_user", key=user, reduce=False, include_docs=True
+    )
+
+    user_docs = []
+    for row in user_view_result:
+        user_docs.append({"doc": row["doc"]})
+
+    st.dataframe(user_docs)
 
 
 # @st.cache_data(ttl=60)
@@ -86,12 +111,6 @@ def load_collective_pages(limit: int = 10):
 
     Returns a list of dicts with keys: _id, title, url, content, created_at, modified_at
     """
-    try:
-        db = couchdb()
-    except Exception as e:
-        # If couchdb helper isn't available in this runtime, return empty
-        st.warning(f"CouchDB connection error: {e}")
-        return []
 
     # Use a simple Mango query if supported; otherwise fallback to all docs filter
     lookup = {

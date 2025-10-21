@@ -4,6 +4,46 @@ import pycouchdb.exceptions
 from lib.settings import settings
 
 
+def create_user_index(db: pycouchdb.client.Database):
+    MARKDOWN_FIELD_NAME = "content"
+
+    # --- The JavaScript Map Function ---
+    # This code runs *inside* CouchDB (it's JavaScript, not Python)
+    map_function = rf"""
+    function(doc) {{
+        if (doc.{MARKDOWN_FIELD_NAME}) {{
+
+            // Regex to find all mentions in the format mention://user/username
+            // The 'g' flag ensures it finds *all* matches, not just the first one.
+            const regex = /mention:\/\/user\/([a-zA-Z0-9_]+)/g;
+
+            // Use matchAll to get an iterator of all matches
+            const matches = doc.{MARKDOWN_FIELD_NAME}.matchAll(regex);
+
+            for (const match of matches) {{
+                // match[1] is the captured group (e.g., "fabian_helm")
+                // We emit the username as the key and the number 1 as the value.
+                emit(match[1], 1);
+            }}
+        }}
+    }}
+    """
+
+    # The built-in _sum reducer will sum all the '1's for each key
+    reduce_function = "_sum"
+
+    # Define the design document structure
+    DESIGN_DOC_ID = "_design/mentions"
+    design_doc = {
+        "_id": DESIGN_DOC_ID,  # The ID must start with _design/
+        "language": "javascript",
+        "views": {"by_user": {"map": map_function, "reduce": reduce_function}},
+    }
+
+    if DESIGN_DOC_ID not in db:
+        db.save(design_doc)
+
+
 def create_indizes_if_not_exist(db: pycouchdb.client.Database):
     indizes = [
         {
@@ -43,5 +83,6 @@ def couchdb() -> pycouchdb.client.Database:
         )
 
     create_indizes_if_not_exist(db)
+    create_user_index(db)
 
     return db
