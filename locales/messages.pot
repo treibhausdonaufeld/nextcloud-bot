@@ -1,0 +1,963 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-07-31 23:08+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: app.py:79
+msgid "{common_name} is open since"
+msgstr ""
+
+#: app.py:83
+msgid "{common_name} is locked since"
+msgstr ""
+
+#: app.py:99
+msgid "{days} day"
+msgstr ""
+
+#: app.py:99
+msgid "{days} days"
+msgstr ""
+
+#: app.py:127
+msgid "Battery of Nuki door lock is critical at just {battery_level} %!"
+msgstr ""
+
+#: app.py:135
+msgid "Battery of keypad is critical!"
+msgstr ""
+
+#: app.py:137
+msgid "Battery of doorsensor is critical!"
+msgstr ""
+
+#: app.py:144
+msgid "Nuki battery level is at {battery_level} %"
+msgstr ""
+
+#: app.py:151
+msgid "Access history"
+msgstr ""
+
+#: app.py:152
+msgid "Show door actions"
+msgstr ""
+
+#: app.py:171 lib/common.py:193
+msgid "Unlatch"
+msgstr ""
+
+#: app.py:172 lib/common.py:192
+msgid "Lock"
+msgstr ""
+
+#: app.py:173 lib/common.py:191
+msgid "Unlock"
+msgstr ""
+
+#: app.py:174 lib/common.py:199
+msgid "Door opened"
+msgstr ""
+
+#: app.py:175 lib/common.py:200
+msgid "Door closed"
+msgstr ""
+
+#: app.py:176 lib/common.py:194
+msgid "Lock'n'go"
+msgstr ""
+
+#: app.py:177
+msgid "Keypad invalid code"
+msgstr ""
+
+#: app.py:199 pages/Money_Form.py:72 pages/Shifts_List.py:42
+msgid "Date"
+msgstr ""
+
+#: app.py:203 pages/Beer_Form.py:262
+msgid "Name"
+msgstr ""
+
+#: app.py:204
+msgid "Action"
+msgstr ""
+
+#: app.py:232
+msgid "No upcoming shifts found - please create some"
+msgstr ""
+
+#: app.py:239
+msgid "No primary person set for next shift on **{next_shift_date}**"
+msgstr ""
+
+#: app.py:245
+msgid "Next open day is **{date}**, which is hosted by **{primary}**"
+msgstr ""
+
+#: app.py:250
+msgid " with **{secondary}**"
+msgstr ""
+
+#: app.py:256
+msgid " and **{tertiary}**"
+msgstr ""
+
+#: app.py:279
+msgid "{common_name} Data Dashboard"
+msgstr ""
+
+#: app.py:296
+msgid "Language"
+msgstr ""
+
+#: lib/common.py:195
+msgid "Lock'n'go with unlatch"
+msgstr ""
+
+#: lib/common.py:230
+msgid "Donations"
+msgstr ""
+
+#: lib/common.py:231
+msgid "Beer"
+msgstr ""
+
+#: lib/common.py:232
+msgid "Tools/Stuff"
+msgstr ""
+
+#: lib/common.py:233
+msgid "Consumables"
+msgstr ""
+
+#: lib/common.py:234
+msgid "Other"
+msgstr ""
+
+#: lib/common.py:235
+msgid "Rent"
+msgstr ""
+
+#: lib/common.py:396
+msgid "Start date"
+msgstr ""
+
+#: lib/common.py:402
+msgid "End date"
+msgstr ""
+
+#: lib/common.py:412
+msgid "Date Quickselect"
+msgstr ""
+
+#: lib/common.py:414
+msgid "Last 30 days"
+msgstr ""
+
+#: lib/common.py:415
+msgid "Last 60 days"
+msgstr ""
+
+#: lib/common.py:416
+msgid "Last 90 days"
+msgstr ""
+
+#: lib/common.py:417
+msgid "Last 180 days"
+msgstr ""
+
+#: lib/common.py:418
+msgid "Last 365 days"
+msgstr ""
+
+#: lib/common.py:419 lib/common.py:426 pages/Debts.py:192
+#: pages/Money_Analytics.py:135
+msgid "All"
+msgstr ""
+
+#: lib/common.py:490
+msgid "Select a Person"
+msgstr ""
+
+#: lib/common.py:495
+msgid "Only persons with recent activity are shown unless the checkbox is ticked"
+msgstr ""
+
+#: lib/common.py:545
+msgid "Sending message to Signal..."
+msgstr ""
+
+#: lib/menu.py:23
+msgid "🏠 Home"
+msgstr ""
+
+#: lib/menu.py:24
+msgid "💪 Shifts List"
+msgstr ""
+
+#: lib/menu.py:25
+msgid "💰 Money Form"
+msgstr ""
+
+#: lib/menu.py:26
+msgid "🍺 Beer Form"
+msgstr ""
+
+#: lib/menu.py:27
+msgid "💸 Debts"
+msgstr ""
+
+#: lib/menu.py:28
+msgid "📈 Access Analytics"
+msgstr ""
+
+#: lib/menu.py:29
+msgid "⚡ Electricity"
+msgstr ""
+
+#: lib/menu.py:33
+msgid "🤑 Money Analytics"
+msgstr ""
+
+#: lib/menu.py:34
+msgid "👯 Members"
+msgstr ""
+
+#: lib/menu.py:35
+msgid "🏦 Bank Account"
+msgstr ""
+
+#: lib/streamlit_oauth.py:26
+msgid "Click here to Login"
+msgstr ""
+
+#: lib/streamlit_oauth.py:37
+msgid "Logout"
+msgstr ""
+
+#: lib/streamlit_oauth.py:46
+msgid "Logged in as {username}"
+msgstr ""
+
+#: lib/streamlit_oauth.py:67
+msgid "You are not authorized to view this page. Please contact the administrator."
+msgstr ""
+
+#: pages/Access_Analytics.py:79
+msgid "Hour"
+msgstr ""
+
+#: pages/Access_Analytics.py:79 pages/Access_Analytics.py:102
+msgid "Open Count"
+msgstr ""
+
+#: pages/Access_Analytics.py:90
+msgid "Monday"
+msgstr ""
+
+#: pages/Access_Analytics.py:91
+msgid "Tuesday"
+msgstr ""
+
+#: pages/Access_Analytics.py:92
+msgid "Wednesday"
+msgstr ""
+
+#: pages/Access_Analytics.py:93
+msgid "Thursday"
+msgstr ""
+
+#: pages/Access_Analytics.py:94
+msgid "Friday"
+msgstr ""
+
+#: pages/Access_Analytics.py:95
+msgid "Saturday"
+msgstr ""
+
+#: pages/Access_Analytics.py:96
+msgid "Sunday"
+msgstr ""
+
+#: pages/Access_Analytics.py:102
+msgid "Weekday"
+msgstr ""
+
+#: pages/Access_Analytics.py:141
+msgid "Who unlocked the door most often? **{top_unlocker}**, having done so **{top_unlock_count}** times."
+msgstr ""
+
+#: pages/Access_Analytics.py:147
+msgid "Unlock Count per Person"
+msgstr ""
+
+#: pages/Access_Analytics.py:152
+msgid "What time is {common_name} usually open?"
+msgstr ""
+
+#: pages/Access_Analytics.py:156
+msgid "All Actions over Time"
+msgstr ""
+
+#: pages/Access_Analytics.py:159
+msgid "Actions per Person"
+msgstr ""
+
+#: pages/Access_Analytics.py:162
+msgid "Actions Over Time for {selected_name}"
+msgstr ""
+
+#: pages/Access_Analytics.py:170
+msgid "{common_name} Nuki Analytics"
+msgstr ""
+
+#: pages/Bank_Account.py:20
+msgid "No data found, please upload some files"
+msgstr ""
+
+#: pages/Bank_Account.py:24
+msgid "Balance"
+msgstr ""
+
+#: pages/Bank_Account.py:25
+msgid "Last booking Date"
+msgstr ""
+
+#: pages/Bank_Account.py:35
+msgid "Total Credit"
+msgstr ""
+
+#: pages/Bank_Account.py:38
+msgid "Total Expenses"
+msgstr ""
+
+#: pages/Bank_Account.py:311
+msgid "Split by accounts/folders"
+msgstr ""
+
+#: pages/Bank_Account.py:316
+msgid "Upload new bank data file(s)"
+msgstr ""
+
+#: pages/Bank_Account.py:321
+msgid "Refresh bank data"
+msgstr ""
+
+#: pages/Bank_Account.py:345
+msgid "All accounts combined"
+msgstr ""
+
+#: pages/Bank_Account.py:353
+msgid "Lenkerbande Bank Analytics"
+msgstr ""
+
+#: pages/Bank_Data_Load.py:14
+msgid "{common_name} Bank Data Load"
+msgstr ""
+
+#: pages/Bank_Data_Load.py:36
+msgid "Error loading data from bank"
+msgstr ""
+
+#: pages/Bank_Data_Load.py:44
+msgid "No transactions found"
+msgstr ""
+
+#: pages/Bank_Data_Load.py:75
+msgid "Bank data saved to disk"
+msgstr ""
+
+#: pages/Bank_Data_Load.py:77
+msgid "You can close this window now"
+msgstr ""
+
+#: pages/Beer_Form.py:134
+msgid "Following data will be sent:"
+msgstr ""
+
+#: pages/Beer_Form.py:137
+msgid "Start Month: "
+msgstr ""
+
+#: pages/Beer_Form.py:138
+msgid "End Month: "
+msgstr ""
+
+#: pages/Beer_Form.py:152
+msgid "Back"
+msgstr ""
+
+#: pages/Beer_Form.py:154 pages/Money_Form.py:135
+msgid "Confirm"
+msgstr ""
+
+#: pages/Beer_Form.py:155
+msgid "Really send data now"
+msgstr ""
+
+#: pages/Beer_Form.py:173
+msgid "Start Month"
+msgstr ""
+
+#: pages/Beer_Form.py:177
+msgid "End Month"
+msgstr ""
+
+#: pages/Beer_Form.py:181
+msgid "Beer Price"
+msgstr ""
+
+#: pages/Beer_Form.py:186
+msgid "Specify amount of drinks for each person (not amount in euro)"
+msgstr ""
+
+#: pages/Beer_Form.py:193
+msgid "Image of beer list"
+msgstr ""
+
+#: pages/Beer_Form.py:194
+msgid "Picture of the original beer list"
+msgstr ""
+
+#: pages/Beer_Form.py:208
+msgid "Names configuration"
+msgstr ""
+
+#: pages/Beer_Form.py:210
+msgid "Removed Names"
+msgstr ""
+
+#: pages/Beer_Form.py:214
+msgid "Additional Names"
+msgstr ""
+
+#: pages/Beer_Form.py:264
+msgid "Amount of Drinks"
+msgstr ""
+
+#: pages/Beer_Form.py:274
+msgid "Send Data"
+msgstr ""
+
+#: pages/Beer_Form.py:290
+msgid "Beer formular sent"
+msgstr ""
+
+#: pages/Beer_Form.py:330
+msgid "Beer data successfully sent"
+msgstr ""
+
+#: pages/Beer_Form.py:338
+msgid "{common_name} Beer Form"
+msgstr ""
+
+#: pages/Debts.py:110
+msgid "Positive values mean that you owe money, which you should send to the club's account when it exceeds {max_debt} €. Negative values mean that the club owes you money."
+msgstr ""
+
+#: pages/Debts.py:118
+msgid "People who should have less debt"
+msgstr ""
+
+#: pages/Debts.py:119
+msgid "All People with debt or credit"
+msgstr ""
+
+#: pages/Debts.py:120 pages/Debts.py:214
+msgid "Raw Data"
+msgstr ""
+
+#: pages/Debts.py:152
+msgid "Debt"
+msgstr ""
+
+#: pages/Debts.py:152 pages/Money_Analytics.py:121
+msgid "Credit"
+msgstr ""
+
+#: pages/Debts.py:177
+msgid "Total Balance"
+msgstr ""
+
+#: pages/Debts.py:179 pages/Members.py:406
+msgid "Debts"
+msgstr ""
+
+#: pages/Debts.py:182
+msgid "Credits"
+msgstr ""
+
+#: pages/Debts.py:185 pages/Money_Analytics.py:128
+msgid "Money Distribution"
+msgstr ""
+
+#: pages/Debts.py:189
+msgid "Show categories"
+msgstr ""
+
+#: pages/Debts.py:192 pages/Debts.py:194 pages/Money_Analytics.py:135
+#: pages/Money_Analytics.py:137
+msgid "Income"
+msgstr ""
+
+#: pages/Debts.py:192 pages/Debts.py:196 pages/Money_Analytics.py:124
+#: pages/Money_Analytics.py:135 pages/Money_Analytics.py:139
+msgid "Expenses"
+msgstr ""
+
+#: pages/Debts.py:192 pages/Money_Analytics.py:135
+msgid "Filter by amount"
+msgstr ""
+
+#: pages/Debts.py:201 pages/Money_Analytics.py:144
+msgid "Group by"
+msgstr ""
+
+#: pages/Debts.py:202 pages/Debts.py:207 pages/Electricity.py:164
+#: pages/Money_Analytics.py:145 pages/Money_Analytics.py:150
+msgid "Week"
+msgstr ""
+
+#: pages/Debts.py:202 pages/Debts.py:208 pages/Electricity.py:165
+#: pages/Money_Analytics.py:145 pages/Money_Analytics.py:151
+msgid "Month"
+msgstr ""
+
+#: pages/Debts.py:202 pages/Debts.py:209 pages/Money_Analytics.py:145
+#: pages/Money_Analytics.py:152
+msgid "Quarter"
+msgstr ""
+
+#: pages/Debts.py:202 pages/Debts.py:210 pages/Money_Analytics.py:145
+#: pages/Money_Analytics.py:153
+msgid "Year"
+msgstr ""
+
+#: pages/Debts.py:214
+msgid "Aggregated"
+msgstr ""
+
+#: pages/Debts.py:214
+msgid "Daily Entries"
+msgstr ""
+
+#: pages/Debts.py:222 pages/Money_Analytics.py:166
+msgid "Money Distribution by Category"
+msgstr ""
+
+#: pages/Debts.py:223
+msgid "Show comments"
+msgstr ""
+
+#: pages/Debts.py:246
+msgid "{common_name} Debts"
+msgstr ""
+
+#: pages/Electricity.py:20
+msgid "Electricity data file not found: {file_path}"
+msgstr ""
+
+#: pages/Electricity.py:45
+msgid "Error loading electricity data: {error}"
+msgstr ""
+
+#: pages/Electricity.py:56
+msgid "Electricity Consumption Analysis"
+msgstr ""
+
+#: pages/Electricity.py:64
+msgid "Effective price per kWh (€-cent)"
+msgstr ""
+
+#: pages/Electricity.py:66
+msgid "Energy price is 15.50 €-cent per kWh, plus 20.10 €-cent for taxes and fees."
+msgstr ""
+
+#: pages/Electricity.py:80
+msgid "Start Date"
+msgstr ""
+
+#: pages/Electricity.py:85
+msgid "End Date"
+msgstr ""
+
+#: pages/Electricity.py:93
+msgid "No data available for the selected date range."
+msgstr ""
+
+#: pages/Electricity.py:117
+msgid "Weekly Electricity Costs (€)"
+msgstr ""
+
+#: pages/Electricity.py:118
+msgid "Monthly Electricity Costs (€)"
+msgstr ""
+
+#: pages/Electricity.py:128
+msgid "Weekly Cost"
+msgstr ""
+
+#: pages/Electricity.py:130
+msgid "Week: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} kWh<extra></extra>"
+msgstr ""
+
+#: pages/Electricity.py:144
+msgid "Monthly Cost"
+msgstr ""
+
+#: pages/Electricity.py:146
+msgid "Month: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} kWh<extra></extra>"
+msgstr ""
+
+#: pages/Electricity.py:159
+msgid "Electricity Cost Overview"
+msgstr ""
+
+#: pages/Electricity.py:166 pages/Electricity.py:167
+msgid "Cost (€)"
+msgstr ""
+
+#: pages/Electricity.py:185
+msgid "Total Cost"
+msgstr ""
+
+#: pages/Electricity.py:190
+msgid "Average Daily Cost"
+msgstr ""
+
+#: pages/Electricity.py:200
+msgid "Average Weekly Cost"
+msgstr ""
+
+#: pages/Electricity.py:210
+msgid "Average Monthly Cost"
+msgstr ""
+
+#: pages/Electricity.py:216
+msgid "Show raw data"
+msgstr ""
+
+#: pages/Electricity.py:217
+msgid "Raw Electricity Data"
+msgstr ""
+
+#: pages/Electricity.py:225
+msgid "{common_name} Electricity"
+msgstr ""
+
+#: pages/Members.py:47
+msgid "No data available"
+msgstr ""
+
+#: pages/Members.py:274
+msgid "Statistics from {start_date} to {end_date} ({days} days)"
+msgstr ""
+
+#: pages/Members.py:282
+msgid "Reset all weights to zero"
+msgstr ""
+
+#: pages/Members.py:292
+msgid "Debug user"
+msgstr ""
+
+#: pages/Members.py:295
+msgid "Select a user to debug their payments"
+msgstr ""
+
+#: pages/Members.py:301
+msgid "Debug payments for {debug_user}"
+msgstr ""
+
+#: pages/Members.py:312
+msgid "Shift weight"
+msgstr ""
+
+#: pages/Members.py:317
+msgid "Value to multiply the number of shifts"
+msgstr ""
+
+#: pages/Members.py:321
+msgid "Unlock weight"
+msgstr ""
+
+#: pages/Members.py:327
+msgid "Value to multiply the number of unlocks"
+msgstr ""
+
+#: pages/Members.py:331
+msgid "Debt weight"
+msgstr ""
+
+#: pages/Members.py:337
+msgid "Value to multiply the money take from the box"
+msgstr ""
+
+#: pages/Members.py:341
+msgid "Shop weight"
+msgstr ""
+
+#: pages/Members.py:347
+msgid "Value to multiply the money people bought stuff for the club"
+msgstr ""
+
+#: pages/Members.py:395
+msgid "Member contribution statistics"
+msgstr ""
+
+#: pages/Members.py:402
+msgid "Monthly payments"
+msgstr ""
+
+#: pages/Members.py:403
+msgid "Shifts"
+msgstr ""
+
+#: pages/Members.py:404
+msgid "Unlocks"
+msgstr ""
+
+#: pages/Members.py:405
+msgid "Shop"
+msgstr ""
+
+#: pages/Members.py:446
+msgid "Total refunds"
+msgstr ""
+
+#: pages/Members.py:448
+msgid "Total amount of refunds for all members"
+msgstr ""
+
+#: pages/Members.py:451
+msgid "Contribution statistics details"
+msgstr ""
+
+#: pages/Members.py:454
+msgid "Regular paying members"
+msgstr ""
+
+#: pages/Members.py:458
+msgid "No recent regular paying members found"
+msgstr ""
+
+#: pages/Members.py:460
+msgid "Irregular or non paying members"
+msgstr ""
+
+#: pages/Members.py:464
+msgid "No irregular or non paying members found"
+msgstr ""
+
+#: pages/Members.py:467
+msgid "Leftover nuki accounts"
+msgstr ""
+
+#: pages/Members.py:489
+msgid "Total members"
+msgstr ""
+
+#: pages/Members.py:491
+msgid "Number regular paying"
+msgstr ""
+
+#: pages/Members.py:493
+msgid "Members who have made a payment in the last 90 days"
+msgstr ""
+
+#: pages/Members.py:496
+msgid "Monthly member payments"
+msgstr ""
+
+#: pages/Members.py:500
+msgid "Last data entry"
+msgstr ""
+
+#: pages/Members.py:509 pages/Members.py:540
+msgid "Last Payment"
+msgstr ""
+
+#: pages/Members.py:510 pages/Members.py:541
+msgid "Days since the last payment"
+msgstr ""
+
+#: pages/Members.py:516 pages/Members.py:547 pages/Money_Form.py:76
+msgid "Amount"
+msgstr ""
+
+#: pages/Members.py:522 pages/Members.py:553
+msgid "Last Nuki use"
+msgstr ""
+
+#: pages/Members.py:564
+msgid "Repayment checks"
+msgstr ""
+
+#: pages/Members.py:611
+msgid "{common_name} Members"
+msgstr ""
+
+#: pages/Money_Analytics.py:108
+msgid "Select Categories"
+msgstr ""
+
+#: pages/Money_Analytics.py:126
+msgid "Result"
+msgstr ""
+
+#: pages/Money_Analytics.py:132
+msgid "Show positive/negative"
+msgstr ""
+
+#: pages/Money_Analytics.py:177
+msgid "Credits by Name"
+msgstr ""
+
+#: pages/Money_Analytics.py:188
+msgid "Expenses by Name"
+msgstr ""
+
+#: pages/Money_Analytics.py:263
+msgid "{common_name} Money Analytics"
+msgstr ""
+
+#: pages/Money_Form.py:13
+msgid "takes"
+msgstr ""
+
+#: pages/Money_Form.py:16
+msgid "paid back"
+msgstr ""
+
+#: pages/Money_Form.py:18
+msgid "gets back"
+msgstr ""
+
+#: pages/Money_Form.py:22
+msgid "for"
+msgstr ""
+
+#: pages/Money_Form.py:24
+msgid "comment"
+msgstr ""
+
+#: pages/Money_Form.py:43
+msgid "Please always use this formular whenever you take money with you, when you get money back because you bought something or when you pay back your debts."
+msgstr ""
+
+#: pages/Money_Form.py:50
+msgid "Take money or pay money?"
+msgstr ""
+
+#: pages/Money_Form.py:53
+msgid "I took money or things with me"
+msgstr ""
+
+#: pages/Money_Form.py:54
+msgid "I bought something"
+msgstr ""
+
+#: pages/Money_Form.py:55
+msgid "I pay back my debts"
+msgstr ""
+
+#: pages/Money_Form.py:58
+msgid "Select if amount is considered positive (=Debt) or negative (=Credit) on behalf of your account"
+msgstr ""
+
+#: pages/Money_Form.py:77
+msgid "Just positive amounts here, round up in case of cents"
+msgstr ""
+
+#: pages/Money_Form.py:86 pages/Money_Form.py:89
+msgid "Select category"
+msgstr ""
+
+#: pages/Money_Form.py:91
+msgid "If you select Other, please specify details in comment field"
+msgstr ""
+
+#: pages/Money_Form.py:97
+msgid "Comment"
+msgstr ""
+
+#: pages/Money_Form.py:98
+msgid "Please just fill out if really something useful to document"
+msgstr ""
+
+#: pages/Money_Form.py:101
+msgid "Send"
+msgstr ""
+
+#: pages/Money_Form.py:104
+msgid "Please fill out the amount field"
+msgstr ""
+
+#: pages/Money_Form.py:124
+msgid "increased"
+msgstr ""
+
+#: pages/Money_Form.py:126
+msgid "decreased"
+msgstr ""
+
+#: pages/Money_Form.py:128
+msgid "You are about to send following entry: "
+msgstr ""
+
+#: pages/Money_Form.py:131
+msgid "This means your debts will be **{change_verb}** by this amount."
+msgstr ""
+
+#: pages/Money_Form.py:139
+msgid "{common_name} Money Form"
+msgstr ""
+
+#: pages/Money_Form.py:148
+msgid "Entry successfully saved"
+msgstr ""
+
+#: pages/Money_Form.py:152
+msgid "New entry"
+msgstr ""
+
+#: pages/Shifts_List.py:43
+msgid "Day of shift"
+msgstr ""
+
+#: pages/Shifts_List.py:48
+msgid "Primary"
+msgstr ""
+
+#: pages/Shifts_List.py:52
+msgid "Secondary"
+msgstr ""
+
+#: pages/Shifts_List.py:56
+msgid "Tertiary"
+msgstr ""
+
+#: pages/Shifts_List.py:66
+msgid "Save"
+msgstr ""
+
+#: pages/Shifts_List.py:69
+msgid "Add month"
+msgstr ""
+
+#: pages/Shifts_List.py:108
+msgid "{common_name} Shifts List"
+msgstr ""

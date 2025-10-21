@@ -1,0 +1,96 @@
+---
+x-common-settings: &common-settings
+  image: registry.gitlab.com/lenkerbande/nextcloud-bot:latest
+  depends_on:
+    - signal-cli
+  volumes:
+    - ./data/abs-data:/data
+  environment:
+    - DATA_DIR_PATH=/data
+  env_file:
+    - .env
+  restart: always
+  # additional extra configuration to avoid cloudflare for authentik calls
+  extra_hosts:
+    - 'auth.lenkerbande.at:95.217.221.199'
+    - 'absdata-proxy.lenkerbande.at:95.217.221.199'
+
+services:
+  datafetcher:
+    <<: *common-settings
+    command: /bin/sh -c "while true; do python3 runner.py -u -s -m; sleep 32000; done"
+
+  analytics:
+    <<: *common-settings
+    networks:
+      - default
+      - caddy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8501/_stcore/health']
+      interval: 1m
+      timeout: 10s
+      retries: 5
+    labels:
+      caddy: absdata.lenkerbande.at
+      caddy.reverse_proxy: '{{upstreams 8501}}'
+      caddy.tls.dns: cloudflare {env.CLOUDFLARE_AUTH_TOKEN}
+
+  signal-cli:
+    image: 'bbernhard/signal-cli-rest-api'
+    volumes:
+      - ./data/signal-data:/home/.local/share/signal-cli
+    environment:
+      - LOG_LEVEL=debug
+      - AUTO_RECEIVE_SCHEDULE=0 22 * * * #enable this parameter on demand (see description below)
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/v1/health']
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    restart: always
+    networks:
+      - default
+      - caddy
+    labels:
+      caddy: signal-cli-LoQoY8Mj4C0XcrD2.lenkerbande.at
+      caddy.reverse_proxy: '{{upstreams 8080}}'
+      caddy.tls.dns: cloudflare {env.CLOUDFLARE_AUTH_TOKEN}
+
+  bankproxy:
+    #image: ghcr.io/bankproxy/bankproxy:latest
+    #    image: bankproxy
+    build: ./bankproxy/
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - BASE_URL=https://absdata-proxy.lenkerbande.at
+      - ADMIN_AUTHORIZE_URL=http://absdata-proxy.lenkerbande.at/admin-secret-XdUxpuTi9dJT
+      - ADMIN_JWT_SECRET=EPWMYFTVJoAT1EnJnLhh4ichLpjQ1iNVvxs12tSdMaVkeDA1
+      - SECRET_KEY=VAmPaXQ4QbqbzsNUIDx3v6VGfoXkqeTBtsU91ybW6I3mRtTiRdwtYMmUMV206tBA
+      - DATABASE_URL=postgresql://postgres:kuUepyDtN94Z0upAor8YurLE@postgres:5432/bankproxy
+    networks:
+      - default
+      - caddy
+    labels:
+      caddy: absdata-proxy.lenkerbande.at
+      caddy.reverse_proxy: '{{upstreams 3000}}'
+      caddy.tls.dns: cloudflare {env.CLOUDFLARE_AUTH_TOKEN}
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: 'kuUepyDtN94Z0upAor8YurLE'
+      POSTGRES_DB: 'bankproxy'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  caddy:
+    external: true

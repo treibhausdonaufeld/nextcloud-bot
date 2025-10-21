@@ -1,0 +1,47 @@
+---
+x-common-settings: &common-settings
+  build: .
+  volumes:
+    - ./data:/app/data
+  env_file:
+    - .env
+
+services:
+  datafetcher:
+    <<: *common-settings
+    command: /bin/sh -c "while true; do python3 runner.py -u -s -m; sleep 32000; done"
+
+  analytics:
+    <<: *common-settings
+    ports:
+      - '127.0.0.1:8501:8501'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8501/_stcore/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # bankproxy:
+  #   image: ghcr.io/bankproxy/bankproxy:latest
+  #   ports:
+  #     - "127.0.0.1:3000:3000"
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - BASE_URL=http://localhost:3000
+  #     - ADMIN_AUTHORIZE_URL=http://localhost:3000/admin
+  #     - ADMIN_JWT_SECRET=EPWMYFTVJoAT1EnJnLhh4ichLpjQ1iNVvxs12tSdMaVkeDA1
+  #     - DATABASE_URL=postgresql://postgres:kuUepyDtN94Z0upAor8YurLE@postgres:5432/bankproxy
+
+  # postgres:
+  #   image: docker.io/pgvector/pgvector:pg17
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_PASSWORD: "kuUepyDtN94Z0upAor8YurLE"
+  #     POSTGRES_DB: "bankproxy"
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5

@@ -1,0 +1,92 @@
+# Time to sleep between checking mails again
+sleep_minutes: 5
+
+nextcloud:
+  host: https://cloud.domain
+  username: admin
+  password: secret_nextcloud_password
+
+  fetch_avatar: true
+  avatar_folder: avatare
+  avatar_refresh_seconds: 86400
+
+deck_reminder:
+  enabled: true
+  cards_processed_storage: processed_cards.json
+  notify_before_days: 3
+  sleep_minutes: 720
+  remind_after_days: 3
+
+  deck_channel_mapping:
+    # - board_id: 110  # AG O&E
+    #   channel: ag-organisation-and-erweiterung
+    - board_id: 49 # UG IT
+      channel: ug-it
+
+imap:
+  host: hostname
+  username: list@cloud.domain
+  password: secret_imap_password
+
+smtp:
+  host: smtp.cloud.domain
+  port: 587
+  username: list@cloud.domain
+  password: secret_smtp_password
+  send_delay_seconds: 30
+
+distribution:
+  # not yet implemented
+  restrict_sender: false
+
+  # if set to true, then "Reply-To" header of the mail will be set to original sender
+  reply_to_original_sender: true
+
+  # send email also to the original sender
+  send_to_sender: true
+
+  # from-address skeleton to be adapted with original sender and recipients
+  from_addr: ORIGINAL_SENDER via Treibhaus Donaufeld Mailinglist LIST_NAME
+
+  lists:
+    list@cloud.domain:
+      prefix: '[THD]'
+      groups:
+        - Wir Alle
+        - realitylab
+        - Nicht-Mitglied
+    list+ka@cloud.domain:
+      prefix: '[THD-KA]'
+      groups:
+        - AG Konzept und Architektur
+    list+oe@cloud.domain:
+      prefix: '[THD-OE]'
+      groups:
+        - AG Organisation und Erweiterung
+    list+rf@cloud.domain:
+      prefix: '[THD-RF]'
+      groups:
+        - AG Recht und Finanzen
+    list+dgl@cloud.domain:
+      prefix: '[THD-DGL]'
+      groups:
+        - AG Das gute Leben
+    list+ni@cloud.domain:
+      prefix: '[THD-NI]'
+      groups:
+        - Nicht-Mitglied
+
+notifier:
+  chat_url: https://cloud.rocket.chat/hooks/some-id/some-token
+
+calendar_notifier:
+  caldav_url: https://example.nextcloud/remote.php/dav/calendars/user/personal/
+  enabled: true
+  search_start_days: 0
+  search_end_days: 7
+  timezone: Europe/Vienna
+  processed_storage: processed_events.json
+
+  # channels where to post the events
+  channel_keywords:
+    channel-name: [kw1, keyword2]
