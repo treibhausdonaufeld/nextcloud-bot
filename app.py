@@ -5,12 +5,12 @@ from gettext import gettext as _
 import pandas as pd
 import streamlit as st
 
-from lib.common import (
+from lib.menu import menu
+from lib.settings import (
     available_languages,
     set_language,
     settings,
 )
-from lib.menu import menu
 from lib.streamlit_oauth import load_user_data, login
 
 pd.set_option("display.float_format", "{:.2f}".format)

@@ -4,6 +4,7 @@
 logs
 
 .env
+.mypy_cache
 
 data
 data/*

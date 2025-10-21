@@ -1,14 +1,36 @@
-from pathlib import Path
-from typing import Any, Dict, Optional
+import gettext
+import locale
+from gettext import gettext as _  # noqa: F401
+from typing import Optional
 
 import sentry_sdk
-from pydantic import BaseModel, HttpUrl, model_validator, validator
+from pydantic import BaseModel, HttpUrl, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+available_languages = {"de": "Deutsch", "en": "English"}
+
+
+def set_language(language: str):
+    global _
+    global _n
+
+    if language and language == "de":
+        localizator = gettext.translation(
+            "messages", localedir="locales", languages=[language]
+        )
+        localizator.install()
+        _ = localizator.gettext
+        _n = localizator.ngettext
+        locale_str = "de_AT.UTF-8"
+    else:
+        _ = gettext.gettext
+        _n = gettext.ngettext
+        locale_str = "en_US.UTF-8"
+
+    locale.setlocale(locale.LC_ALL, locale_str)
 
 
 class AuthSettings(BaseModel):
-    data_dir_path: Path
-
     provider_base_url: Optional[HttpUrl] = None
     authorization_endpoint: str = ""
     token_endpoint: str = ""
@@ -23,10 +45,6 @@ class AuthSettings(BaseModel):
     authentik_token: str = ""
 
     board_group_name: str = "Vorstand"
-
-    @property
-    def members_file(self) -> Path:
-        return self.data_dir_path / "members.json"
 
     @validator("authentik_base_url", always=True)
     def set_authentik_base_url(cls, v, values):
@@ -47,6 +65,19 @@ class AuthSettings(BaseModel):
         return v or str(values.get("provider_base_url", "")) + "application/o/userinfo/"
 
 
+class NextcloudSettings(BaseModel):
+    base_url: Optional[HttpUrl] = None
+    admin_username: str = ""
+    admin_password: str = ""
+
+    collectives_id: int = 1
+
+
+class CouchDBSettings(BaseModel):
+    url: str = "http://admin:password@localhost:5984/"
+    database_name: str = "nextcloud_bot"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__")
 
@@ -56,17 +87,9 @@ class Settings(BaseSettings):
     name: str = "Nextcloud-Bot"
     default_language: str = "de"
 
-    @model_validator(mode="before")
-    @classmethod
-    def build_extra(cls, data) -> Dict[str, Any]:
-        """Add data dir path to all configured sub-settings"""
-        data_dir_path = data.get("data_dir_path") or Path("data")
-
-        for key in ["signal", "reminder", "auth", "nuki", "money", "power"]:
-            data.setdefault(key, {})
-            data[key]["data_dir_path"] = data_dir_path
-
-        return data
+    couchdb: CouchDBSettings = CouchDBSettings()
+    auth: AuthSettings = AuthSettings()
+    nextcloud: NextcloudSettings = NextcloudSettings()
 
 
 settings = Settings()

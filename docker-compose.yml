@@ -21,6 +21,30 @@ services:
       timeout: 10s
       retries: 5
 
+  couchdb:
+    image: couchdb
+    restart: always
+    ports:
+      - '127.0.0.1:5984:5984'
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+    volumes:
+      - couch-data:/opt/couchdb/data
+
+  chromadb:
+    image: chromadb/chromadb:latest
+    # bind to localhost only for safety
+    ports:
+      - '127.0.0.1:8000:8000'
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_DB_IMPL=duckdb+parquet
+      - CHROMA_PERSIST_DIRECTORY=/chromadb
+    volumes:
+      - chroma-data:/chromadb
+
   # bankproxy:
   #   image: ghcr.io/bankproxy/bankproxy:latest
   #   ports:
@@ -45,3 +69,7 @@ services:
   #     interval: 30s
   #     timeout: 10s
   #     retries: 5
+
+volumes:
+  chroma-data: {}
+  couch-data: {}

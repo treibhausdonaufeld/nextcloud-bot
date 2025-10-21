@@ -20,4 +20,14 @@ dependencies = [
     "pytz>=2024.2",
     "pyyaml>=6.0.2",
     "tzlocal>=5.3.1",
+    "pycouchdb>=1.16.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "types-authlib>=1.6.5.20251005",
+    "types-pytz>=2025.2.0.20250809",
+    "types-pyyaml>=6.0.12.20250915",
+    "types-requests>=2.32.4.20250913",
 ]
