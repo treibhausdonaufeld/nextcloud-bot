@@ -3,6 +3,7 @@ from datetime import datetime
 from gettext import gettext as _
 
 import pandas as pd
+import pytz
 import streamlit as st
 
 from lib.couchdb import couchdb
@@ -102,42 +103,35 @@ def load_collective_pages(limit: int = 10):
     response.raise_for_status()
     docs = results.get("docs", []) if isinstance(results, dict) else []
 
-    # normalize docs
-    out = []
-    for d in docs:
-        out.append(
-            {
-                "_id": d.get("_id"),
-                "title": d.get("title")
-                or d.get("raw", {}).get("title")
-                or d.get("_id"),
-                "url": d.get("url"),
-                "content": d.get("content") or d.get("raw", {}).get("content") or "",
-                "created_at": d.get("created_at"),
-                "modified_at": d.get("modified_at"),
-            }
-        )
-
-    return out
+    return docs
 
 
 # Display collected pages on the start page
 collective_pages = load_collective_pages()
-st.markdown("## Collectives — Pages")
+st.subheader("Newest Updates from Collectives")
 
 if collective_pages:
     for p in collective_pages:
-        title = p.get("title") or p.get("_id")
-        url = p.get("url")
-        content = (p.get("content") or "").strip()
-        excerpt = content[:300] + ("…" if len(content) > 300 else "")
-        if url:
-            st.markdown(f"### [{title}]({url})")
-        else:
-            st.markdown(f"### {title}")
-        if excerpt:
-            st.write(excerpt)
-        st.divider()
+        dt_object = datetime.fromtimestamp(p.get("timestamp"))
+        tz = pytz.timezone(settings.timezone)
+        localized_dt = tz.localize(dt_object)
+
+        with st.expander(
+            f"{localized_dt.strftime('%c')} - " + p.get("title"),
+            expanded=False,
+        ):
+            collective_name = p["raw"]["collectivePath"].split("/")[1]
+            url = (
+                str(settings.nextcloud.base_url)
+                + f"apps/collectives/{collective_name}-{settings.nextcloud.collectives_id}"
+                + f"/{p['raw']['slug']}-{p['raw']['id']}"
+            )
+            content = (p.get("content") or "").strip()
+            excerpt = content[:600] + ("…" if len(content) > 600 else "")
+
+            st.markdown(f"## [{p.get('title')}]({url})")
+            if excerpt:
+                st.write(excerpt)
 
 with st.sidebar:
     # if "language" not in st.session_state:
