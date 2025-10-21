@@ -10,7 +10,7 @@ from authlib.integrations.base_client.errors import OAuthError
 from authlib.integrations.requests_client import OAuth2Session
 from streamlit_cookies_controller import CookieController
 
-from lib.common import _, settings
+from lib.settings import _, settings
 
 
 def get_base_url() -> str:

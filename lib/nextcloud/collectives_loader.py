@@ -110,38 +110,16 @@ def _make_doc_for_page(page: Dict[str, Any]) -> Dict[str, Any]:
     # Best-effort id extraction from common keys
     page_id = page.get("id")
 
-    doc_id = (
-        f"collective:{settings.nextcloud.collectives_id}:{page_id}" if page_id else None
-    )
-
     doc: Dict[str, Any] = {
         "type": "collective_page",
         "title": page.get("title") or page.get("name"),
         "emoji": page.get("emoji"),
-        "content": fetch_page_markdown(page),
+        "timestamp": page.get("timestamp"),
         "raw": page,
+        "_id": f"collective:{settings.nextcloud.collectives_id}:{page_id}"
+        if page_id
+        else None,
     }
-
-    if doc_id:
-        doc["_id"] = doc_id
-
-    # optional fields
-    for k in ("modifiedAt", "modified_at", "updated_at", "mtime"):
-        if k in page:
-            doc["modified_at"] = page[k]
-            break
-
-    for k in ("createdAt", "created_at", "ctime", "created"):
-        if k in page:
-            doc["created_at"] = page[k]
-            break
-
-    # build a best-effort URL to the page
-    slug = page.get("slug") or page.get("id")
-    if slug:
-        doc["url"] = (
-            f"{str(settings.nextcloud.base_url).rstrip('/')}/apps/collectives/page/{slug}"
-        )
 
     return doc
 
@@ -162,10 +140,15 @@ def store_pages_to_couchdb(pages: List[Dict[str, Any]]) -> int:
             existing = db.get(doc_id)
             if existing and isinstance(existing, dict):
                 doc["_rev"] = existing.get("_rev")
+
+            if existing.get("timestamp") == page.get("timestamp"):
+                logger.info("Page %s unchanged, skipping", doc_id)
+                continue
         except NotFound:
             pass
 
         try:
+            doc["content"] = fetch_page_markdown(page)
             db.save(doc)
             stored += 1
             logger.info("Stored collectives page to CouchDB: %s", doc_id)

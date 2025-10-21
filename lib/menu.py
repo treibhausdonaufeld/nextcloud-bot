@@ -5,7 +5,7 @@ import streamlit as st
 from streamlit_cookies_controller import CookieController
 from streamlit_js_eval import get_browser_language
 
-from lib.common import set_language, settings
+from lib.settings import set_language, settings
 
 
 def menu():

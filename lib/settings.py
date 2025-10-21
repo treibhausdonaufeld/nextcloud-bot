@@ -1,5 +1,6 @@
 import gettext
 import locale
+import logging
 from gettext import gettext as _  # noqa: F401
 from typing import Optional
 
@@ -71,6 +72,7 @@ class NextcloudSettings(BaseModel):
     admin_password: str = ""
 
     collectives_id: int = 1
+    configuration_page_id: int = 15158708
 
 
 class CouchDBSettings(BaseModel):
@@ -87,6 +89,8 @@ class Settings(BaseSettings):
     name: str = "Nextcloud-Bot"
     default_language: str = "de"
 
+    log_level: str = "INFO"
+
     couchdb: CouchDBSettings = CouchDBSettings()
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
@@ -99,3 +103,8 @@ if settings.sentry_dsn:
         dsn=settings.sentry_dsn,
         enable_tracing=False,
     )
+
+logging.basicConfig(
+    level=settings.log_level,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)

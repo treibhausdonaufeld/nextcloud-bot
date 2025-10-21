@@ -1,6 +1,6 @@
 import datetime
 
-from lib.collectives_loader import fetch_and_store_all_pages
+from lib.nextcloud.collectives_loader import fetch_and_store_all_pages
 
 
 def main():
