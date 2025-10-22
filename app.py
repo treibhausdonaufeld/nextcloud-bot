@@ -98,12 +98,9 @@ if user:
     user_view_result = db.query(
         "mentions/by_user", key=user, reduce=False, include_docs=True
     )
-
-    user_docs = []
     for row in user_view_result:
-        user_docs.append({"doc": row["doc"]})
-
-    st.dataframe(user_docs)
+        page = CollectivePage.model_validate(row["doc"])
+        st.markdown(f"### [{page.title}]({page.url})")
 
 
 # @st.cache_data(ttl=60)
@@ -126,29 +123,8 @@ def load_collective_pages(limit: int = 10):
     # Convert raw CouchDB docs into CollectivePage models when possible
     out: list[CollectivePage] = []
     for d in docs:
-        try:
-            # ensure 'raw' is parsed into OCSCollectivePage by Pydantic
-            cp = CollectivePage.parse_obj(d)
-            out.append(cp)
-        except Exception:
-            # fall back to minimal mapping
-            out.append(
-                CollectivePage(
-                    **{
-                        k: d.get(k)
-                        for k in (
-                            "_id",
-                            "_rev",
-                            "type",
-                            "title",
-                            "emoji",
-                            "timestamp",
-                            "raw",
-                            "content",
-                        )
-                    }
-                )
-            )
+        cp = CollectivePage.model_validate(d)
+        out.append(cp)
 
     return out
 

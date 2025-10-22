@@ -15,7 +15,8 @@ def create_user_index(db: pycouchdb.client.Database):
 
             // Regex to find all mentions in the format mention://user/username
             // The 'g' flag ensures it finds *all* matches, not just the first one.
-            const regex = /mention:\/\/user\/([a-zA-Z0-9_]+)/g;
+            // Allow letters, numbers, underscores, hyphens and dots
+            const regex = /mention:\/\/user\/([A-Za-z0-9_.-]+)/g;
 
             // Use matchAll to get an iterator of all matches
             const matches = doc.{MARKDOWN_FIELD_NAME}.matchAll(regex);
@@ -39,6 +40,9 @@ def create_user_index(db: pycouchdb.client.Database):
         "language": "javascript",
         "views": {"by_user": {"map": map_function, "reduce": reduce_function}},
     }
+
+    # if DESIGN_DOC_ID in db:
+    #     db.delete(design_doc)
 
     if DESIGN_DOC_ID not in db:
         db.save(design_doc)

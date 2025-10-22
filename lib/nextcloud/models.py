@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Any, List
 
+import pytz
 from pydantic import BaseModel
 
 from lib.settings import settings
@@ -36,6 +38,9 @@ class CollectivePage(BaseModel):
     raw: OCSCollectivePage | None = None
     content: str | None = None
 
+    def __str__(self) -> str:
+        return f"CollectivePage(id={self.id}, title={self.title})"
+
     @property
     def collective_name(self) -> str | None:
         if not self.raw or not self.raw.collectivePath:
@@ -53,6 +58,16 @@ class CollectivePage(BaseModel):
             + f"/{self.raw.slug}-{self.raw.id}"
         )
 
+    @property
+    def last_update(self) -> str | None:
+        if not self.timestamp:
+            return None
+
+        dt_object = datetime.fromtimestamp(self.timestamp)
+        tz = pytz.timezone(settings.timezone)
+        localized_dt = tz.localize(dt_object)
+        return localized_dt.strftime("%c")
+
     @classmethod
     def from_ocs_page(cls, page: OCSCollectivePage) -> "CollectivePage":
         doc_id = f"collective:{settings.nextcloud.collectives_id}:{page.id}"
@@ -63,3 +78,13 @@ class CollectivePage(BaseModel):
             timestamp=page.timestamp,
             raw=page,
         )
+
+    @classmethod
+    def model_validate(cls, data: dict) -> "CollectivePage":
+        # If _id is present in the input dict, use it for the id field
+        for x, y in [("_id", "id"), ("_rev", "rev")]:
+            if x in data and (y not in data or not data[y]):
+                data = dict(data)  # copy to avoid mutating caller's dict
+                data[y] = data[x]
+
+        return super().model_validate(data)
