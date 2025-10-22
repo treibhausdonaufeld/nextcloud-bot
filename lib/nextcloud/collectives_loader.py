@@ -16,12 +16,13 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import List
 
 import requests
 from pycouchdb.exceptions import NotFound
 
 from lib.couchdb import couchdb
+from lib.nextcloud.models import CollectivePage, OCSCollectivePage
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def _build_auth() -> tuple[str, str]:
     return (settings.nextcloud.admin_username, settings.nextcloud.admin_password)
 
 
-def _try_fetch_from_endpoint(url: str) -> List[Dict[str, Any]] | None:
+def _try_fetch_from_endpoint(url: str) -> List[OCSCollectivePage] | None:
     """Try to GET the given URL and return a list of page dicts if found.
 
     Returns None when the endpoint did not return a usable list.
@@ -54,10 +55,19 @@ def _try_fetch_from_endpoint(url: str) -> List[Dict[str, Any]] | None:
 
     data = resp.json()
 
-    return data["ocs"]["data"]["pages"]
+    # Nextcloud OCS responses nest the result under ocs->data->pages
+    pages = data.get("ocs", {}).get("data", {}).get("pages")
+    if not pages:
+        return None
+
+    parsed: List[OCSCollectivePage] = []
+    for p in pages:
+        parsed.append(OCSCollectivePage(**p))
+
+    return parsed
 
 
-def fetch_all_pages() -> List[Dict[str, Any]]:
+def fetch_all_pages() -> List[OCSCollectivePage]:
     """Fetch all pages from Nextcloud Collectives.
 
     Raises RuntimeError when no endpoint returns a usable result.
@@ -80,18 +90,20 @@ def fetch_all_pages() -> List[Dict[str, Any]]:
     raise RuntimeError("Unable to fetch collectives pages from Nextcloud")
 
 
-def fetch_page_markdown(page: dict) -> str:
+def fetch_page_markdown(page: OCSCollectivePage) -> str:
     """Fetch the markdown content of a collectives page via WebDAV."""
     base = settings.nextcloud.base_url
 
     # settings.nextcloud.base_url is a pydantic HttpUrl — convert to str
     base_str = str(base).rstrip("/")
 
-    slug = page.get("slug") or page.get("id")
+    slug = page.slug or str(page.id)
     if not slug:
         raise ValueError("Page does not have a slug or id for URL construction")
 
-    filepath = "/".join((page["collectivePath"], page["filePath"], page["fileName"]))
+    filepath = "/".join(
+        (page.collectivePath or "", page.filePath or "", page.fileName or "")
+    )
 
     url = base_str + PAGE_DETAIL.format(
         username=settings.nextcloud.admin_username, filepath=filepath
@@ -105,55 +117,37 @@ def fetch_page_markdown(page: dict) -> str:
     return resp.text
 
 
-def _make_doc_for_page(page: Dict[str, Any]) -> Dict[str, Any]:
-    """Convert a page dict from the API into a CouchDB document."""
-    # Best-effort id extraction from common keys
-    page_id = page.get("id")
-
-    doc: Dict[str, Any] = {
-        "type": "collective_page",
-        "title": page.get("title") or page.get("name"),
-        "emoji": page.get("emoji"),
-        "timestamp": page.get("timestamp"),
-        "raw": page,
-        "_id": f"collective:{settings.nextcloud.collectives_id}:{page_id}"
-        if page_id
-        else None,
-    }
-
-    return doc
-
-
-def store_pages_to_couchdb(pages: List[Dict[str, Any]]) -> int:
+def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
     """Upsert the given pages into CouchDB. Returns number of stored docs."""
     db = couchdb()
     stored = 0
     for page in pages:
-        doc = _make_doc_for_page(page)
-        if not doc.get("_id"):
+        # _make_doc_for_page returns a dict suitable for CouchDB
+        doc = CollectivePage.from_ocs_page(page=page)
+        if not doc.id:
             logger.warning("Skipping page without identifiable id: %s", page)
             continue
 
-        doc_id = doc["_id"]
         # try to fetch existing doc to obtain _rev for update
         try:
-            existing = db.get(doc_id)
+            existing = db.get(doc.id)
             if existing and isinstance(existing, dict):
-                doc["_rev"] = existing.get("_rev")
+                doc.rev = existing.get("_rev")
 
-            if existing.get("timestamp") == page.get("timestamp"):
-                logger.info("Page %s unchanged, skipping", doc_id)
+            # existing timestamp is stored at top-level in the doc
+            if existing.get("timestamp") == doc.timestamp:
+                logger.info("Page %s unchanged, skipping", doc.id)
                 continue
         except NotFound:
             pass
 
         try:
-            doc["content"] = fetch_page_markdown(page)
+            doc.content = fetch_page_markdown(page)
             db.save(doc)
             stored += 1
-            logger.info("Stored collectives page to CouchDB: %s", doc_id)
+            logger.info("Stored collectives page to CouchDB: %s", doc.id)
         except Exception as e:
-            logger.exception("Failed to save page %s: %s", doc_id, e)
+            logger.exception("Failed to save page %s: %s", doc.id, e)
 
     return stored
 

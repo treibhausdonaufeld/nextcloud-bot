@@ -8,6 +8,7 @@ import streamlit as st
 
 from lib.couchdb import couchdb
 from lib.menu import menu
+from lib.nextcloud.models import CollectivePage
 from lib.settings import (
     available_languages,
     set_language,
@@ -122,7 +123,34 @@ def load_collective_pages(limit: int = 10):
     response.raise_for_status()
     docs = results.get("docs", []) if isinstance(results, dict) else []
 
-    return docs
+    # Convert raw CouchDB docs into CollectivePage models when possible
+    out: list[CollectivePage] = []
+    for d in docs:
+        try:
+            # ensure 'raw' is parsed into OCSCollectivePage by Pydantic
+            cp = CollectivePage.parse_obj(d)
+            out.append(cp)
+        except Exception:
+            # fall back to minimal mapping
+            out.append(
+                CollectivePage(
+                    **{
+                        k: d.get(k)
+                        for k in (
+                            "_id",
+                            "_rev",
+                            "type",
+                            "title",
+                            "emoji",
+                            "timestamp",
+                            "raw",
+                            "content",
+                        )
+                    }
+                )
+            )
+
+    return out
 
 
 # Display collected pages on the start page
@@ -131,24 +159,28 @@ st.subheader("Newest Updates from Collectives")
 
 if collective_pages:
     for p in collective_pages:
-        dt_object = datetime.fromtimestamp(p.get("timestamp"))
-        tz = pytz.timezone(settings.timezone)
-        localized_dt = tz.localize(dt_object)
+        # p is a CollectivePage
+        if p.timestamp:
+            dt_object = datetime.fromtimestamp(p.timestamp)
+            tz = pytz.timezone(settings.timezone)
+            localized_dt = tz.localize(dt_object)
+            header_time = localized_dt.strftime("%c")
+        else:
+            header_time = ""
 
         with st.expander(
-            f"{localized_dt.strftime('%c')} - " + p.get("title"),
+            f"{header_time} - " + (p.title or p._id or "Untitled"),
             expanded=False,
         ):
-            collective_name = p["raw"]["collectivePath"].split("/")[1]
-            url = (
-                str(settings.nextcloud.base_url)
-                + f"apps/collectives/{collective_name}-{settings.nextcloud.collectives_id}"
-                + f"/{p['raw']['slug']}-{p['raw']['id']}"
-            )
-            content = (p.get("content") or "").strip()
+            url = p.url
+            content = (p.content or "").strip()
             excerpt = content[:600] + ("…" if len(content) > 600 else "")
 
-            st.markdown(f"## [{p.get('title')}]({url})")
+            if url:
+                st.markdown(f"## [{p.title or p._id}]({url})")
+            else:
+                st.markdown(f"## {p.title or p._id}")
+
             if excerpt:
                 st.write(excerpt)
 
