@@ -3,7 +3,7 @@ import smtplib
 import time
 from email.message import Message
 
-from .config import Config
+from lib.nextcloud.config import Config
 
 
 class MailSender:

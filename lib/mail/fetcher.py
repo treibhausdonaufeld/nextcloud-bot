@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from email.message import Message
 from typing import List, Set
 
-from .config import Config
-from .nc_users import NCUserList
+from lib.nextcloud.config import Config
+from lib.nextcloud.nc_users import NCUserList
+
 from .sender import MailSender
 
 
@@ -159,7 +160,7 @@ class MailFetcher:
                 )
             )
         except Exception:
-            logging.exception("Error extracting recipients for: %s", mail_data._headers)
+            logging.exception("Error extracting recipients for: %s", mail_data.__dict__)
             return set()
 
     def _login_imap(self):

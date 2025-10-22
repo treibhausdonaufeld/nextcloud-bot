@@ -80,11 +80,11 @@ class CollectivePage(BaseModel):
         )
 
     @classmethod
-    def model_validate(cls, data: dict) -> "CollectivePage":
+    def model_validate(cls, obj: dict, *args, **kwargs) -> "CollectivePage":
         # If _id is present in the input dict, use it for the id field
         for x, y in [("_id", "id"), ("_rev", "rev")]:
-            if x in data and (y not in data or not data[y]):
-                data = dict(data)  # copy to avoid mutating caller's dict
+            if x in obj and (y not in obj or not obj[y]):
+                data = dict(obj)  # copy to avoid mutating caller's dict
                 data[y] = data[x]
 
-        return super().model_validate(data)
+        return super().model_validate(obj, *args, **kwargs)

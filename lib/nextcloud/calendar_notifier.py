@@ -9,6 +9,8 @@ import caldav
 import pytz
 import requests
 
+from lib.settings import settings
+
 logger = logging.getLogger(__name__)
 
 vor_ort_dabei = [
@@ -79,8 +81,8 @@ class Notifier:
         self.calendar = client.calendar(url=cal_config["caldav_url"])
 
     def _local_datetime(self, date) -> str:
-        localtz = pytz.timezone(self.config.get("timezone", "Europe/Vienna"))
-        locale.setlocale(locale.LC_ALL, self.config.get("locale", "de_AT.UTF-8"))
+        localtz = pytz.timezone(settings.timezone)
+        locale.setlocale(locale.LC_ALL, settings.locale)
         return date.astimezone(localtz).strftime("%A, %d. %B %Y, %H:%M h")
 
     def notify_upcoming_events(self) -> None:

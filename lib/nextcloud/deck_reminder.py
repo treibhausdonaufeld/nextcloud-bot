@@ -150,7 +150,7 @@ class DeckReminder:
         logger.info(f"Message sent to {channel}: {text}")
 
     def get_due_cards(self):
-        deck_mapping: list = self.config["deck_reminder"]["deck_channel_mapping"]
+        deck_mapping = self.config["deck_reminder"]["deck_channel_mapping"]
         # iterate over deck_mapping and fetch all cards for this board
         for board_dict in deck_mapping:
             board_id = board_dict["board_id"]

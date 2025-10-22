@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     timezone: str = "Europe/Berlin"
+    locale: str = "de_AT.UTF-8"
+
     name: str = "Nextcloud-Bot"
     default_language: str = "de"
 

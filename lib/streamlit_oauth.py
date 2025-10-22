@@ -89,7 +89,7 @@ def load_user_data():
     return user_data
 
 
-def login(filename: str = None, require_groups: list[str] = None) -> bool:
+def login(filename: str | None = None, require_groups: list[str] | None = None) -> bool:
     """Show login button, but return true if not configured"""
     if not settings.auth.client_id or not settings.auth.client_secret:
         return True
