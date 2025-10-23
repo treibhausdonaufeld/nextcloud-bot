@@ -5,7 +5,7 @@ from gettext import gettext as _  # noqa: F401
 from typing import Optional
 
 import sentry_sdk
-from pydantic import BaseModel, HttpUrl, validator
+from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 available_languages = {"de": "Deutsch", "en": "English"}
@@ -47,23 +47,45 @@ class AuthSettings(BaseModel):
 
     board_group_name: str = "Vorstand"
 
-    @validator("authentik_base_url", always=True)
+    @field_validator("authentik_base_url")
     def set_authentik_base_url(cls, v, values):
         return v or values.get("provider_base_url")
 
-    @validator("authorization_endpoint", always=True)
+    @field_validator("authorization_endpoint")
     def set_authorization_endpoint(cls, v, values):
         return (
             v or str(values.get("provider_base_url", "")) + "application/o/authorize/"
         )
 
-    @validator("token_endpoint", always=True)
+    @field_validator("token_endpoint")
     def set_token_endpoint(cls, v, values) -> str:
         return v or str(values.get("provider_base_url", "")) + "application/o/token/"
 
-    @validator("userinfo_endpoint", always=True)
+    @field_validator("userinfo_endpoint")
     def set_userinfo_endpoint(cls, v, values) -> str:
         return v or str(values.get("provider_base_url", "")) + "application/o/userinfo/"
+
+
+class RocketchatSettings(BaseModel):
+    hook_url: Optional[HttpUrl] = None
+
+    info_channel: str = ""
+    error_channel: str = ""
+
+
+class MailSettings(BaseModel):
+    smtp_server: str = ""
+    smtp_port: int = 25
+    use_tls: bool = True
+    username: Optional[str] = None
+    password: Optional[str] = None
+    from_address: str = ""
+
+    imap_server: str = ""
+    imap_port: int = 143
+    use_imap_tls: bool = True
+    imap_username: Optional[str] = None
+    imap_password: Optional[str] = None
 
 
 class NextcloudSettings(BaseModel):
@@ -76,7 +98,7 @@ class NextcloudSettings(BaseModel):
 
 
 class CouchDBSettings(BaseModel):
-    url: str = "http://admin:password@localhost:5984/"
+    url: HttpUrl = HttpUrl("http://admin:password@localhost:5984/")
     database_name: str = "nextcloud_bot"
 
 
@@ -96,6 +118,8 @@ class Settings(BaseSettings):
     couchdb: CouchDBSettings = CouchDBSettings()
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
+    rocketchat: RocketchatSettings = RocketchatSettings()
+    mail: MailSettings = MailSettings()
 
 
 settings = Settings()

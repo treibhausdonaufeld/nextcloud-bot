@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import pycouchdb
 import pycouchdb.exceptions
 
@@ -71,9 +73,15 @@ def create_indizes_if_not_exist(db: pycouchdb.client.Database):
         raise RuntimeError(f"Failed to create index: {e}") from e
 
 
-# @st.cache_data()
+@lru_cache(maxsize=1)
 def couchdb() -> pycouchdb.client.Database:
-    server = pycouchdb.Server(settings.couchdb.url)
+    """Return a cached pycouchdb Database instance for the configured DB.
+
+    The result is cached in-process so repeated calls reuse the same
+    connection/object. To force a new connection, restart the process or
+    clear the cache with `lib.couchdb.couchdb.cache_clear()`.
+    """
+    server = pycouchdb.Server(str(settings.couchdb.url))
 
     try:
         db = server.database(settings.couchdb.database_name)

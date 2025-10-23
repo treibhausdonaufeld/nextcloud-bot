@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Any, List
 
+import pycouchdb
 import pytz
 from pydantic import BaseModel
 
+from lib.couchdb import couchdb
 from lib.settings import settings
 
 
@@ -69,10 +71,13 @@ class CollectivePage(BaseModel):
         return localized_dt.strftime("%c")
 
     @classmethod
+    def build_id(cls, ocs_page_id: int) -> str:
+        return f"collective:{settings.nextcloud.collectives_id}:{ocs_page_id}"
+
+    @classmethod
     def from_ocs_page(cls, page: OCSCollectivePage) -> "CollectivePage":
-        doc_id = f"collective:{settings.nextcloud.collectives_id}:{page.id}"
         return cls(
-            id=doc_id,
+            id=cls.build_id(page.id),
             title=page.title,
             emoji=page.emoji,
             timestamp=page.timestamp,
@@ -88,3 +93,20 @@ class CollectivePage(BaseModel):
                 data[y] = data[x]
 
         return super().model_validate(obj, *args, **kwargs)
+
+    def load_from_db(self, db: pycouchdb.client.Database | None = None) -> None:
+        """Load the latest content from the database into this instance."""
+        db = db or couchdb()
+
+        if not self.id:
+            raise ValueError("Cannot load from DB without an id")
+
+        doc = db.get(self.id)
+        if not doc:
+            raise ValueError(f"No document found in DB with id {self.id}")
+
+        updated_instance = CollectivePage.model_validate(doc)
+        # Copy all model fields from the loaded instance to self
+        field_names = CollectivePage.model_fields.keys()
+        for name in field_names:
+            setattr(self, name, getattr(updated_instance, name, None))
