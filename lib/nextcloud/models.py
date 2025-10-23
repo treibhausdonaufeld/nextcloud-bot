@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import cached_property
 from typing import Any, List
 
 import pytz
@@ -14,12 +15,22 @@ class CouchDBModel(BaseModel):
     id: str | None = None
     rev: str | None = None
 
+    @cached_property
+    def type(self) -> str:
+        """Return the runtime type name of this model (e.g. 'NCUser')."""
+        return type(self).__name__
+
     def save(self) -> None:
         """Save the current instance to CouchDB."""
         db = couchdb()
 
         # Prepare the document dict for CouchDB
         doc = self.model_dump()
+
+        doc["type"] = self.type
+
+        if not self.id and hasattr(doc, "build_id"):
+            self.id = doc["build_id"]()
         if self.id:
             doc["_id"] = self.id
         if self.rev:
@@ -49,6 +60,16 @@ class CouchDBModel(BaseModel):
         for name in field_names:
             setattr(self, name, getattr(updated_instance, name, None))
 
+    @classmethod
+    def model_validate(cls, obj: dict, *args, **kwargs) -> "CouchDBModel":
+        # If _id is present in the input dict, use it for the id field
+        for x, y in [("_id", "id"), ("_rev", "rev")]:
+            if x in obj and (y not in obj or not obj[y]):
+                data = dict(obj)  # copy to avoid mutating caller's dict
+                data[y] = data[x]
+
+        return super().model_validate(obj, *args, **kwargs)
+
 
 class OCSCollectivePage(BaseModel):
     id: int
@@ -72,7 +93,6 @@ class OCSCollectivePage(BaseModel):
 
 
 class CollectivePage(CouchDBModel):
-    type: str = "collective_page"
     title: str | None = None
     emoji: str | None = None
     timestamp: int | None = None
@@ -81,6 +101,14 @@ class CollectivePage(CouchDBModel):
 
     def __str__(self) -> str:
         return f"CollectivePage(id={self.id}, title={self.title})"
+
+    def build_id(self, ocs_page_id: int | None) -> str:
+        if not ocs_page_id:
+            if self.raw and self.raw.id:
+                ocs_page_id = self.raw.id
+            else:
+                raise ValueError("ocs_page_id is required to build CollectivePage id")
+        return f"{self.type}:{settings.nextcloud.collectives_id}:{ocs_page_id}"
 
     @property
     def collective_name(self) -> str | None:
@@ -110,25 +138,22 @@ class CollectivePage(CouchDBModel):
         return localized_dt.strftime("%c")
 
     @classmethod
-    def build_id(cls, ocs_page_id: int) -> str:
-        return f"collective:{settings.nextcloud.collectives_id}:{ocs_page_id}"
-
-    @classmethod
     def from_ocs_page(cls, page: OCSCollectivePage) -> "CollectivePage":
-        return cls(
-            id=cls.build_id(page.id),
+        instance = cls(
             title=page.title,
             emoji=page.emoji,
             timestamp=page.timestamp,
             raw=page,
         )
+        instance.id = instance.build_id(page.id)
+        return instance
 
     @classmethod
-    def model_validate(cls, obj: dict, *args, **kwargs) -> "CollectivePage":
-        # If _id is present in the input dict, use it for the id field
-        for x, y in [("_id", "id"), ("_rev", "rev")]:
-            if x in obj and (y not in obj or not obj[y]):
-                data = dict(obj)  # copy to avoid mutating caller's dict
-                data[y] = data[x]
+    def load_from_raw_id(cls, raw_id: int) -> "CollectivePage":
+        """Load the latest content from the database into this instance."""
+        if raw_id is None:
+            raise ValueError("raw_id is required to load CollectivePage")
 
-        return super().model_validate(obj, *args, **kwargs)
+        instance = cls()
+        instance.id = instance.build_id(raw_id)
+        return instance

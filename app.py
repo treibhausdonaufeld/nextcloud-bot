@@ -99,7 +99,7 @@ if user:
         "mentions/by_user", key=user, reduce=False, include_docs=True
     )
     for row in user_view_result:
-        page = CollectivePage.model_validate(row["doc"])
+        page = CollectivePage(**row["doc"])
         st.markdown(f"### [{page.title}]({page.url})")
 
 
@@ -123,7 +123,7 @@ def load_collective_pages(limit: int = 10):
     # Convert raw CouchDB docs into CollectivePage models when possible
     out: list[CollectivePage] = []
     for d in docs:
-        cp = CollectivePage.model_validate(d)
+        cp = CollectivePage(**d)
         out.append(cp)
 
     return out

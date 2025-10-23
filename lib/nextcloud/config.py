@@ -75,10 +75,9 @@ class BotConfig(BaseModel):
 
     @classmethod
     def load_config(cls) -> BotConfig | None:
-        config_page = CollectivePage(
-            id=CollectivePage.build_id(settings.nextcloud.configuration_page_id)
+        config_page = CollectivePage.load_from_raw_id(
+            raw_id=settings.nextcloud.configuration_page_id
         )
-        config_page.load()
 
         raw = config_page.content or ""
         yaml_text = extract_yaml_block(raw)

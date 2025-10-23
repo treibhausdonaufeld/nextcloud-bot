@@ -154,13 +154,3 @@ def fetch_and_store_all_pages() -> int:
     """
     pages = fetch_all_pages()
     return store_pages_to_couchdb(pages)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    try:
-        n = fetch_and_store_all_pages()
-        print(f"Stored {n} collectives pages into CouchDB")
-    except Exception as e:
-        logger.exception("Error fetching/storing collectives pages: %s", e)
-        raise
