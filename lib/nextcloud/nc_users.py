@@ -2,7 +2,8 @@ import logging
 from typing import List, Set
 
 import requests
-from .config import Config
+
+from .config import BotConfig
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class NCUserList:
         self._load_users()
 
     def _load_users(self):
-        config = Config.data["nextcloud"]
+        config = BotConfig.data["nextcloud"]
 
         response = requests.get(
             f"{config['host']}{self.USER_LIST_URL}",

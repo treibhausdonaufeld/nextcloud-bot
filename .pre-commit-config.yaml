@@ -36,7 +36,7 @@ repos:
 
   # Run the Ruff linter.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+    rev: v0.14.1
     hooks:
       # Linter
       - id: ruff
@@ -49,6 +49,16 @@ repos:
     hooks:
       # - id: djlint-reformat-django
       - id: djlint-django
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        name: mypy (type check)
+        additional_dependencies:
+          [types-authlib, types-pytz, types-pyyaml, types-requests]
+        # args: [--config-file, mypy.ini, --cache-dir, .mypy_cache]
+        # files: '^lib/|^app.py$|^runner.py$|^scripts/'
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:

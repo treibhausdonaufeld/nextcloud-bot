@@ -14,10 +14,12 @@ from lib.settings import _, settings
 
 
 def get_base_url() -> str:
-    session = st.runtime.get_instance()._session_mgr.list_active_sessions()[0]
-    return urllib.parse.urlunparse(
-        [session.client.request.protocol, session.client.request.host, "", "", "", ""]
-    )
+    # runtime is a streamlit internal attribute and not typed; ignore for mypy
+    session = st.runtime.get_instance()._session_mgr.list_active_sessions()[0]  # type: ignore[attr-defined]
+    # protocol/host may be bytes in some runtime representations; ensure str for mypy
+    protocol = session.client.request.protocol  # type: ignore[attr-defined]
+    host = session.client.request.host  # type: ignore[attr-defined]
+    return urllib.parse.urlunparse([str(protocol), str(host), "", "", "", ""])
 
 
 def login_button(authorization_url):
@@ -78,13 +80,17 @@ def is_in_group(group: str) -> bool:
 
 def load_user_data():
     controller = st.session_state.get("controller")
-    user_data = controller and controller.get("user_data")
+    user_data = None
+    if controller is not None:
+        user_data = controller.get("user_data")
 
     if user_data:
         if isinstance(user_data, str):
             user_data = json.loads(user_data)
         st.session_state.user_data = user_data
         st.session_state.username = user_data["name"].title()
+        # controller is not None here
+        assert controller is not None
         st.session_state.token = controller.get("token")
     return user_data
 

@@ -3,7 +3,7 @@ import smtplib
 import time
 from email.message import Message
 
-from lib.nextcloud.config import Config
+from lib.nextcloud.config import BotConfig
 
 
 class MailSender:
@@ -12,7 +12,7 @@ class MailSender:
     @staticmethod
     def send(message: Message, to_addr: str):
         """Send a mail message to given to_addr"""
-        config = Config.data["smtp"]
+        config = BotConfig.data["smtp"]
 
         message.replace_header("To", to_addr)
 

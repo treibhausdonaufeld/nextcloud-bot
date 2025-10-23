@@ -8,7 +8,7 @@ from typing import Dict
 
 import requests
 
-from .config import Config
+from .config import BotConfig
 from .nc_users import NCUserList
 
 logger = logging.getLogger()
@@ -19,7 +19,7 @@ class AvatarFetcher:
 
     @cached_property
     def config(self) -> Dict:
-        return Config.data["nextcloud"]
+        return BotConfig.data["nextcloud"]
 
     @cached_property
     def base_folder(self) -> Path:

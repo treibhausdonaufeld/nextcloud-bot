@@ -62,6 +62,8 @@ class BotConfig(BaseModel):
     calendar_notifier: CalendarNotifierConfig = CalendarNotifierConfig()
     mailer: MailerConfig = MailerConfig()
 
+    data: Dict = {}
+
     @field_validator("sleep_minutes")
     def sleep_positive(cls, v):
         if v < 0:

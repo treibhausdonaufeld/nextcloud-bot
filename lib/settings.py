@@ -8,6 +8,10 @@ import sentry_sdk
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Ensure _n is always defined for mypy
+_n = gettext.ngettext
+
+
 available_languages = {"de": "Deutsch", "en": "English"}
 
 

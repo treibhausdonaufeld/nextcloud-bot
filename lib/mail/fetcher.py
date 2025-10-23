@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from email.message import Message
 from typing import List, Set
 
-from lib.nextcloud.config import Config
+from lib.nextcloud.config import BotConfig
 from lib.nextcloud.nc_users import NCUserList
 
 from .sender import MailSender
@@ -41,7 +41,7 @@ class MailFetcher:
         """Fetch message objects from server which should be handled"""
         mail = self._login_imap()
 
-        result, data = mail.uid("search", None, "ALL")  # fetch all mails
+        result, data = mail.uid("search", "", "ALL")  # fetch all mails
 
         mails_to_process = []
 
@@ -59,7 +59,7 @@ class MailFetcher:
 
     def distribute_mail(self, message: Message, nc_users: NCUserList):
         """Distribute mail to all recipients"""
-        config = Config.data["distribution"]
+        config = BotConfig.data["distribution"]
 
         target_mailinglists = self._extract_recipients(message)
 
@@ -164,7 +164,7 @@ class MailFetcher:
             return set()
 
     def _login_imap(self):
-        config = Config.data["imap"]
+        config = BotConfig.data["imap"]
 
         mail = imaplib.IMAP4_SSL(config["host"])
         mail.login(config["username"], config["password"])
