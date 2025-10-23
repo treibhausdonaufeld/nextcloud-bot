@@ -21,7 +21,6 @@ from typing import List
 import requests
 from pycouchdb.exceptions import NotFound
 
-from lib.couchdb import couchdb
 from lib.nextcloud.models import CollectivePage, OCSCollectivePage
 from lib.settings import settings
 
@@ -119,7 +118,6 @@ def fetch_page_markdown(page: OCSCollectivePage) -> str:
 
 def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
     """Upsert the given pages into CouchDB. Returns number of stored docs."""
-    db = couchdb()
     stored = 0
     for page in pages:
         # _make_doc_for_page returns a dict suitable for CouchDB
@@ -130,12 +128,9 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
 
         # try to fetch existing doc to obtain _rev for update
         try:
-            existing = db.get(doc.id)
-            if existing and isinstance(existing, dict):
-                doc.rev = existing.get("_rev")
-
+            doc.load()
             # existing timestamp is stored at top-level in the doc
-            if existing.get("timestamp") == doc.timestamp:
+            if page.timestamp == doc.timestamp:
                 logger.info("Page %s unchanged, skipping", doc.id)
                 continue
         except NotFound:
@@ -143,7 +138,7 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
 
         try:
             doc.content = fetch_page_markdown(page)
-            db.save(doc)
+            doc.save()
             stored += 1
             logger.info("Stored collectives page to CouchDB: %s", doc.id)
         except Exception as e:

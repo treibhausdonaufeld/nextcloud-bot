@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
+import logging
+import re
 from typing import Dict, List, Optional
 
 import yaml
@@ -8,6 +9,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from lib.nextcloud.models import CollectivePage
 from lib.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class OrganisationConfig(BaseModel):
@@ -71,11 +74,44 @@ class BotConfig(BaseModel):
         return v
 
     @classmethod
-    def load_config(cls, config_file: Path):
+    def load_config(cls) -> BotConfig | None:
         config_page = CollectivePage(
             id=CollectivePage.build_id(settings.nextcloud.configuration_page_id)
         )
-        config_page.load_from_db()
+        config_page.load()
 
-        data = yaml.safe_load(config_page.content or "")
-        cls.data = data
+        raw = config_page.content or ""
+        yaml_text = extract_yaml_block(raw)
+        if not yaml_text:
+            raise ValueError(
+                "No YAML configuration block found in the configuration page"
+            )
+
+        parsed = yaml.safe_load(yaml_text)
+        logger.info("Loaded bot configuration from collectives page %s", config_page.id)
+
+        return cls.model_validate(parsed)
+
+
+def extract_yaml_block(content: str) -> Optional[str]:
+    """Extract the first fenced YAML block (``` ... ```) using a regular expression.
+
+    This will match an optional language marker after the opening fence, e.g. ```yaml\n...
+    Returns the inner YAML text or None if not found.
+    """
+    if not content:
+        return None
+
+    # Regex: opening fence ```, optional language marker until newline, then capture until closing fence
+    m = re.search(r"```(?:[^\n]*\n)?(.*?)```", content, flags=re.DOTALL)
+    if not m:
+        return None
+
+    yaml_text = m.group(1).strip()
+    # replace "\t" with spaces for YAML parsing
+    yaml_text = yaml_text.replace("\t", "  ")
+
+    return yaml_text if yaml_text else None
+
+
+bot_config = BotConfig.load_config()

@@ -1,12 +1,53 @@
 from datetime import datetime
 from typing import Any, List
 
-import pycouchdb
 import pytz
 from pydantic import BaseModel
 
 from lib.couchdb import couchdb
 from lib.settings import settings
+
+
+class CouchDBModel(BaseModel):
+    """Base model for CouchDB documents with _id and _rev fields."""
+
+    id: str | None = None
+    rev: str | None = None
+
+    def save(self) -> None:
+        """Save the current instance to CouchDB."""
+        db = couchdb()
+
+        # Prepare the document dict for CouchDB
+        doc = self.model_dump()
+        if self.id:
+            doc["_id"] = self.id
+        if self.rev:
+            doc["_rev"] = self.rev
+
+        # Save to CouchDB
+        saved_doc = db.save(doc)
+
+        # Update id and rev from the saved document
+        self.id = saved_doc.get("_id", self.id)
+        self.rev = saved_doc.get("_rev", self.rev)
+
+    def load(self) -> None:
+        """Load the latest content from the database into this instance."""
+        db = couchdb()
+
+        if not self.id:
+            raise ValueError("Cannot load from DB without an id")
+
+        doc = db.get(self.id)
+        if not doc:
+            raise ValueError(f"No document found in DB with id {self.id}")
+
+        updated_instance = self.model_validate(doc)
+        # Copy all model fields from the loaded instance to self
+        field_names = type(self).model_fields.keys()
+        for name in field_names:
+            setattr(self, name, getattr(updated_instance, name, None))
 
 
 class OCSCollectivePage(BaseModel):
@@ -30,9 +71,7 @@ class OCSCollectivePage(BaseModel):
     shareToken: str | None = None
 
 
-class CollectivePage(BaseModel):
-    id: str | None = None
-    rev: str | None = None
+class CollectivePage(CouchDBModel):
     type: str = "collective_page"
     title: str | None = None
     emoji: str | None = None
@@ -93,20 +132,3 @@ class CollectivePage(BaseModel):
                 data[y] = data[x]
 
         return super().model_validate(obj, *args, **kwargs)
-
-    def load_from_db(self, db: pycouchdb.client.Database | None = None) -> None:
-        """Load the latest content from the database into this instance."""
-        db = db or couchdb()
-
-        if not self.id:
-            raise ValueError("Cannot load from DB without an id")
-
-        doc = db.get(self.id)
-        if not doc:
-            raise ValueError(f"No document found in DB with id {self.id}")
-
-        updated_instance = CollectivePage.model_validate(doc)
-        # Copy all model fields from the loaded instance to self
-        field_names = CollectivePage.model_fields.keys()
-        for name in field_names:
-            setattr(self, name, getattr(updated_instance, name, None))

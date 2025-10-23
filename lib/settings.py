@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
     rocketchat: RocketchatSettings = RocketchatSettings()
-    mail: MailSettings = MailSettings()
+    mailinglist: MailSettings = MailSettings()
 
 
 settings = Settings()
