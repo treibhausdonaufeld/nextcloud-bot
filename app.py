@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 from gettext import gettext as _
+from typing import Sequence, cast
 
 import pandas as pd
 import pytz
@@ -83,82 +84,36 @@ if "user_data" in st.session_state:
 
 st.title(title)
 
-view_result = db.query("mentions/by_user", group=True)
-
-distinct_users = []
-for row in view_result:
-    distinct_users.append({"username": row["key"], "total_mentions": row["value"]})
-
-st.dataframe(distinct_users)
-
-user = st.selectbox("Select a user", options=[u["username"] for u in distinct_users])
-st.write(user)
-
-if user:
-    user_view_result = db.query(
-        "mentions/by_user", key=user, reduce=False, include_docs=True
-    )
-    for row in user_view_result:
-        page = CollectivePage(**row["doc"])
-        st.markdown(f"### [{page.title}]({page.url})")
-
-
-# @st.cache_data(ttl=60)
-def load_collective_pages(limit: int = 10):
-    """Load collective_page documents from CouchDB.
-
-    Returns a list of dicts with keys: _id, title, url, content, created_at, modified_at
-    """
-
-    # Use a simple Mango query if supported; otherwise fallback to all docs filter
-    lookup = {
-        "selector": {"type": "collective_page"},
-        "sort": [{"timestamp": "desc"}],
-        "limit": limit,
-    }
-    response, results = db.resource.post("_find", json=lookup)
-    response.raise_for_status()
-    docs = results.get("docs", []) if isinstance(results, dict) else []
-
-    # Convert raw CouchDB docs into CollectivePage models when possible
-    out: list[CollectivePage] = []
-    for d in docs:
-        cp = CollectivePage(**d)
-        out.append(cp)
-
-    return out
-
 
 # Display collected pages on the start page
-collective_pages = load_collective_pages()
+collective_pages = cast(Sequence[CollectivePage], CollectivePage.load_all(limit=10))
 st.subheader("Newest Updates from Collectives")
 
-if collective_pages:
-    for p in collective_pages:
-        # p is a CollectivePage
-        if p.timestamp:
-            dt_object = datetime.fromtimestamp(p.timestamp)
-            tz = pytz.timezone(settings.timezone)
-            localized_dt = tz.localize(dt_object)
-            header_time = localized_dt.strftime("%c")
+for p in collective_pages:
+    # p is a CollectivePage
+    if p.timestamp:
+        dt_object = datetime.fromtimestamp(p.timestamp)
+        tz = pytz.timezone(settings.timezone)
+        localized_dt = tz.localize(dt_object)
+        header_time = localized_dt.strftime("%c")
+    else:
+        header_time = ""
+
+    with st.expander(
+        f"{header_time} - " + (p.title or "Untitled"),
+        expanded=False,
+    ):
+        url = p.url
+        content = (p.content or "").strip()
+        excerpt = content[:1000] + ("…" if len(content) > 1000 else "")
+
+        if url:
+            st.markdown(f"## [{p.title}]({url})")
         else:
-            header_time = ""
+            st.markdown(f"## {p.title}")
 
-        with st.expander(
-            f"{header_time} - " + (p.title or p._id or "Untitled"),
-            expanded=False,
-        ):
-            url = p.url
-            content = (p.content or "").strip()
-            excerpt = content[:600] + ("…" if len(content) > 600 else "")
-
-            if url:
-                st.markdown(f"## [{p.title or p._id}]({url})")
-            else:
-                st.markdown(f"## {p.title or p._id}")
-
-            if excerpt:
-                st.write(excerpt)
+        if excerpt:
+            st.write("```" + excerpt + "```")
 
 with st.sidebar:
     # if "language" not in st.session_state:

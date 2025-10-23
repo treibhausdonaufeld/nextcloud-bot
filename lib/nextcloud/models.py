@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from functools import cached_property
 from typing import Any, List
 
@@ -14,6 +15,8 @@ class CouchDBModel(BaseModel):
 
     id: str | None = None
     rev: str | None = None
+
+    updated_at: int | None = None
 
     @cached_property
     def type(self) -> str:
@@ -35,6 +38,8 @@ class CouchDBModel(BaseModel):
             doc["_id"] = self.id
         if self.rev:
             doc["_rev"] = self.rev
+
+        self.updated_at = int(datetime.now().timestamp())
 
         # Save to CouchDB
         saved_doc = db.save(doc)
@@ -63,16 +68,32 @@ class CouchDBModel(BaseModel):
     @classmethod
     def model_validate(cls, obj: dict, *args, **kwargs) -> "CouchDBModel":
         # If _id is present in the input dict, use it for the id field
-        for x, y in [("_id", "id"), ("_rev", "rev")]:
-            if x in obj and (y not in obj or not obj[y]):
-                data = dict(obj)  # copy to avoid mutating caller's dict
-                data[y] = data[x]
+        new_obj = super().model_validate(obj, *args, **kwargs)
 
-        return super().model_validate(obj, *args, **kwargs)
+        # hard overwrite id and rev from _id and _rev fields
+        for x, y in [("_id", "id"), ("_rev", "rev")]:
+            setattr(new_obj, y, obj[x])
+
+        return new_obj
+
+    @classmethod
+    def load_all(cls, limit: int = 100) -> List["CouchDBModel"]:
+        """Load all documents of this model type from CouchDB."""
+        db = couchdb()
+
+        lookup = {
+            "selector": {"type": cls.__name__},
+            "sort": [{"updated_at": "desc"}],
+            "limit": limit,
+        }
+        response, results = db.resource.post("_find", json=lookup)
+        response.raise_for_status()
+
+        return [cls(**d) for d in results.get("docs", [])]
 
 
 class OCSCollectivePage(BaseModel):
-    id: int
+    id: int = 0
     slug: str | None = None
     lastUserId: str | None = None
     lastUserDisplayName: str | None = None
@@ -81,50 +102,61 @@ class OCSCollectivePage(BaseModel):
     isFullWidth: bool | None = False
     tags: List[str] = []
     trashTimestamp: int | None = None
-    title: str | None = None
+    title: str = ""
     timestamp: int | None = None
     size: int | None = None
-    fileName: str | None = None
-    filePath: str | None = None
-    filePathString: str | None = None
-    collectivePath: str | None = None
+    fileName: str = ""
+    filePath: str = ""
+    filePathString: str = ""
+    collectivePath: str = ""
     parentId: int | None = None
     shareToken: str | None = None
 
 
+class PageSubtype(str, Enum):
+    GROUP = "group"
+    PROTOCOL = "protocol"
+
+
 class CollectivePage(CouchDBModel):
-    title: str | None = None
-    emoji: str | None = None
+    title: str = ""
     timestamp: int | None = None
-    raw: OCSCollectivePage | None = None
+    ocs: OCSCollectivePage = OCSCollectivePage()
     content: str | None = None
+
+    subtype: PageSubtype | None = None
+    date: str | None = None
+    moderated_by: str | None = None
+    protocol_by: str | None = None
+    participants: List[str] = []
+    tags: List[str] = []
 
     def __str__(self) -> str:
         return f"CollectivePage(id={self.id}, title={self.title})"
 
     def build_id(self, ocs_page_id: int | None) -> str:
         if not ocs_page_id:
-            if self.raw and self.raw.id:
-                ocs_page_id = self.raw.id
+            if self.ocs and self.ocs.id:
+                ocs_page_id = self.ocs.id
             else:
                 raise ValueError("ocs_page_id is required to build CollectivePage id")
         return f"{self.type}:{settings.nextcloud.collectives_id}:{ocs_page_id}"
 
     @property
     def collective_name(self) -> str | None:
-        if not self.raw or not self.raw.collectivePath:
+        if not self.ocs or not self.ocs.collectivePath:
             return None
-        return self.raw.collectivePath.split("/")[1]
+        return self.ocs.collectivePath.split("/")[1]
 
     @property
     def url(self) -> str | None:
-        if not self.raw or not self.raw.collectivePath or not self.raw.slug:
+        if not self.ocs or not self.ocs.collectivePath or not self.ocs.slug:
             return None
 
         return (
             str(settings.nextcloud.base_url).rstrip("/")
             + f"/apps/collectives/{self.collective_name}-{settings.nextcloud.collectives_id}"
-            + f"/{self.raw.slug}-{self.raw.id}"
+            + f"/{self.ocs.slug}-{self.ocs.id}"
         )
 
     @property
@@ -141,9 +173,8 @@ class CollectivePage(CouchDBModel):
     def from_ocs_page(cls, page: OCSCollectivePage) -> "CollectivePage":
         instance = cls(
             title=page.title,
-            emoji=page.emoji,
             timestamp=page.timestamp,
-            raw=page,
+            ocs=page,
         )
         instance.id = instance.build_id(page.id)
         return instance
@@ -156,4 +187,5 @@ class CollectivePage(CouchDBModel):
 
         instance = cls()
         instance.id = instance.build_id(raw_id)
+        instance.load()
         return instance

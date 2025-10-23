@@ -1,11 +1,13 @@
 import datetime
 
+from lib.nextcloud.collectives_loader import fetch_and_store_all_pages, parse_pages
 from lib.nextcloud.nc_users import NCUserList
 
 
 def main():
-    # fetch_and_store_all_pages()
+    fetch_and_store_all_pages()
 
+    parse_pages()
     # BotConfig.load_config()
 
     NCUserList()

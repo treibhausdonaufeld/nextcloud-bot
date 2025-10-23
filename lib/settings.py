@@ -1,6 +1,7 @@
 import gettext
 import locale
 import logging
+import re
 from gettext import gettext as _  # noqa: F401
 from typing import Optional
 
@@ -13,6 +14,9 @@ _n = gettext.ngettext
 
 
 available_languages = {"de": "Deutsch", "en": "English"}
+
+
+user_regex = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
 def set_language(language: str):

@@ -1,8 +1,8 @@
 import logging
-from typing import List, Optional, Set
+from typing import List, Set
 
 import requests
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from lib.couchdb import couchdb
 from lib.nextcloud.models import CouchDBModel
@@ -11,15 +11,10 @@ from lib.settings import settings
 logger = logging.getLogger(__name__)
 
 
-class NCUser(CouchDBModel):
-    # allow field population via aliases (JSON uses camelCase keys)
-    model_config = {"populate_by_name": True, "extra": "ignore"}
-
-    # Primary identifiers
-    username: str = Field("", alias="id")
+class OCSUser(BaseModel):
+    id: str = ""
     email: str = ""
 
-    name: str | None = None
     displayname: str | None = Field(None, alias="displayname")
     display_name: str | None = Field(None, alias="display-name")
 
@@ -56,8 +51,14 @@ class NCUser(CouchDBModel):
 
     backend_capabilities: dict | None = Field(None, alias="backendCapabilities")
 
-    # meta fields
-    last_update: Optional[int] = None
+
+class NCUser(CouchDBModel):
+    # allow field population via aliases (JSON uses camelCase keys)
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+    ocs: OCSUser | None = None
+
+    # Primary identifiers
+    username: str = Field("", alias="id")
 
     def build_id(self) -> str:
         return f"{type(self).__name__}:{self.username}"
@@ -68,7 +69,7 @@ class NCUserList:
 
     USER_LIST_URL = "/ocs/v2.php/cloud/users/details"
 
-    user_data: List[NCUser]
+    users: List[NCUser]
 
     def __init__(self):
         self.load_users()
@@ -82,7 +83,7 @@ class NCUserList:
         response, results = db.resource.post("_find", json=lookup)
         response.raise_for_status()
 
-        self.user_data = [NCUser(**d) for d in results.get("docs", [])]
+        self.users = [NCUser(**d) for d in results.get("docs", [])]
 
     def update_from_nextcloud(self):
         response = requests.get(
@@ -98,19 +99,27 @@ class NCUserList:
             response.raise_for_status()
 
         for username, user_data in response.json()["ocs"]["data"]["users"].items():
-            user = NCUser(**user_data)
+            if "id" in user_data:
+                user_data["nextcloud_id"] = user_data.pop("id")
+            ocs_user = OCSUser(**user_data)
+            user = NCUser(username=username, ocs=ocs_user)
+            user.build_id()
             user.save()
             logger.debug("Saved user %s to CouchDB", username)
 
     def mails_for_groups(self, group_names: List[str]) -> Set[str]:
         """Return mail addresses for all users in given list of groups"""
-        user_emails = set()
+        user_emails: Set[str] = set()
 
-        for group in group_names:
-            user_emails |= {u.email for u in self.user_data if group in u.groups}
+        # for group in group_names:
+        #     user_emails |= {
+        #         u.ocs.email if u.ocs else None
+        #         for u in self.users
+        #         if group in u.ocs.groups
+        #     }
 
         return user_emails
 
     def get_all_usernames(self) -> Set[str]:
         """Return mail addresses for all users in given list of groups"""
-        return {u.username for u in self.user_data}
+        return {u.username for u in self.users}

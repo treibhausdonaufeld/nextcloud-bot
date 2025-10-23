@@ -13,6 +13,10 @@ Features:
 - Protocol summaries
 - Logbook overview
 
+TODOs:
+
+- bot check that title starts with date
+
 ## Update translations
 
 `make update_po`

@@ -53,13 +53,27 @@ def create_user_index(db: pycouchdb.client.Database):
 def create_indizes_if_not_exist(db: pycouchdb.client.Database):
     indizes = [
         {
-            "index": {"fields": ["timestamp"]},
+            "index": {"fields": ["updated_at"]},
             "name": "idx_timestamp",
             "type": "json",
         },
         {
             "index": {"fields": ["type"]},
             "name": "idx_type",
+            "type": "json",
+        },
+        {
+            "index": {"fields": ["subtype"]},
+            "name": "idx_subtype",
+            "type": "json",
+        },
+        # Composite index required when using a selector on `type` and
+        # sorting by `updated_at`. Mango requires an index whose fields
+        # start with the equality fields used in the selector followed by
+        # the sort fields in the requested order.
+        {
+            "index": {"fields": ["type", "updated_at"]},
+            "name": "idx_type_updated_at",
             "type": "json",
         },
     ]

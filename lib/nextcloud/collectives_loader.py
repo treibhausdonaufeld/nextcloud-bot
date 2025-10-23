@@ -16,13 +16,14 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
-from typing import List
+import re
+from typing import List, cast
 
 import requests
 from pycouchdb.exceptions import NotFound
 
-from lib.nextcloud.models import CollectivePage, OCSCollectivePage
-from lib.settings import settings
+from lib.nextcloud.models import CollectivePage, OCSCollectivePage, PageSubtype
+from lib.settings import settings, user_regex
 
 logger = logging.getLogger(__name__)
 
@@ -130,8 +131,8 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
         try:
             doc.load()
             # existing timestamp is stored at top-level in the doc
-            if page.timestamp == doc.timestamp:
-                logger.info("Page %s unchanged, skipping", doc.id)
+            if doc.updated_at and page.timestamp and page.timestamp < doc.updated_at:
+                logger.info("Page %s unchanged, skipping", doc.title)
                 continue
         except NotFound:
             pass
@@ -140,9 +141,9 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
             doc.content = fetch_page_markdown(page)
             doc.save()
             stored += 1
-            logger.info("Stored collectives page to CouchDB: %s", doc.id)
+            logger.info("Stored collectives page to CouchDB: %s", doc.title)
         except Exception as e:
-            logger.exception("Failed to save page %s: %s", doc.id, e)
+            logger.exception("Failed to save page %s: %s", doc.title, e)
 
     return stored
 
@@ -154,3 +155,50 @@ def fetch_and_store_all_pages() -> int:
     """
     pages = fetch_all_pages()
     return store_pages_to_couchdb(pages)
+
+
+def parse_content(page: CollectivePage) -> None:
+    """Parse metadata from the markdown content."""
+    from lib.nextcloud.config import bot_config
+
+    if not page.content or not page.content:
+        return
+
+    if not page.subtype:
+        if page.title.upper().startswith(tuple(bot_config.organisation.group_prefixes)):
+            page.subtype = PageSubtype.GROUP
+        elif any(
+            kw in page.ocs.filePath.lower()
+            for kw in bot_config.organisation.protocol_subtype_keywords
+        ):
+            page.subtype = PageSubtype.PROTOCOL
+            page.date = page.ocs.title.split(" ")[0]  # first word as date
+
+    lines = page.content.splitlines()
+
+    first_word_regex = re.compile(r"\b(\w[\w-]*)\b")
+
+    for line in lines:
+        # get the first word on the line, ignoring any leading non-word chars
+        m = first_word_regex.search(line)
+        if not m:
+            continue
+        first_word = m.group(1).lower()
+
+        users = re.findall(user_regex, line)
+
+        if first_word in bot_config.organisation.moderation_person_keywords:
+            page.moderated_by = ", ".join(users)
+        elif first_word in bot_config.organisation.protocol_person_keywords:
+            page.protocol_by = ", ".join(users)
+        elif first_word in bot_config.organisation.participant_keywords:
+            page.participants.extend(users)
+
+
+def parse_pages() -> None:
+    """Fetch all pages from CouchDB and parse their content."""
+
+    for page in cast(List[CollectivePage], CollectivePage.load_all(limit=500)):
+        parse_content(page)
+        page.save()
+        logger.info("Parsed content for page %s", page.id)
