@@ -108,6 +108,8 @@ for p in collective_pages:
         if excerpt:
             st.text(excerpt)
 
+st.dataframe([p.ocs.model_dump() for p in collective_pages])
+
 with st.sidebar:
     # if "language" not in st.session_state:
     #     st.session_state.language = get_browser_language() or default_language

@@ -5,6 +5,7 @@ import re
 from typing import Dict, List, Optional
 
 import yaml
+from pycouchdb.exceptions import NotFound
 from pydantic import BaseModel, Field, field_validator
 
 from lib.nextcloud.models import CollectivePage
@@ -17,7 +18,7 @@ class OrganisationConfig(BaseModel):
     group_prefixes: List[str] = Field(default_factory=lambda: ["AG", "UG", "PG"])
     extra_groups: List[str] = Field(default_factory=list)
     protocol_subtype_keywords: List[str] = Field(
-        default_factory=lambda: ["protocol", "protokoll", "protokolle"]
+        default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
     )
 
     protocol_person_keywords: List[str] = Field(
@@ -26,7 +27,7 @@ class OrganisationConfig(BaseModel):
     moderation_person_keywords: List[str] = Field(
         default_factory=lambda: ["moderation", "moderator", "moderatorin"]
     )
-    participant_keywords: List[str] = Field(
+    participant_person_keywords: List[str] = Field(
         default_factory=lambda: [
             "teilnehmer",
             "teilnehmende",
@@ -35,7 +36,17 @@ class OrganisationConfig(BaseModel):
         ]
     )
 
-    @field_validator("group_prefixes")
+    coordination_person_keywords: List[str] = Field(
+        default_factory=lambda: ["koordination", "koordinator", "koordinatorin"]
+    )
+    delegate_person_keywords: List[str] = Field(
+        default_factory=lambda: ["delegierter", "delegierte"]
+    )
+    member_person_keywords: List[str] = Field(
+        default_factory=lambda: ["mitglied", "mitglieder"]
+    )
+
+    @field_validator("group_prefixes", "extra_groups", mode="before")
     def to_upper(cls, v):
         return [prefix.upper() for prefix in v]
 
@@ -97,9 +108,17 @@ class BotConfig(BaseModel):
 
     @classmethod
     def load_config(cls) -> BotConfig:
-        config_page = CollectivePage.load_from_raw_id(
-            raw_id=settings.nextcloud.configuration_page_id
-        )
+        """Load bot configuration from the Nextcloud Collectives configuration page."""
+        try:
+            config_page = CollectivePage.load_from_raw_id(
+                raw_id=settings.nextcloud.configuration_page_id
+            )
+        except NotFound:
+            logger.warning(
+                "Configuration page with id %s not found",
+                settings.nextcloud.configuration_page_id,
+            )
+            return BotConfig()
 
         raw = config_page.content or ""
         yaml_text = extract_yaml_block(raw)

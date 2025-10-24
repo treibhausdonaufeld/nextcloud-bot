@@ -31,7 +31,8 @@ class CouchDBModel(BaseModel):
     def __init__(self, **data: Any):
         if isinstance(data, dict):
             for x, y in [("_id", "id"), ("_rev", "rev")]:
-                data[y] = data[x]
+                if x in data:
+                    data[y] = data[x]
 
         return super().__init__(**data)
 
@@ -65,18 +66,30 @@ class CouchDBModel(BaseModel):
         self.id = saved_doc.get("_id", self.id)
         self.rev = saved_doc.get("_rev", self.rev)
 
+    def delete(self) -> None:
+        """Delete the current instance from CouchDB."""
+        db = couchdb()
+
+        if not self.id or not self.rev:
+            raise ValueError("Cannot delete document without id and rev")
+
+        db.delete(self.id)
+
     @classmethod
     def get(cls, doc_id: str) -> "CouchDBModel":
         """Get a document by its id from CouchDB."""
         db = couchdb()
 
+        if not doc_id.startswith(f"{cls.__name__}:"):
+            if hasattr(cls, "build_id"):
+                doc_id = getattr(cls, "build_id")(doc_id)
+            else:
+                doc_id = f"{cls.__name__}:{doc_id}"
+
         if not doc_id:
             raise ValueError("doc_id is required to get document")
 
         doc = db.get(doc_id)
-        if not doc:
-            raise ValueError(f"No document found in DB with id {doc_id}")
-
         return cls(**doc)
 
     @classmethod
@@ -109,7 +122,7 @@ class OCSCollectivePage(BaseModel):
     emoji: str | None = None
     subpageOrder: List[Any] = []
     isFullWidth: bool | None = False
-    tags: List[str] = []
+    tags: List[int] = []
     trashTimestamp: int | None = None
     title: str = ""
     timestamp: int | None = None
@@ -179,3 +192,7 @@ class CollectivePage(CouchDBModel):
             raise ValueError("raw_id is required to load CollectivePage")
 
         return cast(CollectivePage, cls.get(cls.build_id(raw_id)))
+
+    @classmethod
+    def get(cls, doc_id: str) -> "CollectivePage":
+        return cast(CollectivePage, super().get(doc_id))
