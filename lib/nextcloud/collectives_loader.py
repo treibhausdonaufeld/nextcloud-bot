@@ -121,24 +121,20 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
     """Upsert the given pages into CouchDB. Returns number of stored docs."""
     stored = 0
     for page in pages:
-        # _make_doc_for_page returns a dict suitable for CouchDB
-        doc = CollectivePage.from_ocs_page(page=page)
-        if not doc.id:
-            logger.warning("Skipping page without identifiable id: %s", page)
-            continue
-
         # try to fetch existing doc to obtain _rev for update
         try:
-            doc.load()
+            doc = CollectivePage.load_from_raw_id(raw_id=page.id)
             # existing timestamp is stored at top-level in the doc
             if doc.updated_at and page.timestamp and page.timestamp < doc.updated_at:
                 logger.info("Page %s unchanged, skipping", doc.title)
                 continue
         except NotFound:
-            pass
+            doc = CollectivePage(ocs=page)
 
         try:
+            doc.ocs = page
             doc.content = fetch_page_markdown(page)
+            parse_content(doc)
             doc.save()
             stored += 1
             logger.info("Stored collectives page to CouchDB: %s", doc.title)
@@ -198,7 +194,7 @@ def parse_content(page: CollectivePage) -> None:
 def parse_pages() -> None:
     """Fetch all pages from CouchDB and parse their content."""
 
-    for page in cast(List[CollectivePage], CollectivePage.load_all(limit=500)):
+    for page in cast(List[CollectivePage], CollectivePage.get_all(limit=500)):
         parse_content(page)
         page.save()
         logger.info("Parsed content for page %s", page.id)

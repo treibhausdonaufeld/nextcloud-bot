@@ -4,7 +4,6 @@ from gettext import gettext as _
 from typing import Sequence, cast
 
 import pandas as pd
-import pytz
 import streamlit as st
 
 from lib.couchdb import couchdb
@@ -86,21 +85,15 @@ st.title(title)
 
 
 # Display collected pages on the start page
-collective_pages = cast(Sequence[CollectivePage], CollectivePage.load_all(limit=10))
+collective_pages = cast(
+    Sequence[CollectivePage],
+    CollectivePage.get_all(limit=10, sort=[{"ocs.timestamp": "desc"}]),
+)
 st.subheader("Newest Updates from Collectives")
 
 for p in collective_pages:
-    # p is a CollectivePage
-    if p.timestamp:
-        dt_object = datetime.fromtimestamp(p.timestamp)
-        tz = pytz.timezone(settings.timezone)
-        localized_dt = tz.localize(dt_object)
-        header_time = localized_dt.strftime("%c")
-    else:
-        header_time = ""
-
     with st.expander(
-        f"{header_time} - " + (p.title or "Untitled"),
+        f"{p.formatted_timestamp} - " + (p.title or "Untitled"),
         expanded=False,
     ):
         url = p.url
@@ -113,7 +106,7 @@ for p in collective_pages:
             st.markdown(f"## {p.title}")
 
         if excerpt:
-            st.write("```" + excerpt + "```")
+            st.text(excerpt)
 
 with st.sidebar:
     # if "language" not in st.session_state:

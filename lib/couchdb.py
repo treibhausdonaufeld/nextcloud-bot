@@ -54,7 +54,17 @@ def create_indizes_if_not_exist(db: pycouchdb.client.Database):
     indizes = [
         {
             "index": {"fields": ["updated_at"]},
+            "name": "idx_updated_at",
+            "type": "json",
+        },
+        {
+            "index": {"fields": ["ocs.timestamp"]},
             "name": "idx_timestamp",
+            "type": "json",
+        },
+        {
+            "index": {"fields": ["date"]},
+            "name": "idx_date",
             "type": "json",
         },
         {

@@ -1,13 +1,23 @@
 from datetime import datetime
 from enum import Enum
 from functools import cached_property
-from typing import Any, List
+from typing import Any, List, cast
 
 import pytz
 from pydantic import BaseModel
 
 from lib.couchdb import couchdb
 from lib.settings import settings
+
+
+def format_timestamp(timestamp: int | None) -> str | None:
+    if not timestamp:
+        return None
+
+    dt_object = datetime.fromtimestamp(timestamp)
+    tz = pytz.timezone(settings.timezone)
+    localized_dt = tz.localize(dt_object)
+    return localized_dt.strftime("%c")
 
 
 class CouchDBModel(BaseModel):
@@ -18,6 +28,13 @@ class CouchDBModel(BaseModel):
 
     updated_at: int | None = None
 
+    def __init__(self, **data: Any):
+        if isinstance(data, dict):
+            for x, y in [("_id", "id"), ("_rev", "rev")]:
+                data[y] = data[x]
+
+        return super().__init__(**data)
+
     @cached_property
     def type(self) -> str:
         """Return the runtime type name of this model (e.g. 'NCUser')."""
@@ -26,6 +43,8 @@ class CouchDBModel(BaseModel):
     def save(self) -> None:
         """Save the current instance to CouchDB."""
         db = couchdb()
+
+        self.updated_at = int(datetime.now().timestamp())
 
         # Prepare the document dict for CouchDB
         doc = self.model_dump()
@@ -39,8 +58,6 @@ class CouchDBModel(BaseModel):
         if self.rev:
             doc["_rev"] = self.rev
 
-        self.updated_at = int(datetime.now().timestamp())
-
         # Save to CouchDB
         saved_doc = db.save(doc)
 
@@ -48,48 +65,70 @@ class CouchDBModel(BaseModel):
         self.id = saved_doc.get("_id", self.id)
         self.rev = saved_doc.get("_rev", self.rev)
 
-    def load(self) -> None:
-        """Load the latest content from the database into this instance."""
+    @classmethod
+    def get(cls, doc_id: str) -> "CouchDBModel":
+        """Get a document by its id from CouchDB."""
         db = couchdb()
 
-        if not self.id:
-            raise ValueError("Cannot load from DB without an id")
+        if not doc_id:
+            raise ValueError("doc_id is required to get document")
 
-        doc = db.get(self.id)
+        doc = db.get(doc_id)
         if not doc:
-            raise ValueError(f"No document found in DB with id {self.id}")
+            raise ValueError(f"No document found in DB with id {doc_id}")
 
-        updated_instance = self.model_validate(doc)
-        # Copy all model fields from the loaded instance to self
-        field_names = type(self).model_fields.keys()
-        for name in field_names:
-            setattr(self, name, getattr(updated_instance, name, None))
+        return cls(**doc)
+
+    # def load(self) -> None:
+    #     """Load the latest content from the database into this instance."""
+    #     db = couchdb()
+
+    #     if not self.id:
+    #         raise ValueError("Cannot load from DB without an id")
+
+    #     doc = db.get(self.id)
+    #     if not doc:
+    #         raise ValueError(f"No document found in DB with id {self.id}")
+
+    # return type(self)(**doc)
+
+    # updated_instance = self.model_validate(doc)
+    # # Copy all model fields from the loaded instance to self
+    # field_names = type(self).model_fields.keys()
+    # for name in field_names:
+    #     setattr(self, name, getattr(updated_instance, name, None))
+
+    # @classmethod
+    # def model_validate(cls, obj: dict, *args, **kwargs) -> "CouchDBModel":
+    #     # If _id is present in the input dict, use it for the id field
+    #     new_obj = super().model_validate(obj, *args, **kwargs)
+
+    #     # hard overwrite id and rev from _id and _rev fields
+    #     for x, y in [("_id", "id"), ("_rev", "rev")]:
+    #         setattr(new_obj, y, obj[x])
+
+    #     return new_obj
 
     @classmethod
-    def model_validate(cls, obj: dict, *args, **kwargs) -> "CouchDBModel":
-        # If _id is present in the input dict, use it for the id field
-        new_obj = super().model_validate(obj, *args, **kwargs)
-
-        # hard overwrite id and rev from _id and _rev fields
-        for x, y in [("_id", "id"), ("_rev", "rev")]:
-            setattr(new_obj, y, obj[x])
-
-        return new_obj
-
-    @classmethod
-    def load_all(cls, limit: int = 100) -> List["CouchDBModel"]:
+    def get_all(
+        cls, limit: int = 100, sort: List[str | dict] = [{"updated_at": "desc"}]
+    ) -> List["CouchDBModel"]:
         """Load all documents of this model type from CouchDB."""
         db = couchdb()
 
         lookup = {
             "selector": {"type": cls.__name__},
-            "sort": [{"updated_at": "desc"}],
+            "sort": sort,
             "limit": limit,
         }
         response, results = db.resource.post("_find", json=lookup)
         response.raise_for_status()
 
         return [cls(**d) for d in results.get("docs", [])]
+
+    @property
+    def formatted_updated_at(self) -> str | None:
+        return format_timestamp(self.updated_at)
 
 
 class OCSCollectivePage(BaseModel):
@@ -119,8 +158,6 @@ class PageSubtype(str, Enum):
 
 
 class CollectivePage(CouchDBModel):
-    title: str = ""
-    timestamp: int | None = None
     ocs: OCSCollectivePage = OCSCollectivePage()
     content: str | None = None
 
@@ -134,13 +171,19 @@ class CollectivePage(CouchDBModel):
     def __str__(self) -> str:
         return f"CollectivePage(id={self.id}, title={self.title})"
 
-    def build_id(self, ocs_page_id: int | None) -> str:
+    @classmethod
+    def build_id(cls, ocs_page_id: int) -> str:
         if not ocs_page_id:
-            if self.ocs and self.ocs.id:
-                ocs_page_id = self.ocs.id
-            else:
-                raise ValueError("ocs_page_id is required to build CollectivePage id")
-        return f"{self.type}:{settings.nextcloud.collectives_id}:{ocs_page_id}"
+            raise ValueError("ocs_page_id is required to build CollectivePage id")
+        return f"{cls.__name__}:{settings.nextcloud.collectives_id}:{ocs_page_id}"
+
+    @property
+    def title(self) -> str:
+        return self.ocs.title if self.ocs and self.ocs.title else ""
+
+    @property
+    def timestamp(self) -> int | None:
+        return self.ocs.timestamp if self.ocs and self.ocs.timestamp else None
 
     @property
     def collective_name(self) -> str | None:
@@ -160,24 +203,8 @@ class CollectivePage(CouchDBModel):
         )
 
     @property
-    def last_update(self) -> str | None:
-        if not self.timestamp:
-            return None
-
-        dt_object = datetime.fromtimestamp(self.timestamp)
-        tz = pytz.timezone(settings.timezone)
-        localized_dt = tz.localize(dt_object)
-        return localized_dt.strftime("%c")
-
-    @classmethod
-    def from_ocs_page(cls, page: OCSCollectivePage) -> "CollectivePage":
-        instance = cls(
-            title=page.title,
-            timestamp=page.timestamp,
-            ocs=page,
-        )
-        instance.id = instance.build_id(page.id)
-        return instance
+    def formatted_timestamp(self) -> str | None:
+        return format_timestamp(self.timestamp)
 
     @classmethod
     def load_from_raw_id(cls, raw_id: int) -> "CollectivePage":
@@ -185,7 +212,4 @@ class CollectivePage(CouchDBModel):
         if raw_id is None:
             raise ValueError("raw_id is required to load CollectivePage")
 
-        instance = cls()
-        instance.id = instance.build_id(raw_id)
-        instance.load()
-        return instance
+        return cast(CollectivePage, cls.get(cls.build_id(raw_id)))
