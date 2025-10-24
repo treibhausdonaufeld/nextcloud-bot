@@ -79,36 +79,6 @@ class CouchDBModel(BaseModel):
 
         return cls(**doc)
 
-    # def load(self) -> None:
-    #     """Load the latest content from the database into this instance."""
-    #     db = couchdb()
-
-    #     if not self.id:
-    #         raise ValueError("Cannot load from DB without an id")
-
-    #     doc = db.get(self.id)
-    #     if not doc:
-    #         raise ValueError(f"No document found in DB with id {self.id}")
-
-    # return type(self)(**doc)
-
-    # updated_instance = self.model_validate(doc)
-    # # Copy all model fields from the loaded instance to self
-    # field_names = type(self).model_fields.keys()
-    # for name in field_names:
-    #     setattr(self, name, getattr(updated_instance, name, None))
-
-    # @classmethod
-    # def model_validate(cls, obj: dict, *args, **kwargs) -> "CouchDBModel":
-    #     # If _id is present in the input dict, use it for the id field
-    #     new_obj = super().model_validate(obj, *args, **kwargs)
-
-    #     # hard overwrite id and rev from _id and _rev fields
-    #     for x, y in [("_id", "id"), ("_rev", "rev")]:
-    #         setattr(new_obj, y, obj[x])
-
-    #     return new_obj
-
     @classmethod
     def get_all(
         cls, limit: int = 100, sort: List[str | dict] = [{"updated_at": "desc"}]
@@ -162,10 +132,6 @@ class CollectivePage(CouchDBModel):
     content: str | None = None
 
     subtype: PageSubtype | None = None
-    date: str | None = None
-    moderated_by: str | None = None
-    protocol_by: str | None = None
-    participants: List[str] = []
     tags: List[str] = []
 
     def __str__(self) -> str:

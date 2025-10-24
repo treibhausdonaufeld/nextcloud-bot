@@ -111,7 +111,7 @@ class BotConfig(BaseModel):
         parsed = yaml.safe_load(yaml_text)
         logger.info("Loaded bot configuration from collectives page %s", config_page.id)
 
-        return cls.model_validate(parsed)
+        return cls(**parsed)
 
 
 def extract_yaml_block(content: str) -> Optional[str]:
