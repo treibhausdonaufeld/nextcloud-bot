@@ -69,7 +69,7 @@ class Group(CouchDBModel):
         return cls.get_by_name(group_names[0])
 
     def update_from_page(self) -> None:
-        page = CollectivePage.get(CollectivePage.build_id(self.page_id))
+        page = CollectivePage.get_from_page_id(self.page_id)
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
 
@@ -85,6 +85,11 @@ class Group(CouchDBModel):
         lines = page.content.splitlines()
         first_word_regex = re.compile(r"\b(\w[\w-]*)\b")
 
+        self.coordination = []
+        self.delegate = []
+        self.members = []
+        attr = ""
+
         for line in lines:
             # get the first word on the line, ignoring any leading non-word chars
             m = first_word_regex.search(line)
@@ -92,20 +97,30 @@ class Group(CouchDBModel):
                 continue
             first_word = m.group(1).lower()
 
-            users = re.findall(user_regex, line)
+            if first_word in bot_config.organisation.coordination_person_keywords:
+                attr = "coordination"
+            elif first_word in bot_config.organisation.delegate_person_keywords:
+                attr = "delegate"
+            elif first_word in bot_config.organisation.member_person_keywords:
+                attr = "members"
 
-            if first_word in bot_config.organisation.moderation_person_keywords:
-                self.coordination = users
-            elif first_word in bot_config.organisation.protocol_person_keywords:
-                self.delegate = users
-            elif first_word in bot_config.organisation.participant_person_keywords:
-                self.members = users
+            users = re.findall(user_regex, line)
+            if users and attr:
+                users_list = getattr(self, attr)
+                users_list.extend(users)
+                setattr(self, attr, sorted(users_list))
+            elif line.strip() != "" and first_word not in (
+                bot_config.organisation.coordination_person_keywords
+                + bot_config.organisation.delegate_person_keywords
+                + bot_config.organisation.member_person_keywords
+            ):
+                attr = ""
 
         self.save()
 
 
 class Protocol(CouchDBModel):
-    group_id: str
+    group_id: str | None = None
     page_id: int
 
     date: str
@@ -116,15 +131,41 @@ class Protocol(CouchDBModel):
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
 
+    @property
+    def group_name(self) -> str | None:
+        if not self.group_id:
+            return None
+        group = Group.get(self.group_id)
+        return group.name
+
+    @property
+    def protocol_path(self) -> str | None:
+        if not self.page_id:
+            return None
+        page = CollectivePage.get_from_page_id(self.page_id)
+        if not page or not page.ocs:
+            return None
+        return page.ocs.filePath
+
     def update_from_page(self) -> None:
-        page = CollectivePage.get(CollectivePage.build_id(self.page_id))
+        page = CollectivePage.get_from_page_id(self.page_id)
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
 
         self.date = page.title.split(" ")[0]  # first word as date
 
+        try:
+            self.group_id = Group.get_for_page(page).id
+        except ValueError:
+            pass
+
         lines = page.content.splitlines()
         first_word_regex = re.compile(r"\b(\w[\w-]*)\b")
+
+        self.moderated_by = []
+        self.protocol_by = []
+        self.participants = []
+        attr = ""
 
         for line in lines:
             # get the first word on the line, ignoring any leading non-word chars
@@ -133,14 +174,24 @@ class Protocol(CouchDBModel):
                 continue
             first_word = m.group(1).lower()
 
-            users = re.findall(user_regex, line)
-
             if first_word in bot_config.organisation.moderation_person_keywords:
-                self.moderated_by = users
+                attr = "moderated_by"
             elif first_word in bot_config.organisation.protocol_person_keywords:
-                self.protocol_by = users
+                attr = "protocol_by"
             elif first_word in bot_config.organisation.participant_person_keywords:
-                self.participants = users
+                attr = "participants"
+
+            users = re.findall(user_regex, line)
+            if users and attr:
+                users_list = getattr(self, attr)
+                users_list.extend(users)
+                setattr(self, attr, sorted(users_list))
+            elif line.strip() != "" and first_word not in (
+                bot_config.organisation.moderation_person_keywords
+                + bot_config.organisation.protocol_person_keywords
+                + bot_config.organisation.participant_person_keywords
+            ):
+                attr = ""
 
         self.save()
 

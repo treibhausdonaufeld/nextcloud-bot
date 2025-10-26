@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from typing import List, cast
 
 import streamlit as st
 
@@ -28,6 +29,22 @@ groups = Group.get_all()
 
 st.dataframe([g.model_dump() for g in groups], use_container_width=True)
 
-groups = Protocol.get_all()
+groups = cast(List[Protocol], Protocol.get_all())
 
-st.dataframe([g.model_dump() for g in groups], use_container_width=True)
+st.dataframe(
+    [
+        {
+            x: getattr(g, x)
+            for x in [
+                "protocol_path",
+                "group_name",
+                "date",
+                "moderated_by",
+                "protocol_by",
+                "participants",
+            ]
+        }
+        for g in groups
+    ],
+    use_container_width=True,
+)

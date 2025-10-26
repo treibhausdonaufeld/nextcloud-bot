@@ -55,21 +55,13 @@ def parse_content(page: CollectivePage) -> None:
         page.subtype = PageSubtype.PROTOCOL
         page.save()
 
+        protocol = Protocol(page_id=page.ocs.id, date="")
         try:
-            group = Group.get_for_page(page)
-
-            if page.id and group.id:
-                protocol = Protocol(
-                    group_id=group.id,
-                    page_id=page.ocs.id,
-                    date="",
-                )
-                protocol.update_from_page()
-                protocol.save()
+            protocol.get(protocol.build_id())
         except NotFound:
-            logger.warning(
-                "Cannot create Protocol for page %s: Group not found", page.id
-            )
+            pass
+        protocol.update_from_page()
+        protocol.save()
 
 
 def parse_pages() -> None:

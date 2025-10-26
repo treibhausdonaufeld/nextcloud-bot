@@ -22,10 +22,20 @@ class OrganisationConfig(BaseModel):
     )
 
     protocol_person_keywords: List[str] = Field(
-        default_factory=lambda: ["protokollant", "protokollantin", "protokoll"]
+        default_factory=lambda: [
+            "protokollant",
+            "protokollantin",
+            "protokoll",
+            "protokollant:in",
+        ]
     )
     moderation_person_keywords: List[str] = Field(
-        default_factory=lambda: ["moderation", "moderator", "moderatorin"]
+        default_factory=lambda: [
+            "moderation",
+            "moderator",
+            "moderatorin",
+            "moderator:in",
+        ]
     )
     participant_person_keywords: List[str] = Field(
         default_factory=lambda: [
@@ -37,7 +47,15 @@ class OrganisationConfig(BaseModel):
     )
 
     coordination_person_keywords: List[str] = Field(
-        default_factory=lambda: ["koordination", "koordinator", "koordinatorin"]
+        default_factory=lambda: [
+            "koordination",
+            "koordinator",
+            "koordinatorin",
+            "koordinator:in",
+            "sprecher",
+            "sprecherin",
+            "sprecher:in",
+        ]
     )
     delegate_person_keywords: List[str] = Field(
         default_factory=lambda: ["delegierter", "delegierte"]
@@ -110,8 +128,8 @@ class BotConfig(BaseModel):
     def load_config(cls) -> BotConfig:
         """Load bot configuration from the Nextcloud Collectives configuration page."""
         try:
-            config_page = CollectivePage.load_from_raw_id(
-                raw_id=settings.nextcloud.configuration_page_id
+            config_page = CollectivePage.get_from_page_id(
+                page_id=settings.nextcloud.configuration_page_id
             )
         except NotFound:
             logger.warning(

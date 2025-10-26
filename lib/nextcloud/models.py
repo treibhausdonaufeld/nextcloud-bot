@@ -1,13 +1,17 @@
+import logging
 from datetime import datetime
 from enum import Enum
 from functools import cached_property
 from typing import Any, List, cast
 
 import pytz
+from pycouchdb.exceptions import Conflict
 from pydantic import BaseModel
 
 from lib.couchdb import couchdb
 from lib.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def format_timestamp(timestamp: int | None) -> str | None:
@@ -47,20 +51,27 @@ class CouchDBModel(BaseModel):
 
         self.updated_at = int(datetime.now().timestamp())
 
+        if not self.id and hasattr(self, "build_id"):
+            self.id = getattr(self, "build_id")()
+
         # Prepare the document dict for CouchDB
         doc = self.model_dump()
 
         doc["type"] = self.type
 
-        if not self.id and hasattr(doc, "build_id"):
-            self.id = doc["build_id"]()
         if self.id:
             doc["_id"] = self.id
         if self.rev:
             doc["_rev"] = self.rev
 
         # Save to CouchDB
-        saved_doc = db.save(doc)
+        try:
+            saved_doc = db.save(doc)
+        except Conflict:
+            # load once again from db and try to save again
+            existing_doc = db.get(self.id)
+            self.rev = doc["_rev"] = existing_doc.get("_rev")
+            saved_doc = db.save(doc)
 
         # Update id and rev from the saved document
         self.id = saved_doc.get("_id", self.id)
@@ -70,21 +81,16 @@ class CouchDBModel(BaseModel):
         """Delete the current instance from CouchDB."""
         db = couchdb()
 
-        if not self.id or not self.rev:
-            raise ValueError("Cannot delete document without id and rev")
+        if not self.id:
+            raise ValueError("Cannot delete document without id")
 
         db.delete(self.id)
+        logger.info("Deleted document %s from CouchDB", self.id)
 
     @classmethod
     def get(cls, doc_id: str) -> "CouchDBModel":
         """Get a document by its id from CouchDB."""
         db = couchdb()
-
-        if not doc_id.startswith(f"{cls.__name__}:"):
-            if hasattr(cls, "build_id"):
-                doc_id = getattr(cls, "build_id")(doc_id)
-            else:
-                doc_id = f"{cls.__name__}:{doc_id}"
 
         if not doc_id:
             raise ValueError("doc_id is required to get document")
@@ -150,11 +156,10 @@ class CollectivePage(CouchDBModel):
     def __str__(self) -> str:
         return f"CollectivePage(id={self.id}, title={self.title})"
 
-    @classmethod
-    def build_id(cls, ocs_page_id: int) -> str:
-        if not ocs_page_id:
-            raise ValueError("ocs_page_id is required to build CollectivePage id")
-        return f"{cls.__name__}:{settings.nextcloud.collectives_id}:{ocs_page_id}"
+    def build_id(self) -> str:
+        if not self.ocs or not self.ocs.id:
+            raise ValueError("ocs.id is required to build CollectivePage id")
+        return f"{self.__class__.__name__}:{settings.nextcloud.collectives_id}:{self.ocs.id}"
 
     @property
     def title(self) -> str:
@@ -186,12 +191,12 @@ class CollectivePage(CouchDBModel):
         return format_timestamp(self.timestamp)
 
     @classmethod
-    def load_from_raw_id(cls, raw_id: int) -> "CollectivePage":
+    def get_from_page_id(cls, page_id: int) -> "CollectivePage":
         """Load the latest content from the database into this instance."""
-        if raw_id is None:
-            raise ValueError("raw_id is required to load CollectivePage")
-
-        return cast(CollectivePage, cls.get(cls.build_id(raw_id)))
+        return cast(
+            CollectivePage,
+            cls.get(CollectivePage(ocs=OCSCollectivePage(id=page_id)).build_id()),
+        )
 
     @classmethod
     def get(cls, doc_id: str) -> "CollectivePage":

@@ -122,7 +122,7 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
     for page in pages:
         # try to fetch existing doc to obtain _rev for update
         try:
-            doc = CollectivePage.load_from_raw_id(raw_id=page.id)
+            doc = CollectivePage.get_from_page_id(page_id=page.id)
             # existing timestamp is stored at top-level in the doc
             if doc.updated_at and page.timestamp and page.timestamp < doc.updated_at:
                 logger.info("Page %s unchanged, skipping", doc.title)
