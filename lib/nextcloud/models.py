@@ -1,8 +1,10 @@
 import logging
+import threading
+from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
 from functools import cached_property
-from typing import Any, List, cast
+from typing import Any, ClassVar, List, cast
 
 import pytz
 from pycouchdb.exceptions import Conflict
@@ -32,13 +34,53 @@ class CouchDBModel(BaseModel):
 
     updated_at: int | None = None
 
-    def __init__(self, **data: Any):
-        if isinstance(data, dict):
-            for x, y in [("_id", "id"), ("_rev", "rev")]:
-                if x in data:
-                    data[y] = data[x]
+    # class-level LRU cache (shared across subclasses)
+    _cache_lock: ClassVar[threading.RLock] = threading.RLock()
+    _instance_cache: ClassVar[OrderedDict] = OrderedDict()
+    _cache_max_size: ClassVar[int] = 500  # default max entries
 
-        return super().__init__(**data)
+    @classmethod
+    def set_cache_size(cls, size: int) -> None:
+        """Adjust the maximum number of cached instances."""
+        with CouchDBModel._cache_lock:
+            CouchDBModel._cache_max_size = max(0, int(size))
+            # Immediately trim if needed
+            while len(CouchDBModel._instance_cache) > CouchDBModel._cache_max_size:
+                CouchDBModel._instance_cache.popitem(last=False)
+
+    @classmethod
+    def _cache_get(cls, doc_id: str):
+        if not doc_id:
+            return None
+        with CouchDBModel._cache_lock:
+            inst = CouchDBModel._instance_cache.get(doc_id)
+            if inst:
+                # mark as recently used
+                CouchDBModel._instance_cache.move_to_end(doc_id)
+            return inst
+
+    @classmethod
+    def _cache_add(cls, instance: "CouchDBModel") -> None:
+        if not instance.id:
+            return
+        with CouchDBModel._cache_lock:
+            CouchDBModel._instance_cache[instance.id] = instance
+            CouchDBModel._instance_cache.move_to_end(instance.id)
+            # trim LRU entries
+            while len(CouchDBModel._instance_cache) > CouchDBModel._cache_max_size:
+                CouchDBModel._instance_cache.popitem(last=False)
+
+    @classmethod
+    def _cache_invalidate(cls, doc_id: str) -> None:
+        if not doc_id:
+            return
+        with CouchDBModel._cache_lock:
+            CouchDBModel._instance_cache.pop(doc_id, None)
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        with CouchDBModel._cache_lock:
+            CouchDBModel._instance_cache.clear()
 
     @cached_property
     def type(self) -> str:
@@ -77,6 +119,9 @@ class CouchDBModel(BaseModel):
         self.id = saved_doc.get("_id", self.id)
         self.rev = saved_doc.get("_rev", self.rev)
 
+        # update cache
+        self._cache_add(self)
+
     def delete(self) -> None:
         """Delete the current instance from CouchDB."""
         db = couchdb()
@@ -85,6 +130,8 @@ class CouchDBModel(BaseModel):
             raise ValueError("Cannot delete document without id")
 
         db.delete(self.id)
+        # invalidate cache
+        self._cache_invalidate(self.id)
         logger.info("Deleted document %s from CouchDB", self.id)
 
     @classmethod
@@ -95,8 +142,15 @@ class CouchDBModel(BaseModel):
         if not doc_id:
             raise ValueError("doc_id is required to get document")
 
+        # check cache first
+        cached = cls._cache_get(doc_id)
+        if cached and isinstance(cached, cls):
+            return cached
+
         doc = db.get(doc_id)
-        return cls(**doc)
+        inst = cls(**doc)
+        cls._cache_add(inst)
+        return inst
 
     @classmethod
     def get_all(
@@ -168,6 +222,14 @@ class CollectivePage(CouchDBModel):
     @property
     def timestamp(self) -> int | None:
         return self.ocs.timestamp if self.ocs and self.ocs.timestamp else None
+
+    @property
+    def is_readme(self) -> bool:
+        return (
+            self.ocs.fileName.lower() == "readme.md"
+            if self.ocs and self.ocs.fileName
+            else False
+        )
 
     @property
     def collective_name(self) -> str | None:

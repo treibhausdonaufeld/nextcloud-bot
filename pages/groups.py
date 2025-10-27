@@ -46,5 +46,5 @@ st.dataframe(
         }
         for g in groups
     ],
-    use_container_width=True,
+    width="stretch",
 )

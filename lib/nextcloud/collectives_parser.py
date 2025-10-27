@@ -35,7 +35,9 @@ def parse_content(page: CollectivePage) -> None:
     if not page.content or not page.ocs or not config:
         return
 
-    if page.ocs.fileName == "Readme.md" and Group.valid_name(page.title):
+    protocol_kws = set(config.organisation.protocol_subtype_keywords)
+
+    if page.is_readme and Group.valid_name(page.title):
         page.subtype = PageSubtype.GROUP
         page.save()
 
@@ -47,10 +49,16 @@ def parse_content(page: CollectivePage) -> None:
                 pass
             group.update_from_page()
             group.save()
-
-    elif any(
-        kw in page.ocs.filePath.lower()
-        for kw in config.organisation.protocol_subtype_keywords
+    elif (
+        len(page.ocs.filePath.split("/")) > 1
+        and (
+            page.is_readme and page.ocs.filePath.split("/")[-2].lower() in protocol_kws
+        )
+        or (
+            not page.is_readme
+            and page.ocs.filePath.split("/")[-1].lower() in protocol_kws
+        )
+        # and Protocol.valid_title(page.title)
     ):
         page.subtype = PageSubtype.PROTOCOL
         page.save()

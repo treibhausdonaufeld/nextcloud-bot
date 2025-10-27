@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 PAGES_LIST_ENDPOINT = (
     "/ocs/v2.php/apps/collectives/api/v1.0/collectives/{collectives_id}/pages"
 )
-PAGE_DETAIL = "/remote.php/dav/files/{username}/{filepath}"
+PAGE_CONTENT_URL = "/remote.php/dav/files/{username}/{filepath}"
 
 
 def _build_auth() -> tuple[str, str]:
@@ -64,6 +64,39 @@ def _try_fetch_from_endpoint(url: str) -> List[OCSCollectivePage] | None:
         parsed.append(OCSCollectivePage(**p))
 
     return parsed
+
+
+def fetch_ocs_collective_page(page_id: int) -> OCSCollectivePage:
+    """Fetch a single collectives page by its OCS id."""
+    base = settings.nextcloud.base_url
+    if not base:
+        raise RuntimeError("settings.nextcloud.base_url is not configured")
+
+    # settings.nextcloud.base_url is a pydantic HttpUrl — convert to str
+    base_str = str(base).rstrip("/")
+
+    url = (
+        base_str
+        + PAGES_LIST_ENDPOINT.format(collectives_id=settings.nextcloud.collectives_id)
+        + f"/{page_id}"
+    )
+
+    auth = _build_auth()
+    logger.debug("Fetching collectives page %d from %s", page_id, url)
+    resp = requests.get(
+        url,
+        auth=auth,
+        headers={"Accept": "application/json", "OCS-APIRequest": "true"},
+        timeout=90,
+    )
+    resp.raise_for_status()
+
+    data = resp.json()
+    page_data = data.get("ocs", {}).get("data", {})
+    if not page_data:
+        raise RuntimeError(f"Page data for id {page_id} not found in response")
+
+    return OCSCollectivePage(**page_data)
 
 
 def fetch_all_pages() -> List[OCSCollectivePage]:
@@ -104,7 +137,7 @@ def fetch_page_markdown(page: OCSCollectivePage) -> str:
         (page.collectivePath or "", page.filePath or "", page.fileName or "")
     )
 
-    url = base_str + PAGE_DETAIL.format(
+    url = base_str + PAGE_CONTENT_URL.format(
         username=settings.nextcloud.admin_username, filepath=filepath
     )
 

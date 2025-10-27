@@ -147,6 +147,28 @@ class Protocol(CouchDBModel):
             return None
         return page.ocs.filePath
 
+    @classmethod
+    def valid_title(cls, title: str) -> bool:
+        """Check if the given title is a valid protocol title."""
+        # Simple check: title starts with a date in YYYY-MM-DD format
+        return bool(re.match(r"^\d{4}-\d{2}-\d{2} .*", title))
+
+    @classmethod
+    def is_protocol_page(cls, page: CollectivePage) -> bool:
+        protocol_kws = set(bot_config.organisation.protocol_subtype_keywords)
+
+        return (
+            len(page.ocs.filePath.split("/")) > 1
+            and (
+                page.is_readme
+                and page.ocs.filePath.split("/")[-2].lower() in protocol_kws
+            )
+            or (
+                not page.is_readme
+                and page.ocs.filePath.split("/")[-1].lower() in protocol_kws
+            )
+        )
+
     def update_from_page(self) -> None:
         page = CollectivePage.get_from_page_id(self.page_id)
         if not page or not page.content:

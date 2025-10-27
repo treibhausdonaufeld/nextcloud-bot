@@ -1,11 +1,30 @@
 import datetime
 
-from lib.nextcloud.collectives_loader import fetch_and_store_all_pages
+from pycouchdb.exceptions import NotFound
+
+from lib.nextcloud.collectives_loader import (
+    fetch_and_store_all_pages,
+    fetch_ocs_collective_page,
+)
 from lib.nextcloud.collectives_parser import parse_pages
+from lib.nextcloud.models import CollectivePage
 from lib.nextcloud.protocol import Protocol
+from lib.settings import settings
 
 
 def main():
+    # first load config from nextcloud
+    try:
+        config_page = CollectivePage.get_from_page_id(
+            page_id=settings.nextcloud.configuration_page_id
+        )
+    except NotFound:
+        ocs_page = fetch_ocs_collective_page(
+            page_id=settings.nextcloud.configuration_page_id
+        )
+        config_page = CollectivePage(ocs=ocs_page)
+        config_page.save()
+
     fetch_and_store_all_pages()
 
     # for group in Group.get_all():

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
+import time
 from typing import Dict, List, Optional
 
 import yaml
-from pycouchdb.exceptions import NotFound
 from pydantic import BaseModel, Field, field_validator
 
 from lib.nextcloud.models import CollectivePage
@@ -127,16 +128,9 @@ class BotConfig(BaseModel):
     @classmethod
     def load_config(cls) -> BotConfig:
         """Load bot configuration from the Nextcloud Collectives configuration page."""
-        try:
-            config_page = CollectivePage.get_from_page_id(
-                page_id=settings.nextcloud.configuration_page_id
-            )
-        except NotFound:
-            logger.warning(
-                "Configuration page with id %s not found",
-                settings.nextcloud.configuration_page_id,
-            )
-            return BotConfig()
+        config_page = CollectivePage.get_from_page_id(
+            page_id=settings.nextcloud.configuration_page_id
+        )
 
         raw = config_page.content or ""
         yaml_text = extract_yaml_block(raw)
@@ -172,4 +166,73 @@ def extract_yaml_block(content: str) -> Optional[str]:
     return yaml_text if yaml_text else None
 
 
-bot_config = BotConfig.load_config()
+class LazyBotConfig:
+    """Lazy loader for BotConfig.
+
+    - Loads on first access.
+    - On every access it will attempt to reload from DB with retries.
+    - If reload fails, returns last cached value (if any) or raises.
+    """
+
+    def __init__(self, retries: int = 3, delay: float = 1.0):
+        self._lock = threading.RLock()
+        self._cached: Optional[BotConfig] = None
+        self._retries = int(retries)
+        self._delay = float(delay)
+
+    def reload(self) -> BotConfig:
+        last_exc: Exception | None = None
+        for attempt in range(1, self._retries + 1):
+            try:
+                cfg = BotConfig.load_config()
+                with self._lock:
+                    self._cached = cfg
+                logger.info(
+                    "Loaded bot configuration (attempt %d/%d)", attempt, self._retries
+                )
+                return cfg
+            except Exception as exc:
+                last_exc = exc
+                logger.warning(
+                    "Failed to load bot configuration (attempt %d/%d): %s",
+                    attempt,
+                    self._retries,
+                    exc,
+                )
+                time.sleep(self._delay)
+        # all attempts failed
+        with self._lock:
+            if self._cached is not None:
+                logger.warning(
+                    "Returning cached bot configuration after %d failed reload attempts",
+                    self._retries,
+                )
+                return self._cached
+        # no cached config available -> re-raise last exception
+        raise last_exc or RuntimeError("Unknown error loading BotConfig")
+
+    def get(self) -> BotConfig:
+        # ensure at least one load happened and attempt to refresh on each access
+        with self._lock:
+            if self._cached is None:
+                return self.reload()
+
+        return self._cached
+        # try to reload but don't blow up if reload fails; return cached instead
+        # try:
+        #     return self.reload()
+        # except Exception:
+        #     with self._lock:
+        #         return self._cached  # type: ignore[return-value]
+
+    def __getattr__(self, name: str):
+        cfg = self.get()
+        return getattr(cfg, name)
+
+    def __repr__(self) -> str:
+        with self._lock:
+            return f"<LazyBotConfig cached={'yes' if self._cached else 'no'}>"
+
+
+# export a module-level instance
+bot_config = LazyBotConfig()
