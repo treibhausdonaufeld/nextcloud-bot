@@ -5,7 +5,7 @@ import requests
 from pydantic import BaseModel, Field
 
 from lib.couchdb import couchdb
-from lib.nextcloud.models import CouchDBModel
+from lib.nextcloud.models.base import CouchDBModel
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)

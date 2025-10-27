@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
-from lib.nextcloud.models import CollectivePage
+from lib.nextcloud.models.collective_page import CollectivePage
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)

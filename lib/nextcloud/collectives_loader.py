@@ -21,7 +21,7 @@ from typing import List
 import requests
 from pycouchdb.exceptions import NotFound
 
-from lib.nextcloud.models import CollectivePage, OCSCollectivePage
+from lib.nextcloud.models.collective_page import CollectivePage, OCSCollectivePage
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)

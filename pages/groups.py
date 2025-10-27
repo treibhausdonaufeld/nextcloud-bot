@@ -5,8 +5,9 @@ import streamlit as st
 
 from lib.couchdb import couchdb
 from lib.menu import menu
+from lib.nextcloud.models.group import Group
 from lib.nextcloud.nc_users import NCUserList
-from lib.nextcloud.protocol import Group, Protocol
+from lib.nextcloud.models.protocol import Protocol
 from lib.settings import (
     settings,
 )

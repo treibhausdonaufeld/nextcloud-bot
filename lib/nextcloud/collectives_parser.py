@@ -21,8 +21,9 @@ from typing import List, cast
 from pycouchdb.exceptions import NotFound
 
 from lib.nextcloud.config import BotConfig, bot_config
-from lib.nextcloud.models import CollectivePage, PageSubtype
-from lib.nextcloud.protocol import Group, Protocol
+from lib.nextcloud.models.collective_page import CollectivePage, PageSubtype
+from lib.nextcloud.models.group import Group
+from lib.nextcloud.models.protocol import Protocol
 
 logger = logging.getLogger(__name__)
 
