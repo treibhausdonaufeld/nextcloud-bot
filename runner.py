@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from pycouchdb.exceptions import NotFound
 
@@ -6,10 +7,11 @@ from lib.nextcloud.collectives_loader import (
     fetch_and_store_all_pages,
     fetch_ocs_collective_page,
 )
-from lib.nextcloud.collectives_parser import parse_pages
+from lib.nextcloud.collectives_parser import parse_content
 from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.models.protocol import Protocol
 from lib.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -25,14 +27,19 @@ def main():
         config_page = CollectivePage(ocs=ocs_page)
         config_page.save()
 
-    fetch_and_store_all_pages()
+    updated_pages = fetch_and_store_all_pages()
+
+    for page in updated_pages:
+        logger.info("Processing page: %s", page.ocs.title)
+        parse_content(page)
+        page.save()
 
     # for group in Group.get_all():
     #     group.delete()
-    for p in Protocol.get_all():
-        p.delete()
+    # for p in Protocol.get_all():
+    #     p.delete()
 
-    parse_pages()
+    # parse_pages()
 
     # NCUserList()
     # userlist.update_from_nextcloud()

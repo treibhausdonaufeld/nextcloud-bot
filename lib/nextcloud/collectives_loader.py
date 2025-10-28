@@ -149,16 +149,17 @@ def fetch_page_markdown(page: OCSCollectivePage) -> str:
     return resp.text
 
 
-def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
+def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     """Upsert the given pages into CouchDB. Returns number of stored docs."""
-    stored = 0
+    stored = []
+
     for page in pages:
         # try to fetch existing doc to obtain _rev for update
         try:
             doc = CollectivePage.get_from_page_id(page_id=page.id)
             # existing timestamp is stored at top-level in the doc
             if doc.updated_at and page.timestamp and page.timestamp < doc.updated_at:
-                logger.info("Page %s unchanged, skipping", doc.title)
+                logger.debug("Page %s unchanged, skipping", doc.title)
                 continue
         except NotFound:
             doc = CollectivePage(ocs=page)
@@ -167,7 +168,7 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
             doc.ocs = page
             doc.content = fetch_page_markdown(page)
             doc.save()
-            stored += 1
+            stored.append(doc)
             logger.info("Stored collectives page: %s, %s", doc.title, doc.id)
         except Exception as e:
             logger.exception("Failed to save page %s: %s", doc.title, e)
@@ -175,7 +176,7 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> int:
     return stored
 
 
-def fetch_and_store_all_pages() -> int:
+def fetch_and_store_all_pages() -> List[CollectivePage]:
     """Convenience function: fetch pages and store them into CouchDB.
 
     Returns the number of pages stored.
