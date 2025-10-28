@@ -9,7 +9,7 @@ from typing import Dict
 import requests
 
 from .config import BotConfig
-from .nc_users import NCUserList
+from .models.user import NCUserList
 
 logger = logging.getLogger()
 

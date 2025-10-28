@@ -115,4 +115,8 @@ class Group(CouchDBModel):
             ):
                 attr = ""
 
+        self.members = sorted(
+            set(self.members) - set(self.coordination) - set(self.delegate)
+        )
+
         self.save()

@@ -7,7 +7,7 @@ from email.message import Message
 from typing import List, Set
 
 from lib.nextcloud.config import BotConfig
-from lib.nextcloud.nc_users import NCUserList
+from lib.nextcloud.models.user import NCUserList
 
 from .sender import MailSender
 

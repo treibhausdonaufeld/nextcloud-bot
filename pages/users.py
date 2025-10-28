@@ -5,7 +5,7 @@ import streamlit as st
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.nc_users import NCUserList
+from lib.nextcloud.models.user import NCUserList
 from lib.settings import (
     available_languages,
     set_language,

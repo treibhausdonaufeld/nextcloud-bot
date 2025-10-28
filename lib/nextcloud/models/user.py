@@ -58,7 +58,7 @@ class NCUser(CouchDBModel):
     ocs: OCSUser | None = None
 
     # Primary identifiers
-    username: str = Field("", alias="id")
+    username: str = ""
 
     def build_id(self) -> str:
         return f"{type(self).__name__}:{self.username}"

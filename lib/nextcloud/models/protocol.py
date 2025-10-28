@@ -108,4 +108,8 @@ class Protocol(CouchDBModel):
             ):
                 attr = ""
 
+        self.participants = sorted(
+            set(self.participants) - set(self.moderated_by) - set(self.protocol_by)
+        )
+
         self.save()
