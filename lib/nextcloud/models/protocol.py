@@ -1,10 +1,11 @@
-from datetime import datetime
-from functools import cached_property
 import logging
 import re
+from datetime import datetime
+from functools import cached_property
 from typing import List
 
 from lib.nextcloud.config import bot_config
+from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
 from lib.settings import user_regex
 
@@ -82,6 +83,31 @@ class Protocol(CouchDBModel):
             )
         )
 
+    def extract_decisions(self) -> None:
+        """Get all decisions marked with ::: success"""
+        if not self.page or not self.page.content:
+            return
+
+        # Simple regex to find ::: success blocks
+        decision_blocks = re.findall(
+            r"::: success(.*?):::", self.page.content, re.DOTALL
+        )
+
+        for block in decision_blocks:
+            lines = block.strip().splitlines()
+            if not lines:
+                continue
+            title = lines[0].replace("**", "").strip("Beschluss").strip(":").strip()
+            text = "\n".join(lines[1:]).strip()
+            decision = Decision(
+                title=title,
+                text=text,
+                date=self.date,
+                protocol_id=self.build_id(),
+                group_id=self.group_id or "",
+            )
+            decision.save()
+
     def update_from_page(self) -> None:
         page = self.page
         if not page or not page.content:
@@ -131,5 +157,7 @@ class Protocol(CouchDBModel):
         self.participants = sorted(
             set(self.participants) - set(self.moderated_by) - set(self.protocol_by)
         )
+
+        self.extract_decisions()
 
         self.save()

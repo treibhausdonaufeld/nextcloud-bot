@@ -78,8 +78,8 @@ def create_indizes_if_not_exist(db: pycouchdb.client.Database):
             "type": "json",
         },
         {
-            "index": {"fields": ["subtype"]},
-            "name": "idx_subtype",
+            "index": {"fields": ["name"]},
+            "name": "idx_name",
             "type": "json",
         },
         # Composite index required when using a selector on `type` and

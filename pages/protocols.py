@@ -27,16 +27,12 @@ def display_users(user_ids: list[str]):
     return ", ".join(names)
 
 
-st.cache_data(ttl=3600)
-
-
+@st.cache_data(ttl=3600)
 def get_all_protocols() -> List[Protocol]:
     return cast(List[Protocol], Protocol.get_all())
 
 
-st.cache_data(ttl=3600)
-
-
+@st.cache_data(ttl=3600)
 def groups_with_count() -> List[str]:
     # group all protocols by group name and count them
     groups = list(set(p.group_name for p in get_all_protocols() if p.group_name))

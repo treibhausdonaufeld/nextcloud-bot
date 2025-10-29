@@ -4,7 +4,6 @@ import logging
 from pycouchdb.exceptions import NotFound
 
 from lib.nextcloud.collectives_loader import (
-    fetch_and_store_all_pages,
     fetch_ocs_collective_page,
 )
 from lib.nextcloud.collectives_parser import parse_content
@@ -27,10 +26,10 @@ def main():
         config_page = CollectivePage(ocs=ocs_page)
         config_page.save()
 
-    updated_pages = fetch_and_store_all_pages()
+    # fetch_and_store_all_pages()
 
-    for page in updated_pages:
-        # for page in CollectivePage.get_all():
+    # for page in updated_pages:
+    for page in CollectivePage.get_all():
         logger.info("Processing page: %s", page.ocs.title)
         parse_content(page)
         page.save()
