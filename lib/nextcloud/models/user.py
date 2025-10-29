@@ -85,6 +85,13 @@ class NCUserList:
 
         self.users = [NCUser(**d) for d in results.get("docs", [])]
 
+    def get_user_by_uid(self, uid: str) -> NCUser | None:
+        """Get a user by their uid."""
+        for user in self.users:
+            if user.username == uid:
+                return user
+        return None
+
     def update_from_nextcloud(self):
         response = requests.get(
             f"{settings.nextcloud.base_url}{self.USER_LIST_URL}",

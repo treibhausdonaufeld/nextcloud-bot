@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from typing import cast
 
 import streamlit as st
 
@@ -21,7 +22,45 @@ load_user_data()
 db = couchdb()
 
 user_list = NCUserList()
+user_list.load_users()
 
 st.title(title)
 
-groups = Group.get_all()
+
+def display_group(
+    group: Group, user_list: NCUserList, all_groups: list[Group], level: int = 0
+):
+    """Display a group and its children."""
+    with st.expander(f"{'➡️' * level} {group.name}"):
+        st.write(f"**{_('Page ID')}:** {group.page_id}")
+
+        if group.parent_group:
+            st.write(f"**{_('Parent Group')}:** {group.parent_group}")
+
+        if group.short_names:
+            st.write(f"**{_('Short Names')}:** {', '.join(group.short_names)}")
+
+        def display_users(title: str, user_ids: list[str]):
+            if user_ids:
+                st.write(f"**{title}:**")
+                for user_id in user_ids:
+                    user = user_list.get_user_by_uid(user_id)
+                    display_name = user_id
+                    if user and user.ocs and user.ocs.display_name:
+                        display_name = user.ocs.display_name
+                    st.write(f"- {display_name}")
+
+        display_users(_("Coordination"), group.coordination)
+        display_users(_("Delegates"), group.delegate)
+        display_users(_("Members"), group.members)
+
+        children = [g for g in all_groups if g.parent_group == group.name]
+        for child in children:
+            display_group(child, user_list, all_groups, level + 1)
+
+
+all_groups = cast(list[Group], Group.get_all())
+top_level_groups = [g for g in all_groups if not g.parent_group]
+
+for group in top_level_groups:
+    display_group(group, user_list, all_groups)

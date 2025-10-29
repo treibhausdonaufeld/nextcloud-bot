@@ -1,3 +1,5 @@
+from datetime import datetime
+from functools import cached_property
 import logging
 import re
 from typing import List
@@ -24,21 +26,39 @@ class Protocol(CouchDBModel):
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
 
-    @property
-    def group_name(self) -> str | None:
+    @cached_property
+    def page(self) -> CollectivePage | None:
+        try:
+            return CollectivePage.get_from_page_id(self.page_id)
+        except ValueError:
+            return None
+
+    @cached_property
+    def group(self) -> Group | None:
         if not self.group_id:
             return None
-        group = Group.get(self.group_id)
-        return group.name
+        try:
+            return Group.get(self.group_id)
+        except ValueError:
+            return None
+
+    @cached_property
+    def date_obj(self) -> datetime | None:
+        if self.date:
+            return datetime.strptime(self.date.split()[0], "%Y-%m-%d")
+        return None
+
+    @property
+    def group_name(self) -> str | None:
+        if self.group:
+            return self.group.name
+        return None
 
     @property
     def protocol_path(self) -> str | None:
-        if not self.page_id:
+        if not self.page or not self.page.ocs:
             return None
-        page = CollectivePage.get_from_page_id(self.page_id)
-        if not page or not page.ocs:
-            return None
-        return page.ocs.filePath
+        return self.page.ocs.filePath
 
     @classmethod
     def valid_title(cls, title: str) -> bool:
@@ -63,7 +83,7 @@ class Protocol(CouchDBModel):
         )
 
     def update_from_page(self) -> None:
-        page = CollectivePage.get_from_page_id(self.page_id)
+        page = self.page
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
 

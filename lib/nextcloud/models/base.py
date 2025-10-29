@@ -3,7 +3,7 @@ import threading
 from collections import OrderedDict
 from datetime import datetime
 from functools import cached_property
-from typing import ClassVar, List
+from typing import Any, ClassVar, List, Type, TypeVar
 
 import pytz
 from pycouchdb.exceptions import Conflict
@@ -13,6 +13,8 @@ from lib.couchdb import couchdb
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 def format_timestamp(timestamp: int | None) -> str | None:
@@ -85,6 +87,10 @@ class CouchDBModel(BaseModel):
     def type(self) -> str:
         """Return the runtime type name of this model (e.g. 'NCUser')."""
         return type(self).__name__
+
+    def build_id(self) -> str:
+        """Build the document id."""
+        raise NotImplementedError
 
     def save(self) -> None:
         """Save the current instance to CouchDB."""
@@ -168,6 +174,11 @@ class CouchDBModel(BaseModel):
 
         return [cls(**d) for d in results.get("docs", [])]
 
-    @property
-    def formatted_updated_at(self) -> str | None:
-        return format_timestamp(self.updated_at)
+    @classmethod
+    def get_by(cls: Type[T], key: str, value: Any) -> List[T]:
+        """Get a list of models by a key-value pair."""
+        db = couchdb()
+        lookup = {"selector": {"type": cls.__name__, key: value}}
+        response, results = db.resource.post("_find", json=lookup)
+        response.raise_for_status()
+        return [cls(**doc) for doc in results.get("docs", [])]
