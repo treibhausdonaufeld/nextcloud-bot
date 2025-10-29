@@ -99,3 +99,7 @@ class CollectivePage(CouchDBModel):
     @classmethod
     def get(cls, doc_id: str) -> "CollectivePage":
         return cast(CollectivePage, super().get(doc_id))
+
+    @classmethod
+    def get_all(cls, *args, **kwargs) -> List["CollectivePage"]:
+        return cast(List[CollectivePage], super().get_all(*args, **kwargs))

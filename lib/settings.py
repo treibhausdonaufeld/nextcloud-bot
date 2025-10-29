@@ -110,6 +110,11 @@ class CouchDBSettings(BaseModel):
     database_name: str = "nextcloud_bot"
 
 
+class ChromaDBSettings(BaseModel):
+    host: str = "localhost"
+    port: int = 8800
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__")
 
@@ -124,6 +129,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     couchdb: CouchDBSettings = CouchDBSettings()
+    chromadb: ChromaDBSettings = ChromaDBSettings()
+
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
     rocketchat: RocketchatSettings = RocketchatSettings()

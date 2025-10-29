@@ -33,10 +33,10 @@ services:
       - couch-data:/opt/couchdb/data
 
   chromadb:
-    image: chromadb/chromadb:latest
+    image: chromadb/chroma:latest
     # bind to localhost only for safety
     ports:
-      - '127.0.0.1:8000:8000'
+      - '127.0.0.1:8800:8000'
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000

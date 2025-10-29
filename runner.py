@@ -30,6 +30,7 @@ def main():
     updated_pages = fetch_and_store_all_pages()
 
     for page in updated_pages:
+        # for page in CollectivePage.get_all():
         logger.info("Processing page: %s", page.ocs.title)
         parse_content(page)
         page.save()

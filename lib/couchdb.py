@@ -77,6 +77,11 @@ def create_indizes_if_not_exist(db: pycouchdb.client.Database):
             "name": "idx_subtype",
             "type": "json",
         },
+        {
+            "index": {"fields": ["subtype"]},
+            "name": "idx_subtype",
+            "type": "json",
+        },
         # Composite index required when using a selector on `type` and
         # sorting by `updated_at`. Mango requires an index whose fields
         # start with the equality fields used in the selector followed by
