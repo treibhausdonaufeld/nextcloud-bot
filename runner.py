@@ -8,6 +8,7 @@ from lib.nextcloud.collectives_loader import (
 )
 from lib.nextcloud.collectives_parser import parse_content
 from lib.nextcloud.models.collective_page import CollectivePage
+from lib.nextcloud.models.decision import Decision
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,10 @@ def main():
         config_page.save()
 
     # fetch_and_store_all_pages()
+
+    for d in Decision.get_all():
+        logger.info("Existing decision: %s", d.title)
+        d.delete()
 
     # for page in updated_pages:
     for page in CollectivePage.get_all():

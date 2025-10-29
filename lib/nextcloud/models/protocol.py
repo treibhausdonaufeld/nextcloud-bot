@@ -97,14 +97,22 @@ class Protocol(CouchDBModel):
             lines = block.strip().splitlines()
             if not lines:
                 continue
-            title = lines[0].replace("**", "").strip("Beschluss").strip(":").strip()
+            title = (
+                lines[0]
+                .replace("**", "")
+                .replace("__", "")
+                .strip("Beschluss")
+                .strip(":")
+                .strip()
+            )
             text = "\n".join(lines[1:]).strip()
             decision = Decision(
                 title=title,
                 text=text,
                 date=self.date,
-                protocol_id=self.build_id(),
+                page_id=self.page_id,
                 group_id=self.group_id or "",
+                group_name=self.group.name if self.group else "",
             )
             decision.save()
 
