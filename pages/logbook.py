@@ -1,10 +1,10 @@
 from gettext import gettext as _
-from typing import List
+from typing import List, cast
 
 import streamlit as st
 
 from lib.menu import menu
-from lib.nextcloud.models.decision import Decision
+from lib.nextcloud.models.decision import Decision, get_decision_collection
 from lib.settings import (
     settings,
 )
@@ -27,18 +27,46 @@ decisions = get_all_decisions()
 
 st.title(title)
 
-# Sort decisions by date (newest first)
-decisions.sort(key=lambda d: d.date, reverse=True)
-
 # Get unique group names for filtering
 group_names = list(set(d.group_name for d in decisions if d.group_name))
 group_names.sort()
 
 # Add filter for group
-selected_group = st.selectbox(_("Filter by group"), [""] + group_names)
+col1, col2, col3 = st.columns(3)
+selected_group = col1.selectbox(
+    label=_("Filter by group"),
+    options=([""] + group_names),
+    placeholder=_("Select a group"),
+)
 
-if selected_group:
+collection_search = col2.text_input(_("Fuzzy search"), "")
+exact_search = col3.text_input(_("Exact search"), "")
+
+distances = []
+
+if selected_group and not collection_search:
     decisions = [d for d in decisions if d.group_name == selected_group]
+elif collection_search:
+    decision_collection = get_decision_collection()
+    results = decision_collection.query(
+        query_texts=[collection_search],
+        n_results=10,
+        where={"group_name": selected_group} if selected_group else None,
+    )
+
+    result_ids = results["ids"][0]
+    if results["distances"]:
+        distances = results["distances"][0]
+    decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
+elif exact_search:
+    # sort by parsed date (fallback to string) descending
+    decisions = sorted(
+        [d for d in decisions if exact_search in d],
+        key=lambda p: p.date,
+        reverse=True,
+    )
+else:
+    decisions = sorted(decisions, key=lambda p: p.date, reverse=True)
 
 
 df = {
@@ -48,6 +76,8 @@ df = {
     _("Group"): [d.group_name for d in decisions],
     _("Link"): [d.page.url if d.page else d.external_link or "" for d in decisions],
 }
+if distances:
+    df[_("Distance")] = distances
 
 st.dataframe(
     df,

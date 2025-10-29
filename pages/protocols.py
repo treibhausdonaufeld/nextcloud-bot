@@ -4,11 +4,10 @@ from typing import List, cast
 
 import streamlit as st
 
-from lib.chromadb import chroma_client
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.models.protocol import Protocol
+from lib.nextcloud.models.protocol import Protocol, get_protocol_collection
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import (
     settings,
@@ -54,7 +53,7 @@ user_list.load_users()
 
 st.title(title)
 
-protocol_collection = chroma_client.get_collection(name="protocols")
+protocol_collection = get_protocol_collection()
 
 
 # filter out protocols in the future

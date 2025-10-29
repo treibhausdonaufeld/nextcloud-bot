@@ -16,7 +16,6 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
-from chromadb.errors import NotFoundError
 from typing import List, cast
 
 from pycouchdb.exceptions import NotFound
@@ -25,7 +24,6 @@ from lib.nextcloud.config import BotConfig, bot_config
 from lib.nextcloud.models.collective_page import CollectivePage, PageSubtype
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
-from lib.chromadb import chroma_client
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +32,6 @@ def parse_content(page: CollectivePage) -> None:
     """Parse metadata from the markdown content."""
 
     config = bot_config or BotConfig.load_config()
-
-    try:
-        protocol_collection = chroma_client.get_collection(name="protocols")
-    except NotFoundError:
-        protocol_collection = chroma_client.create_collection(name="protocols")
 
     if not page.content or not page.ocs or not config:
         return
@@ -78,19 +71,6 @@ def parse_content(page: CollectivePage) -> None:
             pass
         protocol.update_from_page()
         protocol.save()
-
-        protocol_collection.add(
-            ids=[protocol.build_id()],
-            documents=[page.content],
-            metadatas=[
-                {
-                    "page_id": page.id,
-                    "title": page.title,
-                    "date": protocol.date,
-                    "group_name": protocol.group_name,
-                },
-            ],
-        )
 
 
 def parse_pages() -> None:
