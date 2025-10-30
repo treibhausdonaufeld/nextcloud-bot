@@ -1,19 +1,30 @@
+import re
 from gettext import gettext as _
-from typing import List, cast
+from typing import List, Tuple, cast
 
 import streamlit as st
+from chromadb import WhereDocument
 
+from lib.logbook_xlsx_import import import_decisions_from_excel
 from lib.menu import menu
 from lib.nextcloud.models.decision import Decision, get_decision_collection
+from lib.nextcloud.models.group import Group
 from lib.settings import (
     settings,
 )
 from lib.streamlit_oauth import load_user_data
 
 
+@st.cache_data(ttl=3600)
+def get_group_names() -> List[str]:
+    group_names = [g.name for g in cast(list[Group], Group.get_all())]
+    group_names.sort()
+    return group_names
+
+
 # @st.cache_data(ttl=3600)
-def get_all_decisions() -> List[Decision]:
-    return Decision.get_all()
+def get_all_decisions(limit: int, skip: int) -> Tuple[List["Decision"], int]:
+    return Decision.paginate(limit, skip, sort=[{"date": "desc"}])
 
 
 # Streamlit app starts here
@@ -23,49 +34,80 @@ st.set_page_config(page_title=title, page_icon="✅", layout="wide")
 menu()
 load_user_data()
 
-decisions = get_all_decisions()
-
 st.title(title)
 
-# Get unique group names for filtering
-group_names = list(set(d.group_name for d in decisions if d.group_name))
-group_names.sort()
+filter_container = st.container()
+df_container = st.container()
+pagination_container = st.container()
 
 # Add filter for group
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = filter_container.columns((1, 3, 3))
 selected_group = col1.selectbox(
     label=_("Filter by group"),
-    options=([""] + group_names),
+    options=([""] + get_group_names()),
     placeholder=_("Select a group"),
 )
 
-collection_search = col2.text_input(_("Fuzzy search"), "")
-exact_search = col3.text_input(_("Exact search"), "")
+search_text = col2.text_input(_("Search"), "")
+search_type = col3.radio(
+    _("Search Type"),
+    options=[_("Semantic"), _("Any"), _("All"), _("Exact")],
+    captions=[_("Semantic Search"), _("Any word"), _("All words"), _("Exact Match")],
+    index=0,
+    horizontal=True,
+)
 
+## fetch data
 distances = []
 
-if selected_group and not collection_search:
-    decisions = [d for d in decisions if d.group_name == selected_group]
-elif collection_search:
+page_size = st.session_state.get("page_size", 25)
+current_page = st.session_state.get("current_page", 1)
+
+
+if selected_group or search_text:
     decision_collection = get_decision_collection()
-    results = decision_collection.query(
-        query_texts=[collection_search],
-        n_results=10,
-        where={"group_name": selected_group} if selected_group else None,
+
+    query_kwargs = {
+        "where": {"group_name": selected_group} if selected_group else None,
+    }
+
+    if search_type in (_("Any"), _("All"), _("Exact")):
+        if search_type == _("Exact") or len(search_text.split()) <= 1:
+            where_document = {"$regex": rf"(?i){re.escape(search_text)}"}
+        else:
+            condition = "$and" if search_type == _("All") else "$or"
+            where_document = {
+                condition: [  # type: ignore
+                    {"$regex": rf"(?i){re.escape(word)}"}
+                    for word in search_text.split()
+                ]
+            }
+
+        results = decision_collection.get(
+            limit=page_size,
+            offset=page_size * (current_page - 1),
+            where_document=cast(WhereDocument, where_document),
+        )
+        result_ids = results["ids"]
+
+    elif search_type == _("Semantic"):
+        results = decision_collection.query(
+            query_texts=[search_text],
+            n_results=page_size,
+        )
+
+        result_ids = results["ids"][0]
+        if results["distances"]:
+            distances = results["distances"][0]
+
+    decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
+    total_count = len(decisions)
+else:
+    decisions, total_count = get_all_decisions(
+        limit=page_size, skip=page_size * (current_page - 1)
     )
 
-    result_ids = results["ids"][0]
-    if results["distances"]:
-        distances = results["distances"][0]
-    decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
-elif exact_search:
-    # sort by parsed date (fallback to string) descending
-    decisions = sorted(
-        [d for d in decisions if exact_search in d],
-        key=lambda p: p.date,
-        reverse=True,
-    )
-else:
+if not search_text:
     decisions = sorted(decisions, key=lambda p: p.date, reverse=True)
 
 
@@ -73,7 +115,9 @@ df = {
     _("Date"): [d.date for d in decisions],
     _("Title"): [d.title for d in decisions],
     _("Text"): [d.text for d in decisions],
+    _("Valid Until"): [d.valid_until for d in decisions],
     _("Group"): [d.group_name for d in decisions],
+    _("Objections"): [d.objections for d in decisions],
     _("Link"): [d.page.url if d.page else d.external_link or "" for d in decisions],
 }
 if distances:
@@ -86,6 +130,7 @@ st.dataframe(
             _("Date"),
             format="YYYY-MM-DD",
         ),
+        _("Text"): st.column_config.TextColumn(_("Text"), max_chars=100),
         _("Link"): st.column_config.LinkColumn(
             _("Link"), display_text="Open protocol", max_chars=30
         ),
@@ -93,15 +138,40 @@ st.dataframe(
     hide_index=True,
 )
 
-# Display decisions
-# for decision in decisions:
-#     with st.expander(f"{decision.date} - {decision.title} ({decision.group_name})"):
-#         if decision.text:
-#             st.markdown(f"**{_('Description')}:** {decision.text}")
 
-#         st.markdown(f"**{_('Group')}:** {decision.group_name}")
-#         st.markdown(f"**{_('Group ID')}:** {decision.group_id}")
-#         st.markdown(f"**{_('Protocol ID')}:** {decision.protocol_id}")
+bottom_menu = st.columns((4, 1, 1))
+with bottom_menu[2]:
+    page_size = st.selectbox("Page Size", options=[10, 25, 50, 100], key="page_size")
+with bottom_menu[1]:
+    total_pages = (
+        int(total_count / page_size) if int(total_count / page_size) > 0 else 1
+    )
+    current_page = st.number_input(
+        "Page", min_value=1, max_value=total_pages, step=1, key="current_page"
+    )
+with bottom_menu[0]:
+    st.markdown(f"Page **{current_page}** of **{total_pages}** ")
 
-#         if decision.external_link:
-#             st.markdown(f"**{_('External Link')}:** [Link]({decision.external_link})")
+# pages = split_frame(dataset, batch_size)
+# pagination.dataframe(data=pages[current_page - 1], use_container_width=True)
+
+st.divider()
+
+# XLSX Upload Section
+uploaded_file = st.file_uploader(
+    _("Upload XLSX file with previous decisions to import"), type=["xlsx"]
+)
+
+if uploaded_file is not None:
+    try:
+        created, erros = import_decisions_from_excel(uploaded_file)
+
+        if created:
+            st.success(f"Successfully imported {created} decisions!")
+        if erros:
+            st.error("Errors encountered:")
+            for error in erros:
+                st.write(f"- {error}")
+
+    except Exception as e:
+        st.error(f"Error reading file: {str(e)}")

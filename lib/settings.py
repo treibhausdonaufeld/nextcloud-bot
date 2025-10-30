@@ -114,6 +114,8 @@ class ChromaDBSettings(BaseModel):
     host: str = "localhost"
     port: int = 8800
 
+    hf_embedding_server_url: str = "http://localhost:8001/embed"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__")

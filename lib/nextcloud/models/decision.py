@@ -1,20 +1,20 @@
 from functools import cached_property, lru_cache
-from typing import List, cast
+from typing import List, Tuple, cast
 
-from chromadb.errors import NotFoundError
+from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
 from lib.chromadb import chroma_client
+from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
 from lib.nextcloud.models.collective_page import CollectivePage
+from lib.settings import settings
 
 
 @lru_cache(maxsize=1)
 def get_decision_collection():
-    name = "decisions"
-    try:
-        return chroma_client.get_collection(name=name)
-    except NotFoundError:
-        return chroma_client.create_collection(name=name)
+    ef = HuggingFaceEmbeddingServer(url=settings.chromadb.hf_embedding_server_url)
+
+    return chroma_client.get_or_create_collection("decisions", embedding_function=ef)  # type: ignore
 
 
 class Decision(CouchDBModel):
@@ -25,6 +25,9 @@ class Decision(CouchDBModel):
     page_id: int | None = None
     group_id: str = ""
     group_name: str = ""
+
+    valid_until: str = ""
+    objections: str = ""
 
     external_link: str = ""
 
@@ -49,6 +52,23 @@ class Decision(CouchDBModel):
     @classmethod
     def get_all(cls, *args, **kwargs) -> List["Decision"]:
         return cast(List[Decision], super().get_all(*args, **kwargs))
+
+    @classmethod
+    def paginate(
+        cls, limit: int, skip: int, sort: List[str | dict] = [{"updated_at": "desc"}]
+    ) -> Tuple[List["Decision"], int]:
+        db = couchdb()
+
+        lookup = {
+            "selector": {"type": cls.__name__},
+            "sort": sort,
+            "limit": limit,
+            "skip": skip,
+        }
+        response, results = db.resource.post("_find", json=lookup)
+        response.raise_for_status()
+
+        return [cls(**d) for d in results.get("docs", [])], results.get("total_rows", 0)
 
     def save(self) -> None:
         super().save()

@@ -92,11 +92,14 @@ def fetch_ocs_collective_page(page_id: int) -> OCSCollectivePage:
     resp.raise_for_status()
 
     data = resp.json()
-    page_data = data.get("ocs", {}).get("data", {})
+    page_data = data.get("ocs", {}).get("data", {}).get("page", {})
     if not page_data:
         raise RuntimeError(f"Page data for id {page_id} not found in response")
 
-    return OCSCollectivePage(**page_data)
+    page = OCSCollectivePage(**page_data)
+    page.content = fetch_page_markdown(page)
+
+    return page
 
 
 def fetch_all_pages() -> List[OCSCollectivePage]:
