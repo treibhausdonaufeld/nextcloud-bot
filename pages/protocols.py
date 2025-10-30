@@ -19,10 +19,10 @@ def display_users(user_ids: list[str]):
     names = []
     for user_id in user_ids:
         user = user_list.get_user_by_uid(user_id)
-        display_name = user_id
-        if user and user.ocs and user.ocs.display_name:
-            display_name = user.ocs.display_name
-        names.append(display_name)
+        displayname = user_id
+        if user and user.ocs and user.ocs.displayname:
+            displayname = user.ocs.displayname
+        names.append(displayname)
     return ", ".join(names)
 
 

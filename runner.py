@@ -4,11 +4,13 @@ import logging
 from lib.nextcloud.collectives_loader import (
     fetch_and_store_all_pages,
 )
-from lib.nextcloud.collectives_parser import parse_content
+from lib.nextcloud.collectives_parser import parse_groups, parse_protocols
 from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.models.decision import Decision
 
 logger = logging.getLogger(__name__)
+
+# reduce logging for httpx package to WARNING
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def main():
@@ -24,17 +26,22 @@ def main():
     #     config_page = CollectivePage(ocs=ocs_page)
     #     config_page.save()
 
-    fetch_and_store_all_pages()
+    ## Update all users from Nextcloud
+    # userlist = NCUserList()
+    # userlist.update_from_nextcloud()
 
-    for d in Decision.get_all():
-        logger.info("Existing decision: %s", d.title)
-        d.delete()
+    updated_pages = fetch_and_store_all_pages()
+    updated_pages = CollectivePage.get_all(limit=1000)
 
-    # for page in updated_pages:
-    for page in CollectivePage.get_all():
-        logger.info("Processing page: %s", page.ocs.title)
-        parse_content(page)
-        page.save()
+    # for d in Decision.get_all():
+    #     logger.info("Existing decision: %s", d.title)
+    #     d.delete()
+
+    for page in updated_pages:
+        parse_groups(page)
+
+    for page in updated_pages:
+        parse_protocols(page)
 
     # for group in Group.get_all():
     #     group.delete()
@@ -42,9 +49,6 @@ def main():
     #     p.delete()
 
     # parse_pages()
-
-    # NCUserList()
-    # userlist.update_from_nextcloud()
 
     # group = Group.get_by_name("UG IT")
     # group.update_from_page()

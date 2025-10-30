@@ -1,5 +1,5 @@
 import logging
-from typing import List, Set
+from typing import Dict, List, Set
 
 import requests
 from pydantic import BaseModel, Field
@@ -16,7 +16,6 @@ class OCSUser(BaseModel):
     email: str = ""
 
     displayname: str | None = Field(None, alias="displayname")
-    display_name: str | None = Field(None, alias="display-name")
 
     # login / metadata
     enabled: bool = True
@@ -69,7 +68,7 @@ class NCUserList:
 
     USER_LIST_URL = "/ocs/v2.php/cloud/users/details"
 
-    users: List[NCUser]
+    users: Dict[str, NCUser]
 
     def __init__(self):
         self.load_users()
@@ -79,18 +78,16 @@ class NCUserList:
 
         lookup = {
             "selector": {"type": NCUser.__name__},
+            "limit": 1000,
         }
         response, results = db.resource.post("_find", json=lookup)
         response.raise_for_status()
 
-        self.users = [NCUser(**d) for d in results.get("docs", [])]
+        self.users = {d["username"]: NCUser(**d) for d in results.get("docs", [])}
 
     def get_user_by_uid(self, uid: str) -> NCUser | None:
         """Get a user by their uid."""
-        for user in self.users:
-            if user.username == uid:
-                return user
-        return None
+        return self.users.get(uid, None)
 
     def update_from_nextcloud(self):
         response = requests.get(
@@ -127,6 +124,6 @@ class NCUserList:
 
         return user_emails
 
-    def get_all_usernames(self) -> Set[str]:
+    def get_all_usernames(self) -> List[str]:
         """Return mail addresses for all users in given list of groups"""
-        return {u.username for u in self.users}
+        return sorted(self.users.keys())

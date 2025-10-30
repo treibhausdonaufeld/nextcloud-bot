@@ -1,5 +1,5 @@
 from functools import cached_property, lru_cache
-from typing import List, Tuple, cast
+from typing import List, cast
 
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
@@ -55,12 +55,16 @@ class Decision(CouchDBModel):
 
     @classmethod
     def paginate(
-        cls, limit: int, skip: int, sort: List[str | dict] = [{"updated_at": "desc"}]
-    ) -> Tuple[List["Decision"], int]:
+        cls,
+        limit: int,
+        skip: int,
+        sort: List[str | dict] = [{"updated_at": "desc"}],
+        selector: dict | None = None,
+    ) -> List["Decision"]:
         db = couchdb()
 
         lookup = {
-            "selector": {"type": cls.__name__},
+            "selector": {"type": cls.__name__} | (selector or {}),
             "sort": sort,
             "limit": limit,
             "skip": skip,
@@ -68,7 +72,7 @@ class Decision(CouchDBModel):
         response, results = db.resource.post("_find", json=lookup)
         response.raise_for_status()
 
-        return [cls(**d) for d in results.get("docs", [])], results.get("total_rows", 0)
+        return [cls(**d) for d in results.get("docs", [])]
 
     def save(self) -> None:
         super().save()
@@ -89,3 +93,10 @@ class Decision(CouchDBModel):
                     },
                 ],
             )
+
+    def delete(self) -> None:
+        # Remove from ChromaDB collection
+        collection = get_decision_collection()
+        collection.delete(ids=[self.build_id()])
+
+        super().delete()

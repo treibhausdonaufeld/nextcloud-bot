@@ -7,9 +7,7 @@ from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.user import NCUserList
-from lib.settings import (
-    settings,
-)
+from lib.settings import settings
 from lib.streamlit_oauth import load_user_data
 
 # Streamlit app starts here
@@ -27,32 +25,35 @@ user_list.load_users()
 st.title(title)
 
 
+def display_users(title: str, user_ids: list[str]):
+    if user_ids:
+        st.write(f"**{title}:**")
+        for user_id in user_ids:
+            user = user_list.get_user_by_uid(user_id)
+            displayname = user_id
+            if user and user.ocs and user.ocs.displayname:
+                displayname = user.ocs.displayname
+            st.write(f"- {displayname}")
+
+
 def display_group(
     group: Group, user_list: NCUserList, all_groups: list[Group], level: int = 0
 ):
     """Display a group and its children."""
-    with st.expander(f"{'➡️' * level} {group.name}"):
-        st.write(f"**{_('Page ID')}:** {group.page_id}")
-
+    with st.expander(f"{'➡️' * level} {group.name}", expanded=level == 0):
         if group.parent_group:
             st.write(f"**{_('Parent Group')}:** {group.parent_group}")
 
         if group.short_names:
             st.write(f"**{_('Short Names')}:** {', '.join(group.short_names)}")
 
-        def display_users(title: str, user_ids: list[str]):
-            if user_ids:
-                st.write(f"**{title}:**")
-                for user_id in user_ids:
-                    user = user_list.get_user_by_uid(user_id)
-                    display_name = user_id
-                    if user and user.ocs and user.ocs.display_name:
-                        display_name = user.ocs.display_name
-                    st.write(f"- {display_name}")
-
-        display_users(_("Coordination"), group.coordination)
-        display_users(_("Delegates"), group.delegate)
-        display_users(_("Members"), group.members)
+        cols = st.columns(3)
+        with cols[0]:
+            display_users(_("Coordination"), group.coordination)
+        with cols[1]:
+            display_users(_("Delegates"), group.delegate)
+        with cols[2]:
+            display_users(_("Members"), group.members)
 
         children = [g for g in all_groups if g.parent_group == group.name]
         for child in children:

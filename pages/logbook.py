@@ -1,6 +1,6 @@
 import re
 from gettext import gettext as _
-from typing import List, Tuple, cast
+from typing import List, cast
 
 import streamlit as st
 from chromadb import WhereDocument
@@ -15,7 +15,7 @@ from lib.settings import (
 from lib.streamlit_oauth import load_user_data
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=10)
 def get_group_names() -> List[str]:
     group_names = [g.name for g in cast(list[Group], Group.get_all())]
     group_names.sort()
@@ -23,8 +23,10 @@ def get_group_names() -> List[str]:
 
 
 # @st.cache_data(ttl=3600)
-def get_all_decisions(limit: int, skip: int) -> Tuple[List["Decision"], int]:
-    return Decision.paginate(limit, skip, sort=[{"date": "desc"}])
+def get_all_decisions(
+    limit: int, skip: int, selector: dict | None = None
+) -> List["Decision"]:
+    return Decision.paginate(limit, skip, sort=[{"date": "desc"}], selector=selector)
 
 
 # Streamlit app starts here
@@ -46,35 +48,43 @@ selected_group = col1.selectbox(
     label=_("Filter by group"),
     options=([""] + get_group_names()),
     placeholder=_("Select a group"),
+    on_change=lambda: st.session_state.update({"current_page": 1}),
 )
 
-search_text = col2.text_input(_("Search"), "")
+search_text = col2.text_input(
+    _("Search"),
+    "",
+    on_change=lambda: st.session_state.update({"current_page": 1}),
+)
 search_type = col3.radio(
     _("Search Type"),
     options=[_("Semantic"), _("Any"), _("All"), _("Exact")],
     captions=[_("Semantic Search"), _("Any word"), _("All words"), _("Exact Match")],
     index=0,
     horizontal=True,
+    on_change=lambda: st.session_state.update({"current_page": 1}),
 )
 
 ## fetch data
 distances = []
 
 page_size = st.session_state.get("page_size", 25)
-current_page = st.session_state.get("current_page", 1)
+current_page = st.session_state.get("current_page", 0)
+if not current_page:
+    st.session_state["current_page"] = current_page = 1
 
 
-if selected_group or search_text:
+if search_text:
     decision_collection = get_decision_collection()
 
     query_kwargs = {
         "where": {"group_name": selected_group} if selected_group else None,
     }
-
     if search_type in (_("Any"), _("All"), _("Exact")):
+        where_document = None
         if search_type == _("Exact") or len(search_text.split()) <= 1:
             where_document = {"$regex": rf"(?i){re.escape(search_text)}"}
-        else:
+        elif search_text:
             condition = "$and" if search_type == _("All") else "$or"
             where_document = {
                 condition: [  # type: ignore
@@ -86,7 +96,9 @@ if selected_group or search_text:
         results = decision_collection.get(
             limit=page_size,
             offset=page_size * (current_page - 1),
-            where_document=cast(WhereDocument, where_document),
+            where_document=cast(WhereDocument, where_document)
+            if where_document
+            else None,
         )
         result_ids = results["ids"]
 
@@ -103,8 +115,10 @@ if selected_group or search_text:
     decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
     total_count = len(decisions)
 else:
-    decisions, total_count = get_all_decisions(
-        limit=page_size, skip=page_size * (current_page - 1)
+    decisions = get_all_decisions(
+        limit=page_size,
+        skip=page_size * (current_page - 1),
+        selector={"group_name": selected_group} if selected_group else None,
     )
 
 if not search_text:
@@ -138,19 +152,41 @@ st.dataframe(
     hide_index=True,
 )
 
+st.markdown("**" + _("Page") + "**: " + str(current_page))
+flex = st.container(horizontal=True, horizontal_alignment="right")
 
-bottom_menu = st.columns((4, 1, 1))
-with bottom_menu[2]:
-    page_size = st.selectbox("Page Size", options=[10, 25, 50, 100], key="page_size")
-with bottom_menu[1]:
-    total_pages = (
-        int(total_count / page_size) if int(total_count / page_size) > 0 else 1
+page_size = flex.selectbox(
+    _("Page size"), options=[10, 25, 50, 100], key="page_size", width=140
+)
+# total_pages = int(total_count / page_size) if int(total_count / page_size) > 0 else 1
+current_page = flex.number_input(
+    "Page", min_value=1, max_value=100, step=1, key="current_page", width=140
+)
+
+if current_page > 1:
+    flex.button(
+        "Previous Page",
+        on_click=lambda: st.session_state.update({"current_page": current_page - 1}),
     )
-    current_page = st.number_input(
-        "Page", min_value=1, max_value=total_pages, step=1, key="current_page"
+if len(decisions) >= page_size:
+    flex.button(
+        "Next Page",
+        on_click=lambda: st.session_state.update({"current_page": current_page + 1}),
     )
-with bottom_menu[0]:
-    st.markdown(f"Page **{current_page}** of **{total_pages}** ")
+
+
+# bottom_menu = st.columns((4, 1, 1))
+# with bottom_menu[2]:
+#     page_size = flex.selectbox("Page Size", options=[10, 25, 50, 100], key="page_size")
+# with bottom_menu[1]:
+#     total_pages = (
+#         int(total_count / page_size) if int(total_count / page_size) > 0 else 1
+#     )
+#     current_page = flex.number_input(
+#         "Page", min_value=1, max_value=total_pages, step=1, key="current_page"
+#     )
+# with bottom_menu[0]:
+#     st.markdown(f"Page **{current_page}** of **{total_pages}** ")
 
 # pages = split_frame(dataset, batch_size)
 # pagination.dataframe(data=pages[current_page - 1], use_container_width=True)

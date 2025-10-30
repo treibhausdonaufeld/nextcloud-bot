@@ -28,15 +28,13 @@ from lib.nextcloud.models.protocol import Protocol
 logger = logging.getLogger(__name__)
 
 
-def parse_content(page: CollectivePage) -> None:
+def parse_groups(page: CollectivePage) -> None:
     """Parse metadata from the markdown content."""
 
     config = bot_config or BotConfig.load_config()
 
     if not page.content or not page.ocs or not config:
         return
-
-    protocol_kws = set(config.organisation.protocol_subtype_keywords)
 
     if page.is_readme and Group.valid_name(page.title):
         page.subtype = PageSubtype.GROUP
@@ -50,7 +48,17 @@ def parse_content(page: CollectivePage) -> None:
                 pass
             group.update_from_page()
             group.save()
-    elif (
+
+
+def parse_protocols(page: CollectivePage) -> None:
+    config = bot_config or BotConfig.load_config()
+
+    if not page.content or not page.ocs or not config:
+        return
+
+    protocol_kws = set(config.organisation.protocol_subtype_keywords)
+
+    if (
         len(page.ocs.filePath.split("/")) > 1
         and (
             page.is_readme and page.ocs.filePath.split("/")[-2].lower() in protocol_kws
@@ -75,8 +83,10 @@ def parse_content(page: CollectivePage) -> None:
 
 def parse_pages() -> None:
     """Fetch all pages from CouchDB and parse their content."""
+    all_pages = cast(List[CollectivePage], CollectivePage.get_all(limit=500))
 
-    for page in cast(List[CollectivePage], CollectivePage.get_all(limit=500)):
-        parse_content(page)
-        page.save()
-        logger.info("Parsed content for page %s", page.id)
+    for page in all_pages:
+        parse_groups(page)
+
+    for page in all_pages:
+        parse_protocols(page)

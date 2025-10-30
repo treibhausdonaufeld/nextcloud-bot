@@ -119,6 +119,12 @@ class Protocol(CouchDBModel):
         if not self.page or not self.page.content:
             return
 
+        if self.date_obj and self.date_obj > datetime.now():
+            logger.info(
+                "Skipping decision extraction for future protocol %s", self.build_id()
+            )
+            return
+
         # Simple regex to find ::: success blocks
         decision_blocks = re.findall(
             r"::: success(.*?):::", self.page.content, re.DOTALL
@@ -137,6 +143,12 @@ class Protocol(CouchDBModel):
                 .strip()
             )
             text = "\n".join(lines[1:]).strip()
+
+            # always fill title
+            if not title:
+                title = text
+                text = ""
+
             decision = Decision(
                 title=title,
                 text=text,
