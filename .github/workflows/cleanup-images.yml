@@ -14,16 +14,9 @@ jobs:
       contents: read
 
     steps:
-      - name: Delete old versions of bubble-backend
+      - name: Delete old versions of nextcloud bot
         uses: actions/delete-package-versions@v5
         with:
-          package-name: 'bubble-backend'
-          package-type: 'container'
-          min-versions-to-keep: 10
-
-      - name: Delete old versions of bubble-frontend
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'bubble-frontend'
+          package-name: 'nextcloud-bot'
           package-type: 'container'
           min-versions-to-keep: 10
