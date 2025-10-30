@@ -1,6 +1,4 @@
 import logging
-import shutil
-import subprocess
 from functools import cached_property
 from pathlib import Path
 from time import time
@@ -38,7 +36,6 @@ class AvatarFetcher:
     def fetch_avatar(self, username: str):
         avatar_path_tmp = self.base_folder / f"{username}"
         avatar_path_jpg = self.base_folder / f"{username}.jpg"
-        avatar_path_dot_jpg = self.base_folder / f"{username.replace('_', '.')}.jpg"
 
         # skip if avatar_path_jpg already exists and is younger than 24 hours
         if avatar_path_jpg.exists() and (
@@ -61,13 +58,18 @@ class AvatarFetcher:
             avatar_file.write(response.content)
 
         try:
-            subprocess.check_call(
-                ["magick", str(avatar_path_tmp), str(avatar_path_jpg)]
-            )
+            with avatar_path_tmp.open("rb") as f:
+                files = {"file": (avatar_path_jpg.name, f, "image/jpeg")}
+                response = requests.post(
+                    f"{settings.imaginary_url}/convert",
+                    params={"type": "jpeg"},
+                    files=files,
+                )
+                response.raise_for_status()
 
-            # copy avatar_path_tmp to avatar_path_dot_jpg
-            shutil.copy(avatar_path_jpg, avatar_path_dot_jpg)
+            with avatar_path_jpg.open("wb") as out_file:
+                out_file.write(response.content)
 
             avatar_path_tmp.unlink()
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             logger.error("Error converting avatar image %s: %s", avatar_path_tmp, e)

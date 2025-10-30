@@ -46,6 +46,11 @@ services:
     volumes:
       - chroma-data:/chromadb
 
+  imaginary:
+    image: h2non/imaginary:latest
+    ports:
+      - '127.0.0.1:9001:9000'
+
   # chromadb-server:
   #   image: server
   #   build:

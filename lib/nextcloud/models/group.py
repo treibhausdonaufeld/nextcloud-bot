@@ -1,4 +1,5 @@
 import re
+from functools import cached_property
 from typing import List, cast
 
 from lib.couchdb import couchdb
@@ -21,6 +22,11 @@ class Group(CouchDBModel):
 
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
+
+    @cached_property
+    def all_members(self) -> List[str]:
+        """Return all members, including coordination and delegates."""
+        return sorted(set(self.coordination + self.delegate + self.members))
 
     @classmethod
     def get(cls, doc_id: str) -> "Group":

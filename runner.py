@@ -1,5 +1,6 @@
 import logging
 import time
+from datetime import datetime
 
 import click
 
@@ -35,16 +36,10 @@ def delete_all_parsed_data():
 @click.command()
 @click.option("--loop", is_flag=True, default=False, help="Run main() in a loop")
 @click.option(
-    "--interval",
-    default=300,
-    show_default=True,
-    help="Sleep interval between runs when --loop is set (in seconds)",
-)
-@click.option(
     "--update-all", is_flag=True, default=False, help="Update/re-parse all pages"
 )
-def main(loop: bool, interval: int, update_all: bool):
-    logger.info("Starting runner in loop mode (interval=%s seconds)", interval)
+def main(loop: bool, update_all: bool):
+    logger.debug("Starting runner")
 
     fetcher = MailFetcher()
 
@@ -54,8 +49,8 @@ def main(loop: bool, interval: int, update_all: bool):
         userlist.update_from_nextcloud()
 
         updated_pages = fetch_and_store_all_pages()
-        if update_all:
-            updated_pages = CollectivePage.get_all(limit=1000)
+        # if update_all:
+        updated_pages = CollectivePage.get_all(limit=1000)
 
         for page in updated_pages:
             parse_groups(page)
@@ -65,10 +60,6 @@ def main(loop: bool, interval: int, update_all: bool):
 
         config = BotConfig.load_config()
 
-        # only send reminder out of sleeping hours
-        # if not (8 < datetime.now().hour < 20):
-        #     return
-
         nc_users = NCUserList()
 
         if config.avatare.fetch_avatar:
@@ -77,10 +68,10 @@ def main(loop: bool, interval: int, update_all: bool):
         if settings.mailinglist.imap_server:
             fetcher.fetch_maildata(nc_users, config.mailer)
 
-        if config.calendar_notifier.enabled:
+        if (8 < datetime.now().hour < 20) and config.calendar_notifier.enabled:
             Notifier(config=config.calendar_notifier).notify_upcoming_events()
 
-        if config.deck_reminder.enabled:
+        if (8 < datetime.now().hour < 20) and config.deck_reminder.enabled:
             DeckReminder(config=config.deck_reminder).remind_card_due_dates()
 
         if not loop:

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
+from lib.nextcloud.models.group import Group
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ class OCSUser(BaseModel):
 class NCUser(CouchDBModel):
     # allow field population via aliases (JSON uses camelCase keys)
     model_config = {"populate_by_name": True, "extra": "ignore"}
-    ocs: OCSUser | None = None
+    ocs: OCSUser
 
     # Primary identifiers
     username: str = ""
@@ -100,7 +101,6 @@ class NCUserList:
             logger.error(
                 "User data could not be fetched, response was %s", response.text
             )
-            response.raise_for_status()
 
         for username, user_data in response.json()["ocs"]["data"]["users"].items():
             if "id" in user_data:
@@ -115,12 +115,13 @@ class NCUserList:
         """Return mail addresses for all users in given list of groups"""
         user_emails: Set[str] = set()
 
-        # for group in group_names:
-        #     user_emails |= {
-        #         u.ocs.email if u.ocs else None
-        #         for u in self.users
-        #         if group in u.ocs.groups
-        #     }
+        for name in group_names:
+            group = Group.get_by_name(name)
+            user_emails |= {
+                self.users[username].ocs.email
+                for username in group.all_members
+                if username in self.users and self.users[username].ocs
+            }
 
         return user_emails
 

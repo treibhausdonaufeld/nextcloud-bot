@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-07-31 23:07+0200\n"
+"POT-Creation-Date: 2025-10-30 22:14+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,984 +16,928 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: app.py:79
-msgid "{common_name} is open since"
-msgstr "{common_name} ist offen seit"
+#: app.py:72
+msgid "{common_name} Dashboard"
+msgstr "{common_name} Dashboard"
 
-#: app.py:83
-msgid "{common_name} is locked since"
-msgstr "{common_name} ist versperrt seit"
-
-#: app.py:99
-msgid "{days} day"
-msgstr "{days} Tag"
-
-#: app.py:99
-msgid "{days} days"
-msgstr "{days} Tage"
-
-#: app.py:127
-msgid "Battery of Nuki door lock is critical at just {battery_level} %!"
-msgstr "Batterie des Nuki Schlosses ist kritisch bei nur {battery_level} %!"
-
-#: app.py:135
-msgid "Battery of keypad is critical!"
-msgstr "Batterie des Keypads ist kritisch!"
-
-#: app.py:137
-msgid "Battery of doorsensor is critical!"
-msgstr "Batterie des Türsensors ist kritisch!"
-
-#: app.py:144
-msgid "Nuki battery level is at {battery_level} %"
-msgstr "Nuki Batterie hat {battery_level} %"
-
-#: app.py:151
-msgid "Access history"
-msgstr "Verlauf"
-
-#: app.py:152
-msgid "Show door actions"
-msgstr "Tür Aktionen anzeigen"
-
-#: app.py:171 lib/common.py:193
-msgid "Unlatch"
-msgstr "Aufgmacht"
-
-#: app.py:172 lib/common.py:192
-msgid "Lock"
-msgstr "Zugsperrt"
-
-#: app.py:173 lib/common.py:191
-msgid "Unlock"
-msgstr "Aufgsperrt"
-
-#: app.py:174 lib/common.py:199
-msgid "Door opened"
-msgstr "Tür auf"
-
-#: app.py:175 lib/common.py:200
-msgid "Door closed"
-msgstr "Tür zu"
-
-#: app.py:176 lib/common.py:194
-msgid "Lock'n'go"
-msgstr "Zu und Baba"
-
-#: app.py:177
-msgid "Keypad invalid code"
-msgstr "Keypad ungültiger Code"
-
-#: app.py:199 pages/Money_Form.py:72 pages/Shifts_List.py:42
-msgid "Date"
-msgstr "Datum"
-
-#: app.py:203 pages/Beer_Form.py:262
-msgid "Name"
-msgstr "Name"
-
-#: app.py:204
-msgid "Action"
-msgstr "Aktion"
-
-#: app.py:232
-msgid "No upcoming shifts found - please create some"
-msgstr "Keine nächsten Dienste eingetragen - bitte erstelle welche"
-
-#: app.py:239
-msgid "No primary person set for next shift on **{next_shift_date}**"
-msgstr "Keine Haupt-Person bis jetzt eingetragen für **{next_shift_date}**"
-
-#: app.py:245
-msgid "Next open day is **{date}**, which is hosted by **{primary}**"
-msgstr "Nächster offener Tag ist **{date}**, hosted von **{primary}**"
-
-#: app.py:250
-msgid " with **{secondary}**"
-msgstr " mit **{secondary}**"
-
-#: app.py:256
-msgid " and **{tertiary}**"
-msgstr " und **{tertiary}**"
-
-#: app.py:279
-msgid "{common_name} Data Dashboard"
-msgstr "{common_name} Data Dashboard"
-
-#: app.py:296
+#: app.py:119 pages/users.py:62
 msgid "Language"
 msgstr "Sprache"
 
-#: lib/common.py:195
-msgid "Lock'n'go with unlatch"
-msgstr "Lock'n'go with unlatch"
+#: lib/menu.py:22
+msgid "Home"
+msgstr "Startseite"
 
-#: lib/common.py:230
-msgid "Donations"
-msgstr "Spenden"
+#: lib/menu.py:23 pages/users.py:17
+msgid "Users"
+msgstr "Benutzer"
 
-#: lib/common.py:231
-msgid "Beer"
-msgstr "Bier"
+#: lib/menu.py:24 pages/groups.py:14
+msgid "Groups"
+msgstr "Gruppen"
 
-#: lib/common.py:232
-msgid "Tools/Stuff"
-msgstr "Werkzeug/Einrichtung"
+#: lib/menu.py:25 pages/protocols.py:43
+msgid "Protocols"
+msgstr "Protokolle"
 
-#: lib/common.py:233
-msgid "Consumables"
-msgstr "Verbrauchsmaterial"
-
-#: lib/common.py:234
-msgid "Other"
-msgstr "Anderes"
-
-#: lib/common.py:235
-msgid "Rent"
-msgstr "Miete"
-
-#: lib/common.py:396
-msgid "Start date"
-msgstr "Anfangs-Datum"
-
-#: lib/common.py:402
-msgid "End date"
-msgstr "End-Datum"
-
-#: lib/common.py:412
-msgid "Date Quickselect"
-msgstr "Zeitraum auswählen"
-
-#: lib/common.py:414
-msgid "Last 30 days"
-msgstr "Letzten 30 Tage"
-
-#: lib/common.py:415
-msgid "Last 60 days"
-msgstr "Letzten 60 Tage"
-
-#: lib/common.py:416
-msgid "Last 90 days"
-msgstr "Letzten 90 Tage"
-
-#: lib/common.py:417
-msgid "Last 180 days"
-msgstr "Letzten 180 Tage"
-
-#: lib/common.py:418
-msgid "Last 365 days"
-msgstr "Letzten 365 Tage"
-
-#: lib/common.py:419 lib/common.py:426 pages/Debts.py:192
-#: pages/Money_Analytics.py:135
-msgid "All"
-msgstr "Alle"
-
-#: lib/common.py:490
-msgid "Select a Person"
-msgstr "Person wählen"
-
-#: lib/common.py:495
-msgid ""
-"Only persons with recent activity are shown unless the checkbox is ticked"
-msgstr ""
-"Nur Personen mit kürzlicher Aktivität werden angezeigt, außer die Checkbox "
-"ist angehAakt"
-
-#: lib/common.py:545
-msgid "Sending message to Signal..."
-msgstr "Nachricht wird an Signal geschickt..."
-
-#: lib/menu.py:23
-msgid "🏠 Home"
-msgstr "🏠 Home"
-
-#: lib/menu.py:24
-msgid "💪 Shifts List"
-msgstr "💪 Dienste"
-
-#: lib/menu.py:25
-msgid "💰 Money Form"
-msgstr "💰 Geld Formular"
-
-#: lib/menu.py:26
-msgid "🍺 Beer Form"
-msgstr "🍺 Bier Formular"
+#: lib/menu.py:26 pages/logbook.py:33
+msgid "Logbook"
+msgstr "Logbuch"
 
 #: lib/menu.py:27
-msgid "💸 Debts"
-msgstr "💸 Schulden"
+msgid "Pages"
+msgstr "Seiten"
 
-#: lib/menu.py:28
-msgid "📈 Access Analytics"
-msgstr "📈 Zutritts-Analysen"
-
-#: lib/menu.py:29
-msgid "⚡ Electricity"
-msgstr "⚡ Strom"
-
-#: lib/menu.py:33
-msgid "🤑 Money Analytics"
-msgstr "🤑 Geld Analysen"
-
-#: lib/menu.py:34
-msgid "👯 Members"
-msgstr "👯 Mitglieder"
-
-#: lib/menu.py:35
-msgid "🏦 Bank Account"
-msgstr "🏦 Bank"
-
-#: lib/streamlit_oauth.py:26
+#: lib/streamlit_oauth.py:28
 msgid "Click here to Login"
 msgstr "Hier klicken für Login"
 
-#: lib/streamlit_oauth.py:37
+#: lib/streamlit_oauth.py:39
 msgid "Logout"
 msgstr "Logout"
 
-#: lib/streamlit_oauth.py:46
+#: lib/streamlit_oauth.py:48
 msgid "Logged in as {username}"
 msgstr "Eingeloggt als {username}"
 
-#: lib/streamlit_oauth.py:67
+#: lib/streamlit_oauth.py:69
 msgid ""
 "You are not authorized to view this page. Please contact the administrator."
 msgstr ""
 "You are not authorized to view this page. Please contact the administrator."
 
-#: pages/Access_Analytics.py:79
-msgid "Hour"
-msgstr "Stunde"
-
-#: pages/Access_Analytics.py:79 pages/Access_Analytics.py:102
-msgid "Open Count"
-msgstr "Anzahl Öffnungen"
-
-#: pages/Access_Analytics.py:90
-msgid "Monday"
-msgstr "Montag"
-
-#: pages/Access_Analytics.py:91
-msgid "Tuesday"
-msgstr "Dienstag"
-
-#: pages/Access_Analytics.py:92
-msgid "Wednesday"
-msgstr "Mittwoch"
-
-#: pages/Access_Analytics.py:93
-msgid "Thursday"
-msgstr "Donnerstag"
-
-#: pages/Access_Analytics.py:94
-msgid "Friday"
-msgstr "Freitag"
-
-#: pages/Access_Analytics.py:95
-msgid "Saturday"
-msgstr "Samstag"
-
-#: pages/Access_Analytics.py:96
-msgid "Sunday"
-msgstr "Sonntag"
-
-#: pages/Access_Analytics.py:102
-msgid "Weekday"
-msgstr "Wochentag"
-
-#: pages/Access_Analytics.py:141
-msgid ""
-"Who unlocked the door most often? **{top_unlocker}**, having done so "
-"**{top_unlock_count}** times."
-msgstr ""
-"**{top_unlocker}** hat am öftesten aufgesperrt: **{top_unlock_count}** mal."
-
-#: pages/Access_Analytics.py:147
-msgid "Unlock Count per Person"
-msgstr "Aufsperrungen pro Person"
-
-#: pages/Access_Analytics.py:152
-msgid "What time is {common_name} usually open?"
-msgstr "Wann ist {common_name} normalerweise offen?"
-
-#: pages/Access_Analytics.py:156
-msgid "All Actions over Time"
-msgstr "Alle Aktionen über die Zeit"
-
-#: pages/Access_Analytics.py:159
-msgid "Actions per Person"
-msgstr "Aktionen pro Person"
-
-#: pages/Access_Analytics.py:162
-msgid "Actions Over Time for {selected_name}"
-msgstr "Aktionen über Zeit von {selected_name}"
-
-#: pages/Access_Analytics.py:170
-msgid "{common_name} Nuki Analytics"
-msgstr "{common_name} Nuki Analytics"
-
-#: pages/Bank_Account.py:20
-msgid "No data found, please upload some files"
-msgstr "Keine Daten hier, bitte neue Dateien hochladen"
-
-#: pages/Bank_Account.py:24
-msgid "Balance"
-msgstr "Ergebnis"
-
-#: pages/Bank_Account.py:25
-msgid "Last booking Date"
-msgstr "Letztes Buchungsdatum"
-
-#: pages/Bank_Account.py:35
-msgid "Total Credit"
-msgstr "Gesamte Einkommen"
-
-#: pages/Bank_Account.py:38
-msgid "Total Expenses"
-msgstr "Gesamte Ausgaben"
-
-#: pages/Bank_Account.py:311
-msgid "Split by accounts/folders"
-msgstr "Aufteilen nach Konten"
-
-#: pages/Bank_Account.py:316
-msgid "Upload new bank data file(s)"
-msgstr "Neue Bank-Dateien hochladen"
-
-#: pages/Bank_Account.py:321
-msgid "Refresh bank data"
-msgstr "Bankdaten Aktualisieren"
-
-#: pages/Bank_Account.py:345
-msgid "All accounts combined"
-msgstr "Alle Konten kombiniert"
-
-#: pages/Bank_Account.py:353
-msgid "Lenkerbande Bank Analytics"
-msgstr "Lenkerbande Bank Analytik"
-
-#: pages/Bank_Data_Load.py:14
-msgid "{common_name} Bank Data Load"
-msgstr "{common_name} Bank Daten Laden"
-
-#: pages/Bank_Data_Load.py:36
-msgid "Error loading data from bank"
-msgstr "Fehler beim Laden der Bankdaten"
-
-#: pages/Bank_Data_Load.py:44
-msgid "No transactions found"
-msgstr "Keine Transaktionen gefunden"
-
-#: pages/Bank_Data_Load.py:75
-msgid "Bank data saved to disk"
-msgstr "Bank Daten gespeichert"
-
-#: pages/Bank_Data_Load.py:77
-msgid "You can close this window now"
-msgstr "Fenster kann geschlossen werden"
-
-#: pages/Beer_Form.py:134
-msgid "Following data will be sent:"
-msgstr "Folgende Daten werden geschickt:"
-
-#: pages/Beer_Form.py:137
-msgid "Start Month: "
-msgstr "Start-Monat: "
-
-#: pages/Beer_Form.py:138
-msgid "End Month: "
-msgstr "End-Monat: "
-
-#: pages/Beer_Form.py:152
-msgid "Back"
-msgstr "Zurück"
-
-#: pages/Beer_Form.py:154 pages/Money_Form.py:135
-msgid "Confirm"
-msgstr "Bestätigen"
-
-#: pages/Beer_Form.py:155
-msgid "Really send data now"
-msgstr "Daten wirklich jetzt senden"
-
-#: pages/Beer_Form.py:173
-msgid "Start Month"
-msgstr "Start-Monat"
-
-#: pages/Beer_Form.py:177
-msgid "End Month"
-msgstr "End-Monat"
-
-#: pages/Beer_Form.py:181
-msgid "Beer Price"
-msgstr "Bier Preis"
-
-#: pages/Beer_Form.py:186
-msgid "Specify amount of drinks for each person (not amount in euro)"
-msgstr "Angabe der Anzahl der Getränke pro Person (nicht Geldwert)"
-
-#: pages/Beer_Form.py:193
-msgid "Image of beer list"
-msgstr "Bild der Getränkeliste"
-
-#: pages/Beer_Form.py:194
-msgid "Picture of the original beer list"
-msgstr "Bild der originalen Getränkeliste"
-
-#: pages/Beer_Form.py:208
-msgid "Names configuration"
-msgstr "Namenskonfiguration"
-
-#: pages/Beer_Form.py:210
-msgid "Removed Names"
-msgstr "Entfernte Namen"
-
-#: pages/Beer_Form.py:214
-msgid "Additional Names"
-msgstr "Zusätzliche Namen"
-
-#: pages/Beer_Form.py:264
-msgid "Amount of Drinks"
-msgstr "Anzahl Getränke"
-
-#: pages/Beer_Form.py:274
-msgid "Send Data"
-msgstr "Daten senden"
-
-#: pages/Beer_Form.py:290
-msgid "Beer formular sent"
-msgstr "Bier-Formular abgeschickt"
-
-#: pages/Beer_Form.py:330
-msgid "Beer data successfully sent"
-msgstr "Bier-Daten erfolgreich gesendet"
-
-#: pages/Beer_Form.py:338
-msgid "{common_name} Beer Form"
-msgstr "{common_name} Bier Formular"
-
-#: pages/Debts.py:110
-msgid ""
-"Positive values mean that you owe money, which you should send to the club's "
-"account when it exceeds {max_debt} €. Negative values mean that the club "
-"owes you money."
-msgstr ""
-"Positive Beträge bedeuten, dass du Geld schuldig bist, das du überweisen "
-"solltest, wenn du über {max_debt} €  kommst. Negative Beträge bedeuten, dass "
-"du Geld zurück bekommst bzw. ein Guthaben hast."
-
-#: pages/Debts.py:118
-msgid "People who should have less debt"
-msgstr "Personen die weniger Schulden haben sollten"
-
-#: pages/Debts.py:119
-msgid "All People with debt or credit"
-msgstr "Alle Personen mit Schulden oder Guthaben"
-
-#: pages/Debts.py:120 pages/Debts.py:214
-msgid "Raw Data"
-msgstr "Rohdaten"
-
-#: pages/Debts.py:152
-msgid "Debt"
-msgstr "Schulden"
-
-#: pages/Debts.py:152 pages/Money_Analytics.py:121
-msgid "Credit"
-msgstr "Guthaben"
-
-#: pages/Debts.py:177
-msgid "Total Balance"
-msgstr "Gesamt-Ergebnis"
-
-#: pages/Debts.py:179 pages/Members.py:406
-msgid "Debts"
-msgstr "Schulden"
-
-#: pages/Debts.py:182
-msgid "Credits"
-msgstr "Einnahmen"
-
-#: pages/Debts.py:185 pages/Money_Analytics.py:128
-msgid "Money Distribution"
-msgstr "Geld Verteilung"
-
-#: pages/Debts.py:189
-msgid "Show categories"
-msgstr "Kategorien anzeigen"
-
-#: pages/Debts.py:192 pages/Debts.py:194 pages/Money_Analytics.py:135
-#: pages/Money_Analytics.py:137
-msgid "Income"
-msgstr "Einnahmen"
-
-#: pages/Debts.py:192 pages/Debts.py:196 pages/Money_Analytics.py:124
-#: pages/Money_Analytics.py:135 pages/Money_Analytics.py:139
-msgid "Expenses"
-msgstr "Ausgaben"
-
-#: pages/Debts.py:192 pages/Money_Analytics.py:135
-msgid "Filter by amount"
-msgstr "Filtern nach Betrag"
-
-#: pages/Debts.py:201 pages/Money_Analytics.py:144
-msgid "Group by"
-msgstr "Gruppieren nach"
-
-#: pages/Debts.py:202 pages/Debts.py:207 pages/Electricity.py:164
-#: pages/Money_Analytics.py:145 pages/Money_Analytics.py:150
-msgid "Week"
-msgstr "Woche"
-
-#: pages/Debts.py:202 pages/Debts.py:208 pages/Electricity.py:165
-#: pages/Money_Analytics.py:145 pages/Money_Analytics.py:151
-msgid "Month"
-msgstr "Monat"
-
-#: pages/Debts.py:202 pages/Debts.py:209 pages/Money_Analytics.py:145
-#: pages/Money_Analytics.py:152
-msgid "Quarter"
-msgstr "Quartal"
-
-#: pages/Debts.py:202 pages/Debts.py:210 pages/Money_Analytics.py:145
-#: pages/Money_Analytics.py:153
-msgid "Year"
-msgstr "Jahr"
-
-#: pages/Debts.py:214
-msgid "Aggregated"
-msgstr "Aggregiert"
-
-#: pages/Debts.py:214
-msgid "Daily Entries"
-msgstr "Genaue Einträge"
-
-#: pages/Debts.py:222 pages/Money_Analytics.py:166
-msgid "Money Distribution by Category"
-msgstr "Geld-Verteilung nach Kategorie"
-
-#: pages/Debts.py:223
-msgid "Show comments"
-msgstr "Kommentare anzeigen"
-
-#: pages/Debts.py:246
-msgid "{common_name} Debts"
-msgstr "{common_name} Schulden"
-
-#: pages/Electricity.py:20
-msgid "Electricity data file not found: {file_path}"
-msgstr "Stromdaten-Datei nicht gefunden: {file_path}"
-
-#: pages/Electricity.py:45
-msgid "Error loading electricity data: {error}"
-msgstr "Fehler beim Laden der Stromdaten: {error}"
-
-#: pages/Electricity.py:56
-msgid "Electricity Consumption Analysis"
-msgstr "Stromverbrauch-Analyse"
-
-#: pages/Electricity.py:64
-msgid "Effective price per kWh (€-cent)"
-msgstr "Effektiver Preis pro kWh (€-Cent)"
-
-#: pages/Electricity.py:66
-msgid ""
-"Energy price is 15.50 €-cent per kWh, plus 20.10 €-cent for taxes and fees."
-msgstr ""
-"Energiepreis ist 15,50 €-Cent pro kWh, plus 20,10 €-Cent für Steuern und "
-"Gebühren."
-
-#: pages/Electricity.py:80
-msgid "Start Date"
-msgstr "Anfangs-Datum"
-
-#: pages/Electricity.py:85
-msgid "End Date"
-msgstr "End-Datum"
-
-#: pages/Electricity.py:93
-msgid "No data available for the selected date range."
-msgstr "Keine Daten für den ausgewählten Zeitraum verfügbar."
-
-#: pages/Electricity.py:117
-msgid "Weekly Electricity Costs (€)"
-msgstr "Wöchentliche Stromkosten (€)"
-
-#: pages/Electricity.py:118
-msgid "Monthly Electricity Costs (€)"
-msgstr "Monatliche Stromkosten (€)"
-
-#: pages/Electricity.py:128
-msgid "Weekly Cost"
-msgstr "Wöchentliche Kosten"
-
-#: pages/Electricity.py:130
-msgid ""
-"Week: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} kWh<extra></"
-"extra>"
-msgstr ""
-"Woche: %{x}<br>Kosten: €%{y:.2f}<br>Verbrauch: %{customdata:.2f} kWh<extra></"
-"extra>"
-
-#: pages/Electricity.py:144
-msgid "Monthly Cost"
-msgstr "Monatliche Kosten"
-
-#: pages/Electricity.py:146
-msgid ""
-"Month: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} kWh<extra></"
-"extra>"
-msgstr ""
-"Monat: %{x}<br>Kosten: €%{y:.2f}<br>Verbrauch: %{customdata:.2f} kWh<extra></"
-"extra>"
-
-#: pages/Electricity.py:159
-msgid "Electricity Cost Overview"
-msgstr "Stromkosten-Übersicht"
-
-#: pages/Electricity.py:166 pages/Electricity.py:167
-msgid "Cost (€)"
-msgstr "Kosten (€)"
-
-#: pages/Electricity.py:185
-msgid "Total Cost"
-msgstr "Gesamtkosten"
-
-#: pages/Electricity.py:190
-msgid "Average Daily Cost"
-msgstr "Durchschnittliche Tageskosten"
-
-#: pages/Electricity.py:200
-msgid "Average Weekly Cost"
-msgstr "Durchschnittliche Wochenkosten"
-
-#: pages/Electricity.py:210
-msgid "Average Monthly Cost"
-msgstr "Durchschnittliche Monatskosten"
-
-#: pages/Electricity.py:216
-msgid "Show raw data"
-msgstr "Rohdaten anzeigen"
-
-#: pages/Electricity.py:217
-msgid "Raw Electricity Data"
-msgstr "Rohe Stromdaten"
-
-#: pages/Electricity.py:225
-msgid "{common_name} Electricity"
-msgstr "{common_name} Strom"
-
-#: pages/Members.py:47
-msgid "No data available"
-msgstr "Keine Daten vorhanden"
-
-#: pages/Members.py:274
-msgid "Statistics from {start_date} to {end_date} ({days} days)"
-msgstr "Statistiken von {start_date} bis {end_date} ({days} Tage)"
-
-#: pages/Members.py:282
-msgid "Reset all weights to zero"
-msgstr "Alle Gewichte auf null zurücksetzen"
-
-#: pages/Members.py:292
-msgid "Debug user"
-msgstr "Debug Benutzer"
-
-#: pages/Members.py:295
-msgid "Select a user to debug their payments"
-msgstr "Benutzer auswählen, um deren Zahlungen zu debuggen"
-
-#: pages/Members.py:301
-msgid "Debug payments for {debug_user}"
-msgstr "Debug Zahlungen für {debug_user}"
-
-#: pages/Members.py:312
-msgid "Shift weight"
-msgstr "Dienst-Gewichtung"
-
-#: pages/Members.py:317
-msgid "Value to multiply the number of shifts"
-msgstr "Wert zum Multiplizieren der Anzahl der Dienste"
-
-#: pages/Members.py:321
-msgid "Unlock weight"
-msgstr "Aufsperr-Gewichtung"
-
-#: pages/Members.py:327
-msgid "Value to multiply the number of unlocks"
-msgstr "Wert zum Multiplizieren der Anzahl der Aufsperrungen"
-
-#: pages/Members.py:331
-msgid "Debt weight"
-msgstr "Schulden-Gewichtung"
-
-#: pages/Members.py:337
-msgid "Value to multiply the money take from the box"
-msgstr "Wert zum Multiplizieren des aus der Kasse genommenen Geldes"
-
-#: pages/Members.py:341
-msgid "Shop weight"
-msgstr "Einkaufs-Gewichtung"
-
-#: pages/Members.py:347
-msgid "Value to multiply the money people bought stuff for the club"
-msgstr "Wert zum Multiplizieren des Geldes, das Leute für den Verein ausgegeben haben"
-
-#: pages/Members.py:395
-msgid "Member contribution statistics"
-msgstr "Mitglieder-Beitrags-Statistiken"
-
-#: pages/Members.py:402
-msgid "Monthly payments"
-msgstr "Monatliche Zahlungen"
-
-#: pages/Members.py:403
-msgid "Shifts"
-msgstr "Dienste"
-
-#: pages/Members.py:404
-msgid "Unlocks"
-msgstr "Aufsperrungen"
-
-#: pages/Members.py:405
-msgid "Shop"
-msgstr "Einkäufe"
-
-#: pages/Members.py:446
-msgid "Total refunds"
-msgstr "Gesamte Rückerstattungen"
-
-#: pages/Members.py:448
-msgid "Total amount of refunds for all members"
-msgstr "Gesamtbetrag der Rückerstattungen für alle Mitglieder"
-
-#: pages/Members.py:451
-msgid "Contribution statistics details"
-msgstr "Details der Beitrags-Statistiken"
-
-#: pages/Members.py:454
-msgid "Regular paying members"
-msgstr "Regelmäßig zahlende Mitglieder"
-
-#: pages/Members.py:458
-msgid "No recent regular paying members found"
-msgstr "Keine kürzlich regelmäßig zahlenden Mitglieder gefunden"
-
-#: pages/Members.py:460
-msgid "Irregular or non paying members"
-msgstr "Unregelmäßig oder nicht zahlende Mitglieder"
-
-#: pages/Members.py:464
-msgid "No irregular or non paying members found"
-msgstr "Keine unregelmäßig oder nicht zahlenden Mitglieder gefunden"
-
-#: pages/Members.py:467
-msgid "Leftover nuki accounts"
-msgstr "Übrig gebliebene Nuki-Konten"
-
-#: pages/Members.py:489
-msgid "Total members"
-msgstr "Gesamte Mitglieder"
-
-#: pages/Members.py:491
-msgid "Number regular paying"
-msgstr "Anzahl regelmäßig zahlend"
-
-#: pages/Members.py:493
-msgid "Members who have made a payment in the last 90 days"
-msgstr "Mitglieder, die in den letzten 90 Tage gezahlt haben"
-
-#: pages/Members.py:496
-msgid "Monthly member payments"
-msgstr "Monatliche Mitgliedschaftsbeiträge"
-
-#: pages/Members.py:500
-msgid "Last data entry"
-msgstr "Letzer Datenpunkt"
-
-#: pages/Members.py:509 pages/Members.py:540
-msgid "Last Payment"
-msgstr "Letzte Zahlung"
-
-#: pages/Members.py:510 pages/Members.py:541
-msgid "Days since the last payment"
-msgstr "Tage seit der letzten Zahlung"
-
-#: pages/Members.py:516 pages/Members.py:547 pages/Money_Form.py:76
-msgid "Amount"
-msgstr "Betrag"
-
-#: pages/Members.py:522 pages/Members.py:553
-msgid "Last Nuki use"
-msgstr "Letzte Nuki-Nutzung"
-
-#: pages/Members.py:564
-msgid "Repayment checks"
-msgstr "Rückzahlungs-Prüfungen"
-
-#: pages/Members.py:611
-msgid "{common_name} Members"
-msgstr "{common_name} Mitglieder"
-
-#: pages/Money_Analytics.py:108
-msgid "Select Categories"
-msgstr "Kategorien wählen"
-
-#: pages/Money_Analytics.py:126
-msgid "Result"
-msgstr "Ergebnis"
-
-#: pages/Money_Analytics.py:132
-msgid "Show positive/negative"
-msgstr "Positiv/Negativ anzeigen"
-
-#: pages/Money_Analytics.py:177
-msgid "Credits by Name"
-msgstr "Einnahmen pro Name"
-
-#: pages/Money_Analytics.py:188
-msgid "Expenses by Name"
-msgstr "Ausgaben pro Name"
-
-#: pages/Money_Analytics.py:263
-msgid "{common_name} Money Analytics"
-msgstr "{common_name} Geld Analytics"
-
-#: pages/Money_Form.py:13
-msgid "takes"
-msgstr "nimmt"
-
-#: pages/Money_Form.py:16
-msgid "paid back"
-msgstr "zahlt zurück"
-
-#: pages/Money_Form.py:18
-msgid "gets back"
-msgstr "bekommt zurück"
-
-#: pages/Money_Form.py:22
-msgid "for"
-msgstr "für"
-
-#: pages/Money_Form.py:24
-msgid "comment"
-msgstr "Kommentar"
-
-#: pages/Money_Form.py:43
-msgid ""
-"Please always use this formular whenever you take money with you, when you "
-"get money back because you bought something or when you pay back your debts."
-msgstr ""
-"Bitte immer dieses Formular verwenden, wenn du Geld mitgenommen hast oder "
-"wenn du Geld zurück bekommst, weil du etwas gekauft hast oder deine Schulden "
-"zurück gezahlt hast."
-
-#: pages/Money_Form.py:50
-msgid "Take money or pay money?"
-msgstr "Geld genommen oder gezahlt?"
-
-#: pages/Money_Form.py:53
-msgid "I took money or things with me"
-msgstr "Ich habe Geld oder Dinge mitgenommen"
-
-#: pages/Money_Form.py:54
-msgid "I bought something"
-msgstr "Ich hab was gekauft und will eine Gutschrift dafür"
-
-#: pages/Money_Form.py:55
-msgid "I pay back my debts"
-msgstr "Ich zahle Schulden zurück"
-
-#: pages/Money_Form.py:58
-msgid ""
-"Select if amount is considered positive (=Debt) or negative (=Credit) on "
-"behalf of your account"
-msgstr ""
-"Auswählen, ob Betrag als positiver Wert (=Schulden) oder negativer Wert "
-"(=Guthaben) gesehen wird"
-
-#: pages/Money_Form.py:77
-msgid "Just positive amounts here, round up in case of cents"
-msgstr "Nur positive Beträge hier, Aufrunden bei Cents"
-
-#: pages/Money_Form.py:86 pages/Money_Form.py:89
-msgid "Select category"
-msgstr "Kategorie wählen"
-
-#: pages/Money_Form.py:91
-msgid "If you select Other, please specify details in comment field"
-msgstr "Wenn Andere ausgewählt, bitte im Kommentar Details anführen"
-
-#: pages/Money_Form.py:97
-msgid "Comment"
-msgstr "Kommentar"
-
-#: pages/Money_Form.py:98
-msgid "Please just fill out if really something useful to document"
-msgstr "Bitte nur ausfüllen, wenn wirklich nützlich"
-
-#: pages/Money_Form.py:101
-msgid "Send"
-msgstr "Abschicken"
-
-#: pages/Money_Form.py:104
-msgid "Please fill out the amount field"
-msgstr "Bitte das Betragsfeld ausfüllen"
-
-#: pages/Money_Form.py:124
-msgid "increased"
-msgstr "erhöht"
-
-#: pages/Money_Form.py:126
-msgid "decreased"
-msgstr "verringert"
-
-#: pages/Money_Form.py:128
-msgid "You are about to send following entry: "
-msgstr "Du bist dabei folgenden Eintrag abzuschicken: "
-
-#: pages/Money_Form.py:131
-msgid "This means your debts will be **{change_verb}** by this amount."
-msgstr ""
-"Das bedeutet, deine Schulden werden um diesen Betrag **{change_verb}**."
-
-#: pages/Money_Form.py:139
-msgid "{common_name} Money Form"
-msgstr "{common_name} Geld Formular"
-
-#: pages/Money_Form.py:148
-msgid "Entry successfully saved"
-msgstr "Eintrag erfolgreich gespeichert"
-
-#: pages/Money_Form.py:152
-msgid "New entry"
-msgstr "Neuer Eintrag"
-
-#: pages/Shifts_List.py:43
-msgid "Day of shift"
-msgstr "Tag des Diensts"
-
-#: pages/Shifts_List.py:48
-msgid "Primary"
-msgstr "1."
-
-#: pages/Shifts_List.py:52
-msgid "Secondary"
-msgstr "2."
-
-#: pages/Shifts_List.py:56
-msgid "Tertiary"
-msgstr "3."
-
-#: pages/Shifts_List.py:66
-msgid "Save"
-msgstr "Speichern"
-
-#: pages/Shifts_List.py:69
-msgid "Add month"
-msgstr "Monat hinzufügen"
-
-#: pages/Shifts_List.py:108
-msgid "{common_name} Shifts List"
-msgstr "{common_name} Dienste Liste"
+#: pages/collective_pages.py:14
+msgid "Collective Pages"
+msgstr "Collective-Seiten"
+
+#: pages/collective_pages.py:32
+msgid "Search filePath"
+msgstr "Dateipfad suchen"
+
+#: pages/collective_pages.py:42
+msgid "ID"
+msgstr "ID"
+
+#: pages/collective_pages.py:43 pages/logbook.py:130
+msgid "Title"
+msgstr "Titel"
+
+#: pages/collective_pages.py:44
+msgid "filePath"
+msgstr "Dateipfad"
+
+#: pages/collective_pages.py:45
+msgid "collectivePath"
+msgstr "Collective-Pfad"
+
+#: pages/collective_pages.py:46
+msgid "is_readme"
+msgstr "Ist Readme"
+
+#: pages/collective_pages.py:47 pages/collective_pages.py:54
+#: pages/collective_pages.py:55
+msgid "URL"
+msgstr "URL"
+
+#: pages/collective_pages.py:48
+msgid "Timestamp"
+msgstr "Zeitstempel"
+
+#: pages/groups.py:44
+msgid "Parent Group"
+msgstr "Übergeordnete Gruppe"
+
+#: pages/groups.py:47
+msgid "Short Names"
+msgstr "Kurzbezeichnungen"
+
+#: pages/groups.py:51
+msgid "Coordination"
+msgstr "Koordination"
+
+#: pages/groups.py:53
+msgid "Delegates"
+msgstr "Delegierte"
+
+#: pages/groups.py:55
+msgid "Members"
+msgstr "Mitglieder"
+
+#: pages/logbook.py:48 pages/protocols.py:64
+msgid "Filter by group"
+msgstr "Nach Gruppe filtern"
+
+#: pages/logbook.py:50 pages/protocols.py:66
+msgid "Select a group"
+msgstr "Gruppe auswählen"
+
+#: pages/logbook.py:55
+msgid "Search"
+msgstr "Suchen"
+
+#: pages/logbook.py:60
+msgid "Search Type"
+msgstr "Suchtyp"
+
+#: pages/logbook.py:61 pages/logbook.py:83
+msgid "Any"
+msgstr "Beliebig"
+
+#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:85
+msgid "Exact"
+msgstr "Exakt"
+
+#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:88
+msgid "All"
+msgstr "Alle"
+
+#: pages/logbook.py:61 pages/logbook.py:105
+msgid "Semantic"
+msgstr "Semantisch"
+
+#: pages/logbook.py:62
+msgid "All words"
+msgstr "Alle Wörter"
+
+#: pages/logbook.py:62
+msgid "Any word"
+msgstr "Beliebiges Wort"
+
+#: pages/logbook.py:62
+msgid "Exact Match"
+msgstr "Exakte Übereinstimmung"
+
+#: pages/logbook.py:62
+msgid "Semantic Search"
+msgstr "Semantische Suche"
+
+#: pages/logbook.py:129 pages/logbook.py:143 pages/logbook.py:144
+msgid "Date"
+msgstr "Datum"
+
+#: pages/logbook.py:131 pages/logbook.py:147
+msgid "Text"
+msgstr "Text"
+
+#: pages/logbook.py:132
+msgid "Valid Until"
+msgstr "Gültig bis"
+
+#: pages/logbook.py:133
+msgid "Group"
+msgstr "Gruppe"
+
+#: pages/logbook.py:134
+msgid "Objections"
+msgstr "Einwände"
+
+#: pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
+#: pages/protocols.py:103
+msgid "Link"
+msgstr "Link"
+
+#: pages/logbook.py:138
+msgid "Distance"
+msgstr "Distanz"
+
+#: pages/logbook.py:155
+msgid "Page"
+msgstr "Seite"
+
+#: pages/logbook.py:159
+msgid "Page size"
+msgstr "Seitengröße"
+
+#: pages/logbook.py:198
+msgid "Upload XLSX file with previous decisions to import"
+msgstr "XLSX-Datei mit Entscheidungen zum Import hochladen"
+
+#: pages/protocols.py:69
+msgid "Search protocols"
+msgstr "Protokolle durchsuchen"
+
+#: pages/protocols.py:105
+msgid "Path"
+msgstr "Pfad"
+
+#: pages/protocols.py:107
+msgid "Moderated by"
+msgstr "Moderiert von"
+
+#: pages/protocols.py:109
+msgid "Protocol by"
+msgstr "Protokolliert von"
+
+#: pages/protocols.py:111
+msgid "Participants"
+msgstr "Teilnehmer"
+
+#: pages/users.py:29
+msgid "Users and their mentioned pages"
+msgstr "Benutzer und ihre erwähnten Seiten"
+
+#: pages/users.py:39
+msgid "All users in Nextcloud"
+msgstr "Alle Nutzer in Nextcloud"
+
+#: pages/users.py:42
+msgid "Pages mentioned by user"
+msgstr "Vom Benutzer erwähnte Seiten"
+
+#~ msgid "{common_name} is open since"
+#~ msgstr "{common_name} ist offen seit"
+
+#~ msgid "{common_name} is locked since"
+#~ msgstr "{common_name} ist versperrt seit"
+
+#~ msgid "{days} day"
+#~ msgstr "{days} Tag"
+
+#~ msgid "{days} days"
+#~ msgstr "{days} Tage"
+
+#~ msgid "Battery of Nuki door lock is critical at just {battery_level} %!"
+#~ msgstr "Batterie des Nuki Schlosses ist kritisch bei nur {battery_level} %!"
+
+#~ msgid "Battery of keypad is critical!"
+#~ msgstr "Batterie des Keypads ist kritisch!"
+
+#~ msgid "Battery of doorsensor is critical!"
+#~ msgstr "Batterie des Türsensors ist kritisch!"
+
+#~ msgid "Nuki battery level is at {battery_level} %"
+#~ msgstr "Nuki Batterie hat {battery_level} %"
+
+#~ msgid "Access history"
+#~ msgstr "Verlauf"
+
+#~ msgid "Show door actions"
+#~ msgstr "Tür Aktionen anzeigen"
+
+#~ msgid "Unlatch"
+#~ msgstr "Aufgmacht"
+
+#~ msgid "Lock"
+#~ msgstr "Zugsperrt"
+
+#~ msgid "Unlock"
+#~ msgstr "Aufgsperrt"
+
+#~ msgid "Door opened"
+#~ msgstr "Tür auf"
+
+#~ msgid "Door closed"
+#~ msgstr "Tür zu"
+
+#~ msgid "Lock'n'go"
+#~ msgstr "Zu und Baba"
+
+#~ msgid "Keypad invalid code"
+#~ msgstr "Keypad ungültiger Code"
+
+#~ msgid "Name"
+#~ msgstr "Name"
+
+#~ msgid "No upcoming shifts found - please create some"
+#~ msgstr "Keine nächsten Dienste eingetragen - bitte erstelle welche"
+
+#~ msgid "No primary person set for next shift on **{next_shift_date}**"
+#~ msgstr "Keine Haupt-Person bis jetzt eingetragen für **{next_shift_date}**"
+
+#~ msgid "Next open day is **{date}**, which is hosted by **{primary}**"
+#~ msgstr "Nächster offener Tag ist **{date}**, hosted von **{primary}**"
+
+#~ msgid " with **{secondary}**"
+#~ msgstr " mit **{secondary}**"
+
+#~ msgid " and **{tertiary}**"
+#~ msgstr " und **{tertiary}**"
+
+#~ msgid "Lock'n'go with unlatch"
+#~ msgstr "Lock'n'go with unlatch"
+
+#~ msgid "Beer"
+#~ msgstr "Bier"
+
+#~ msgid "Tools/Stuff"
+#~ msgstr "Werkzeug/Einrichtung"
+
+#~ msgid "Consumables"
+#~ msgstr "Verbrauchsmaterial"
+
+#~ msgid "Other"
+#~ msgstr "Anderes"
+
+#~ msgid "Rent"
+#~ msgstr "Miete"
+
+#~ msgid "Start date"
+#~ msgstr "Anfangs-Datum"
+
+#~ msgid "End date"
+#~ msgstr "End-Datum"
+
+#~ msgid "Date Quickselect"
+#~ msgstr "Zeitraum auswählen"
+
+#~ msgid "Last 30 days"
+#~ msgstr "Letzten 30 Tage"
+
+#~ msgid "Last 60 days"
+#~ msgstr "Letzten 60 Tage"
+
+#~ msgid "Last 90 days"
+#~ msgstr "Letzten 90 Tage"
+
+#~ msgid "Last 180 days"
+#~ msgstr "Letzten 180 Tage"
+
+#~ msgid "Last 365 days"
+#~ msgstr "Letzten 365 Tage"
+
+#~ msgid ""
+#~ "Only persons with recent activity are shown unless the checkbox is ticked"
+#~ msgstr ""
+#~ "Nur Personen mit kürzlicher Aktivität werden angezeigt, außer die "
+#~ "Checkbox ist angehAakt"
+
+#~ msgid "Sending message to Signal..."
+#~ msgstr "Nachricht wird an Signal geschickt..."
+
+#~ msgid "💪 Shifts List"
+#~ msgstr "💪 Dienste"
+
+#~ msgid "💰 Money Form"
+#~ msgstr "💰 Geld Formular"
+
+#~ msgid "🍺 Beer Form"
+#~ msgstr "🍺 Bier Formular"
+
+#~ msgid "💸 Debts"
+#~ msgstr "💸 Schulden"
+
+#~ msgid "📈 Access Analytics"
+#~ msgstr "📈 Zutritts-Analysen"
+
+#~ msgid "⚡ Electricity"
+#~ msgstr "⚡ Strom"
+
+#~ msgid "🤑 Money Analytics"
+#~ msgstr "🤑 Geld Analysen"
+
+#~ msgid "🏦 Bank Account"
+#~ msgstr "🏦 Bank"
+
+#~ msgid "Hour"
+#~ msgstr "Stunde"
+
+#~ msgid "Open Count"
+#~ msgstr "Anzahl Öffnungen"
+
+#~ msgid "Monday"
+#~ msgstr "Montag"
+
+#~ msgid "Tuesday"
+#~ msgstr "Dienstag"
+
+#~ msgid "Wednesday"
+#~ msgstr "Mittwoch"
+
+#~ msgid "Thursday"
+#~ msgstr "Donnerstag"
+
+#~ msgid "Friday"
+#~ msgstr "Freitag"
+
+#~ msgid "Saturday"
+#~ msgstr "Samstag"
+
+#~ msgid "Sunday"
+#~ msgstr "Sonntag"
+
+#~ msgid "Weekday"
+#~ msgstr "Wochentag"
+
+#~ msgid ""
+#~ "Who unlocked the door most often? **{top_unlocker}**, having done so "
+#~ "**{top_unlock_count}** times."
+#~ msgstr ""
+#~ "**{top_unlocker}** hat am öftesten aufgesperrt: **{top_unlock_count}** "
+#~ "mal."
+
+#~ msgid "Unlock Count per Person"
+#~ msgstr "Aufsperrungen pro Person"
+
+#~ msgid "What time is {common_name} usually open?"
+#~ msgstr "Wann ist {common_name} normalerweise offen?"
+
+#~ msgid "All Actions over Time"
+#~ msgstr "Alle Aktionen über die Zeit"
+
+#~ msgid "Actions per Person"
+#~ msgstr "Aktionen pro Person"
+
+#~ msgid "Actions Over Time for {selected_name}"
+#~ msgstr "Aktionen über Zeit von {selected_name}"
+
+#~ msgid "{common_name} Nuki Analytics"
+#~ msgstr "{common_name} Nuki Analytics"
+
+#~ msgid "No data found, please upload some files"
+#~ msgstr "Keine Daten hier, bitte neue Dateien hochladen"
+
+#~ msgid "Balance"
+#~ msgstr "Ergebnis"
+
+#~ msgid "Last booking Date"
+#~ msgstr "Letztes Buchungsdatum"
+
+#~ msgid "Total Credit"
+#~ msgstr "Gesamte Einkommen"
+
+#~ msgid "Total Expenses"
+#~ msgstr "Gesamte Ausgaben"
+
+#~ msgid "Split by accounts/folders"
+#~ msgstr "Aufteilen nach Konten"
+
+#~ msgid "Upload new bank data file(s)"
+#~ msgstr "Neue Bank-Dateien hochladen"
+
+#~ msgid "Refresh bank data"
+#~ msgstr "Bankdaten Aktualisieren"
+
+#~ msgid "All accounts combined"
+#~ msgstr "Alle Konten kombiniert"
+
+#~ msgid "Lenkerbande Bank Analytics"
+#~ msgstr "Lenkerbande Bank Analytik"
+
+#~ msgid "{common_name} Bank Data Load"
+#~ msgstr "{common_name} Bank Daten Laden"
+
+#~ msgid "Error loading data from bank"
+#~ msgstr "Fehler beim Laden der Bankdaten"
+
+#~ msgid "No transactions found"
+#~ msgstr "Keine Transaktionen gefunden"
+
+#~ msgid "Bank data saved to disk"
+#~ msgstr "Bank Daten gespeichert"
+
+#~ msgid "You can close this window now"
+#~ msgstr "Fenster kann geschlossen werden"
+
+#~ msgid "Following data will be sent:"
+#~ msgstr "Folgende Daten werden geschickt:"
+
+#~ msgid "Start Month: "
+#~ msgstr "Start-Monat: "
+
+#~ msgid "End Month: "
+#~ msgstr "End-Monat: "
+
+#~ msgid "Back"
+#~ msgstr "Zurück"
+
+#~ msgid "Confirm"
+#~ msgstr "Bestätigen"
+
+#~ msgid "Really send data now"
+#~ msgstr "Daten wirklich jetzt senden"
+
+#~ msgid "Start Month"
+#~ msgstr "Start-Monat"
+
+#~ msgid "End Month"
+#~ msgstr "End-Monat"
+
+#~ msgid "Beer Price"
+#~ msgstr "Bier Preis"
+
+#~ msgid "Specify amount of drinks for each person (not amount in euro)"
+#~ msgstr "Angabe der Anzahl der Getränke pro Person (nicht Geldwert)"
+
+#~ msgid "Image of beer list"
+#~ msgstr "Bild der Getränkeliste"
+
+#~ msgid "Picture of the original beer list"
+#~ msgstr "Bild der originalen Getränkeliste"
+
+#~ msgid "Names configuration"
+#~ msgstr "Namenskonfiguration"
+
+#~ msgid "Removed Names"
+#~ msgstr "Entfernte Namen"
+
+#~ msgid "Additional Names"
+#~ msgstr "Zusätzliche Namen"
+
+#~ msgid "Amount of Drinks"
+#~ msgstr "Anzahl Getränke"
+
+#~ msgid "Send Data"
+#~ msgstr "Daten senden"
+
+#~ msgid "Beer formular sent"
+#~ msgstr "Bier-Formular abgeschickt"
+
+#~ msgid "Beer data successfully sent"
+#~ msgstr "Bier-Daten erfolgreich gesendet"
+
+#~ msgid "{common_name} Beer Form"
+#~ msgstr "{common_name} Bier Formular"
+
+#~ msgid ""
+#~ "Positive values mean that you owe money, which you should send to the "
+#~ "club's account when it exceeds {max_debt} €. Negative values mean that "
+#~ "the club owes you money."
+#~ msgstr ""
+#~ "Positive Beträge bedeuten, dass du Geld schuldig bist, das du überweisen "
+#~ "solltest, wenn du über {max_debt} €  kommst. Negative Beträge bedeuten, "
+#~ "dass du Geld zurück bekommst bzw. ein Guthaben hast."
+
+#~ msgid "People who should have less debt"
+#~ msgstr "Personen die weniger Schulden haben sollten"
+
+#~ msgid "All People with debt or credit"
+#~ msgstr "Alle Personen mit Schulden oder Guthaben"
+
+#~ msgid "Raw Data"
+#~ msgstr "Rohdaten"
+
+#~ msgid "Debt"
+#~ msgstr "Schulden"
+
+#~ msgid "Credit"
+#~ msgstr "Guthaben"
+
+#~ msgid "Total Balance"
+#~ msgstr "Gesamt-Ergebnis"
+
+#~ msgid "Debts"
+#~ msgstr "Schulden"
+
+#~ msgid "Credits"
+#~ msgstr "Einnahmen"
+
+#~ msgid "Money Distribution"
+#~ msgstr "Geld Verteilung"
+
+#~ msgid "Show categories"
+#~ msgstr "Kategorien anzeigen"
+
+#~ msgid "Income"
+#~ msgstr "Einnahmen"
+
+#~ msgid "Expenses"
+#~ msgstr "Ausgaben"
+
+#~ msgid "Week"
+#~ msgstr "Woche"
+
+#~ msgid "Month"
+#~ msgstr "Monat"
+
+#~ msgid "Quarter"
+#~ msgstr "Quartal"
+
+#~ msgid "Year"
+#~ msgstr "Jahr"
+
+#~ msgid "Aggregated"
+#~ msgstr "Aggregiert"
+
+#~ msgid "Daily Entries"
+#~ msgstr "Genaue Einträge"
+
+#~ msgid "Money Distribution by Category"
+#~ msgstr "Geld-Verteilung nach Kategorie"
+
+#~ msgid "Show comments"
+#~ msgstr "Kommentare anzeigen"
+
+#~ msgid "{common_name} Debts"
+#~ msgstr "{common_name} Schulden"
+
+#~ msgid "Electricity data file not found: {file_path}"
+#~ msgstr "Stromdaten-Datei nicht gefunden: {file_path}"
+
+#~ msgid "Error loading electricity data: {error}"
+#~ msgstr "Fehler beim Laden der Stromdaten: {error}"
+
+#~ msgid "Electricity Consumption Analysis"
+#~ msgstr "Stromverbrauch-Analyse"
+
+#~ msgid "Effective price per kWh (€-cent)"
+#~ msgstr "Effektiver Preis pro kWh (€-Cent)"
+
+#~ msgid ""
+#~ "Energy price is 15.50 €-cent per kWh, plus 20.10 €-cent for taxes and "
+#~ "fees."
+#~ msgstr ""
+#~ "Energiepreis ist 15,50 €-Cent pro kWh, plus 20,10 €-Cent für Steuern und "
+#~ "Gebühren."
+
+#~ msgid "Start Date"
+#~ msgstr "Anfangs-Datum"
+
+#~ msgid "End Date"
+#~ msgstr "End-Datum"
+
+#~ msgid "No data available for the selected date range."
+#~ msgstr "Keine Daten für den ausgewählten Zeitraum verfügbar."
+
+#~ msgid "Weekly Electricity Costs (€)"
+#~ msgstr "Wöchentliche Stromkosten (€)"
+
+#~ msgid "Monthly Electricity Costs (€)"
+#~ msgstr "Monatliche Stromkosten (€)"
+
+#~ msgid "Weekly Cost"
+#~ msgstr "Wöchentliche Kosten"
+
+#~ msgid ""
+#~ "Week: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} "
+#~ "kWh<extra></extra>"
+#~ msgstr ""
+#~ "Woche: %{x}<br>Kosten: €%{y:.2f}<br>Verbrauch: %{customdata:.2f} "
+#~ "kWh<extra></extra>"
+
+#~ msgid "Monthly Cost"
+#~ msgstr "Monatliche Kosten"
+
+#~ msgid ""
+#~ "Month: %{x}<br>Cost: €%{y:.2f}<br>Consumption: %{customdata:.2f} "
+#~ "kWh<extra></extra>"
+#~ msgstr ""
+#~ "Monat: %{x}<br>Kosten: €%{y:.2f}<br>Verbrauch: %{customdata:.2f} "
+#~ "kWh<extra></extra>"
+
+#~ msgid "Electricity Cost Overview"
+#~ msgstr "Stromkosten-Übersicht"
+
+#~ msgid "Cost (€)"
+#~ msgstr "Kosten (€)"
+
+#~ msgid "Total Cost"
+#~ msgstr "Gesamtkosten"
+
+#~ msgid "Average Daily Cost"
+#~ msgstr "Durchschnittliche Tageskosten"
+
+#~ msgid "Average Weekly Cost"
+#~ msgstr "Durchschnittliche Wochenkosten"
+
+#~ msgid "Average Monthly Cost"
+#~ msgstr "Durchschnittliche Monatskosten"
+
+#~ msgid "Show raw data"
+#~ msgstr "Rohdaten anzeigen"
+
+#~ msgid "Raw Electricity Data"
+#~ msgstr "Rohe Stromdaten"
+
+#~ msgid "{common_name} Electricity"
+#~ msgstr "{common_name} Strom"
+
+#~ msgid "No data available"
+#~ msgstr "Keine Daten vorhanden"
+
+#~ msgid "Statistics from {start_date} to {end_date} ({days} days)"
+#~ msgstr "Statistiken von {start_date} bis {end_date} ({days} Tage)"
+
+#~ msgid "Reset all weights to zero"
+#~ msgstr "Alle Gewichte auf null zurücksetzen"
+
+#~ msgid "Debug user"
+#~ msgstr "Debug Benutzer"
+
+#~ msgid "Select a user to debug their payments"
+#~ msgstr "Benutzer auswählen, um deren Zahlungen zu debuggen"
+
+#~ msgid "Debug payments for {debug_user}"
+#~ msgstr "Debug Zahlungen für {debug_user}"
+
+#~ msgid "Shift weight"
+#~ msgstr "Dienst-Gewichtung"
+
+#~ msgid "Value to multiply the number of shifts"
+#~ msgstr "Wert zum Multiplizieren der Anzahl der Dienste"
+
+#~ msgid "Unlock weight"
+#~ msgstr "Aufsperr-Gewichtung"
+
+#~ msgid "Value to multiply the number of unlocks"
+#~ msgstr "Wert zum Multiplizieren der Anzahl der Aufsperrungen"
+
+#~ msgid "Debt weight"
+#~ msgstr "Schulden-Gewichtung"
+
+#~ msgid "Value to multiply the money take from the box"
+#~ msgstr "Wert zum Multiplizieren des aus der Kasse genommenen Geldes"
+
+#~ msgid "Shop weight"
+#~ msgstr "Einkaufs-Gewichtung"
+
+#~ msgid "Value to multiply the money people bought stuff for the club"
+#~ msgstr ""
+#~ "Wert zum Multiplizieren des Geldes, das Leute für den Verein ausgegeben "
+#~ "haben"
+
+#~ msgid "Member contribution statistics"
+#~ msgstr "Mitglieder-Beitrags-Statistiken"
+
+#~ msgid "Monthly payments"
+#~ msgstr "Monatliche Zahlungen"
+
+#~ msgid "Shifts"
+#~ msgstr "Dienste"
+
+#~ msgid "Unlocks"
+#~ msgstr "Aufsperrungen"
+
+#~ msgid "Shop"
+#~ msgstr "Einkäufe"
+
+#~ msgid "Total refunds"
+#~ msgstr "Gesamte Rückerstattungen"
+
+#~ msgid "Total amount of refunds for all members"
+#~ msgstr "Gesamtbetrag der Rückerstattungen für alle Mitglieder"
+
+#~ msgid "Contribution statistics details"
+#~ msgstr "Details der Beitrags-Statistiken"
+
+#~ msgid "Regular paying members"
+#~ msgstr "Regelmäßig zahlende Mitglieder"
+
+#~ msgid "No recent regular paying members found"
+#~ msgstr "Keine kürzlich regelmäßig zahlenden Mitglieder gefunden"
+
+#~ msgid "Irregular or non paying members"
+#~ msgstr "Unregelmäßig oder nicht zahlende Mitglieder"
+
+#~ msgid "No irregular or non paying members found"
+#~ msgstr "Keine unregelmäßig oder nicht zahlenden Mitglieder gefunden"
+
+#~ msgid "Leftover nuki accounts"
+#~ msgstr "Übrig gebliebene Nuki-Konten"
+
+#~ msgid "Total members"
+#~ msgstr "Gesamte Mitglieder"
+
+#~ msgid "Number regular paying"
+#~ msgstr "Anzahl regelmäßig zahlend"
+
+#~ msgid "Members who have made a payment in the last 90 days"
+#~ msgstr "Mitglieder, die in den letzten 90 Tage gezahlt haben"
+
+#~ msgid "Monthly member payments"
+#~ msgstr "Monatliche Mitgliedschaftsbeiträge"
+
+#~ msgid "Last data entry"
+#~ msgstr "Letzer Datenpunkt"
+
+#~ msgid "Last Payment"
+#~ msgstr "Letzte Zahlung"
+
+#~ msgid "Days since the last payment"
+#~ msgstr "Tage seit der letzten Zahlung"
+
+#~ msgid "Amount"
+#~ msgstr "Betrag"
+
+#~ msgid "Last Nuki use"
+#~ msgstr "Letzte Nuki-Nutzung"
+
+#~ msgid "Repayment checks"
+#~ msgstr "Rückzahlungs-Prüfungen"
+
+#~ msgid "{common_name} Members"
+#~ msgstr "{common_name} Mitglieder"
+
+#~ msgid "Select Categories"
+#~ msgstr "Kategorien wählen"
+
+#~ msgid "Result"
+#~ msgstr "Ergebnis"
+
+#~ msgid "Show positive/negative"
+#~ msgstr "Positiv/Negativ anzeigen"
+
+#~ msgid "Credits by Name"
+#~ msgstr "Einnahmen pro Name"
+
+#~ msgid "Expenses by Name"
+#~ msgstr "Ausgaben pro Name"
+
+#~ msgid "{common_name} Money Analytics"
+#~ msgstr "{common_name} Geld Analytics"
+
+#~ msgid "takes"
+#~ msgstr "nimmt"
+
+#~ msgid "paid back"
+#~ msgstr "zahlt zurück"
+
+#~ msgid "gets back"
+#~ msgstr "bekommt zurück"
+
+#~ msgid "for"
+#~ msgstr "für"
+
+#~ msgid "comment"
+#~ msgstr "Kommentar"
+
+#~ msgid ""
+#~ "Please always use this formular whenever you take money with you, when "
+#~ "you get money back because you bought something or when you pay back your "
+#~ "debts."
+#~ msgstr ""
+#~ "Bitte immer dieses Formular verwenden, wenn du Geld mitgenommen hast oder "
+#~ "wenn du Geld zurück bekommst, weil du etwas gekauft hast oder deine "
+#~ "Schulden zurück gezahlt hast."
+
+#~ msgid "Take money or pay money?"
+#~ msgstr "Geld genommen oder gezahlt?"
+
+#~ msgid "I took money or things with me"
+#~ msgstr "Ich habe Geld oder Dinge mitgenommen"
+
+#~ msgid "I bought something"
+#~ msgstr "Ich hab was gekauft und will eine Gutschrift dafür"
+
+#~ msgid "I pay back my debts"
+#~ msgstr "Ich zahle Schulden zurück"
+
+#~ msgid ""
+#~ "Select if amount is considered positive (=Debt) or negative (=Credit) on "
+#~ "behalf of your account"
+#~ msgstr ""
+#~ "Auswählen, ob Betrag als positiver Wert (=Schulden) oder negativer Wert "
+#~ "(=Guthaben) gesehen wird"
+
+#~ msgid "Just positive amounts here, round up in case of cents"
+#~ msgstr "Nur positive Beträge hier, Aufrunden bei Cents"
+
+#~ msgid "Select category"
+#~ msgstr "Kategorie wählen"
+
+#~ msgid "If you select Other, please specify details in comment field"
+#~ msgstr "Wenn Andere ausgewählt, bitte im Kommentar Details anführen"
+
+#~ msgid "Comment"
+#~ msgstr "Kommentar"
+
+#~ msgid "Please just fill out if really something useful to document"
+#~ msgstr "Bitte nur ausfüllen, wenn wirklich nützlich"
+
+#~ msgid "Send"
+#~ msgstr "Abschicken"
+
+#~ msgid "Please fill out the amount field"
+#~ msgstr "Bitte das Betragsfeld ausfüllen"
+
+#~ msgid "increased"
+#~ msgstr "erhöht"
+
+#~ msgid "decreased"
+#~ msgstr "verringert"
+
+#~ msgid "You are about to send following entry: "
+#~ msgstr "Du bist dabei folgenden Eintrag abzuschicken: "
+
+#~ msgid "This means your debts will be **{change_verb}** by this amount."
+#~ msgstr ""
+#~ "Das bedeutet, deine Schulden werden um diesen Betrag **{change_verb}**."
+
+#~ msgid "{common_name} Money Form"
+#~ msgstr "{common_name} Geld Formular"
+
+#~ msgid "Entry successfully saved"
+#~ msgstr "Eintrag erfolgreich gespeichert"
+
+#~ msgid "New entry"
+#~ msgstr "Neuer Eintrag"
+
+#~ msgid "Day of shift"
+#~ msgstr "Tag des Diensts"
+
+#~ msgid "Primary"
+#~ msgstr "1."
+
+#~ msgid "Secondary"
+#~ msgstr "2."
+
+#~ msgid "Tertiary"
+#~ msgstr "3."
+
+#~ msgid "Save"
+#~ msgstr "Speichern"
+
+#~ msgid "Add month"
+#~ msgstr "Monat hinzufügen"
+
+#~ msgid "{common_name} Shifts List"
+#~ msgstr "{common_name} Dienste Liste"

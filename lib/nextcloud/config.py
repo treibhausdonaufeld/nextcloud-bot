@@ -188,7 +188,7 @@ class LazyBotConfig:
                 cfg = BotConfig.load_config()
                 with self._lock:
                     self._cached = cfg
-                logger.info(
+                logger.debug(
                     "Loaded bot configuration (attempt %d/%d)", attempt, self._retries
                 )
                 return cfg

@@ -1,19 +1,15 @@
 from functools import cached_property, lru_cache
 from typing import List, cast
 
-from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-
 from lib.chromadb import chroma_client
+from lib.chromadb import embedding_function as ef
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
 from lib.nextcloud.models.collective_page import CollectivePage
-from lib.settings import settings
 
 
 @lru_cache(maxsize=1)
 def get_decision_collection():
-    ef = HuggingFaceEmbeddingServer(url=settings.chromadb.hf_embedding_server_url)
-
     return chroma_client.get_or_create_collection("decisions", embedding_function=ef)  # type: ignore
 
 

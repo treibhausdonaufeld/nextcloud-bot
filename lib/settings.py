@@ -116,6 +116,7 @@ class ChromaDBSettings(BaseModel):
     port: int = 8800
 
     hf_embedding_server_url: str = "http://localhost:8001/embed"
+    gemini_api_key: str = ""
 
 
 class Settings(BaseSettings):
@@ -130,6 +131,8 @@ class Settings(BaseSettings):
     default_language: str = "de"
 
     log_level: str = "INFO"
+
+    imaginary_url: str = "http://localhost:9001"
 
     couchdb: CouchDBSettings = CouchDBSettings()
     chromadb: ChromaDBSettings = ChromaDBSettings()

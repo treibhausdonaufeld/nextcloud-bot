@@ -10,7 +10,7 @@ all: update_po
 
 # Target to generate .pot file
 .pot:
-	@pygettext3 -d $(DOMAIN) -o $(LOCALES_DIR)/$(DOMAIN).pot $(FILES)
+	@pygettext3.py -d $(DOMAIN) -o $(LOCALES_DIR)/$(DOMAIN).pot $(FILES)
 
 # Target to update .po files in each language directory
 update_po: .pot

@@ -4,9 +4,8 @@ from datetime import datetime
 from functools import cached_property, lru_cache
 from typing import List
 
-from chromadb.errors import NotFoundError
-
 from lib.chromadb import chroma_client
+from lib.chromadb import embedding_function as ef
 from lib.nextcloud.config import bot_config
 from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
@@ -20,10 +19,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def get_protocol_collection():
-    try:
-        return chroma_client.get_collection(name="protocols")
-    except NotFoundError:
-        return chroma_client.create_collection(name="protocols")
+    return chroma_client.get_or_create_collection("protocols", embedding_function=ef)  # type: ignore
 
 
 class Protocol(CouchDBModel):
