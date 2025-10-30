@@ -5,3 +5,8 @@ venv
 
 Dockerfile
 Makefile
+
+.mypy_cache
+.venv
+.ruff_cache
+.git
