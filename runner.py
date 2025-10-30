@@ -49,8 +49,8 @@ def main(loop: bool, update_all: bool):
         userlist.update_from_nextcloud()
 
         updated_pages = fetch_and_store_all_pages()
-        # if update_all:
-        updated_pages = CollectivePage.get_all(limit=1000)
+        if update_all:
+            updated_pages = CollectivePage.get_all(limit=1000)
 
         for page in updated_pages:
             parse_groups(page)
