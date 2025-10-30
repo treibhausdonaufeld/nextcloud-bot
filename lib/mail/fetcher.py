@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from email.message import Message
 from typing import List, Set
 
-from lib.nextcloud.config import BotConfig
+from lib.nextcloud.config import MailerConfig
 from lib.nextcloud.models.user import NCUserList
+from lib.settings import settings
 
 from .sender import MailSender
 
@@ -30,11 +31,11 @@ class MailFetcher:
 
     mail_regex = re.compile(r"[a-zA-Z0-9&_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 
-    def fetch_maildata(self, nc_users: NCUserList):
+    def fetch_maildata(self, nc_users: NCUserList, config: MailerConfig):
         mails_to_process = self._fetch_messages()
 
         for mail_message in mails_to_process:
-            self.distribute_mail(mail_message.message, nc_users)
+            self.distribute_mail(mail_message.message, nc_users, config)
             self.move_to_archive(mail_message.uid)
 
     def _fetch_messages(self) -> List[MailMessage]:
@@ -57,10 +58,10 @@ class MailFetcher:
 
         return mails_to_process
 
-    def distribute_mail(self, message: Message, nc_users: NCUserList):
+    def distribute_mail(
+        self, message: Message, nc_users: NCUserList, config: MailerConfig
+    ):
         """Distribute mail to all recipients"""
-        config = BotConfig.data["distribution"]
-
         target_mailinglists = self._extract_recipients(message)
 
         original_sender_email = self.mail_regex.findall(message["From"])[0]
@@ -76,7 +77,7 @@ class MailFetcher:
             logging.warning("Ignoring autoreply message: %s", message["From"])
             return
 
-        if config.get("reply_to_original_sender", True):
+        if config.reply_to_original_sender:
             if "Reply-To" in message:
                 message.replace_header("Reply-To", message["From"])
             else:
@@ -84,9 +85,11 @@ class MailFetcher:
 
         # self._delete_original_headers(message)
 
-        from_addr = config.get("from_addr", "").replace("ORIGINAL_SENDER", sender_name)
+        from_addr = settings.mailinglist.from_address.replace(
+            "ORIGINAL_SENDER", sender_name
+        )
 
-        all_lists = config["lists"]
+        all_lists = config.lists
 
         for list_mail_addr in target_mailinglists:
             if list_mail_addr not in all_lists:
@@ -96,14 +99,14 @@ class MailFetcher:
                 continue
 
             list_config = all_lists[list_mail_addr]
-            group_names = list_config["groups"]
+            group_names = list_config.groups
             new_recipients = nc_users.mails_for_groups(group_names)
 
             message.replace_header(
-                "Subject", list_config.get("prefix", "") + " " + message["Subject"]
+                "Subject", list_config.prefix + " " + message["Subject"]
             )
 
-            if not config.get("send_to_sender", True):
+            if not config.send_to_sender:
                 new_recipients -= {original_sender_email}
 
             if from_addr:
@@ -164,10 +167,10 @@ class MailFetcher:
             return set()
 
     def _login_imap(self):
-        config = BotConfig.data["imap"]
-
-        mail = imaplib.IMAP4_SSL(config["host"])
-        mail.login(config["username"], config["password"])
+        mail = imaplib.IMAP4_SSL(settings.mailinglist.imap_server)
+        mail.login(
+            settings.mailinglist.imap_username, settings.mailinglist.imap_password
+        )
         mail.select("INBOX")  # connect to inbox.
 
         return mail

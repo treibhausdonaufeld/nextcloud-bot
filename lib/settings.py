@@ -84,16 +84,17 @@ class RocketchatSettings(BaseModel):
 class MailSettings(BaseModel):
     smtp_server: str = ""
     smtp_port: int = 25
-    use_tls: bool = True
-    username: Optional[str] = None
-    password: Optional[str] = None
+    smtp_use_tls: bool = True
+    smtp_username: str = ""
+    smtp_password: str = ""
     from_address: str = ""
+    send_delay_seconds: int = 1
 
     imap_server: str = ""
     imap_port: int = 143
-    use_imap_tls: bool = True
-    imap_username: Optional[str] = None
-    imap_password: Optional[str] = None
+    imap_use_tls: bool = True
+    imap_username: str = ""
+    imap_password: str = ""
 
 
 class NextcloudSettings(BaseModel):

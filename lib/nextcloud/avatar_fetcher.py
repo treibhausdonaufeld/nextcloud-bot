@@ -4,11 +4,12 @@ import subprocess
 from functools import cached_property
 from pathlib import Path
 from time import time
-from typing import Dict
 
 import requests
 
-from .config import BotConfig
+from lib.settings import settings
+
+from .config import AvatarConfig
 from .models.user import NCUserList
 
 logger = logging.getLogger()
@@ -16,14 +17,14 @@ logger = logging.getLogger()
 
 class AvatarFetcher:
     AVATAR_URL = "/index.php/avatar/{username}/200?v=1'"
+    config: AvatarConfig
 
-    @cached_property
-    def config(self) -> Dict:
-        return BotConfig.data["nextcloud"]
+    def __init__(self, config: AvatarConfig) -> None:
+        self.config = config
 
     @cached_property
     def base_folder(self) -> Path:
-        base_folder = Path(self.config["avatar_folder"])
+        base_folder = Path(self.config.avatar_folder)
         if not base_folder.exists():
             base_folder.mkdir()
 
@@ -42,13 +43,13 @@ class AvatarFetcher:
         # skip if avatar_path_jpg already exists and is younger than 24 hours
         if avatar_path_jpg.exists() and (
             avatar_path_jpg.stat().st_mtime
-            > (time() - self.config.get("avatar_refresh_seconds", 86400))
+            > (time() - self.config.avatar_refresh_seconds or 86400)
         ):
             return
 
         response = requests.get(
-            f"{self.config['host']}{self.AVATAR_URL.format(username=username)}",
-            auth=(self.config["username"], self.config["password"]),
+            f"{settings.nextcloud.base_url}{self.AVATAR_URL.format(username=username)}",
+            auth=(settings.nextcloud.admin_username, settings.nextcloud.admin_password),
             headers={"OCS-APIRequest": "true"},
         )
 

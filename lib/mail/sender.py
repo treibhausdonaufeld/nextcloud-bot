@@ -3,7 +3,7 @@ import smtplib
 import time
 from email.message import Message
 
-from lib.nextcloud.config import BotConfig
+from lib.settings import settings
 
 
 class MailSender:
@@ -12,20 +12,21 @@ class MailSender:
     @staticmethod
     def send(message: Message, to_addr: str):
         """Send a mail message to given to_addr"""
-        config = BotConfig.data["smtp"]
+        config = settings.mailinglist
 
         message.replace_header("To", to_addr)
 
         # open authenticated SMTP connection and send message with
         # specified envelope from and to addresses
-        smtp = smtplib.SMTP(config["host"], config["port"])
+        smtp = smtplib.SMTP(config.smtp_server, config.smtp_port)
         smtp.starttls()
-        smtp.login(config["username"], config["password"])
+        smtp.login(config.smtp_username, config.smtp_password)
         smtp.sendmail(message["From"], to_addr, message.as_string())
         smtp.quit()
 
         logging.info("Successfully sent %s to %s", message["Subject"], to_addr)
 
-        delay_seconds = int(config["send_delay_seconds"])
-        logging.debug("Sleeping %d seconds", delay_seconds)
-        time.sleep(delay_seconds)
+        delay_seconds = int(config.send_delay_seconds)
+        if delay_seconds > 0:
+            logging.debug("Sleeping %d seconds", delay_seconds)
+            time.sleep(delay_seconds)

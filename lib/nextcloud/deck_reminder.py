@@ -1,9 +1,15 @@
-import json
 import logging
 import time
 from datetime import datetime
+from typing import Any
 
 import requests
+from pycouchdb.client import Database
+from pycouchdb.exceptions import NotFound
+
+from lib.couchdb import couchdb
+from lib.nextcloud.config import DeckChannelMappingItem, DeckReminderConfig
+from lib.settings import NextcloudSettings, settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,16 +17,22 @@ API_VERSION = "v1.0"
 
 
 class DeckReminder:
-    config: dict
-    nextcloud_config: dict
+    cards_processed_key: str = "deck_reminder_cards"
+    events: dict[str, Any]  # document from couchdb
+    cards_processed: dict[str, Any]
 
-    def __init__(self, config):
+    config: DeckReminderConfig
+    nextcloud_config: NextcloudSettings
+
+    chat_url: str = ""
+
+    couchdb: Database
+
+    def __init__(self, config: DeckReminderConfig) -> None:
         self.config = config
-        self.chat_url = config.get("notifier", {}).get("chat_url", "")
-        self.nextcloud_config = config["nextcloud"]
-        self.cards_processed_storage = config.get("deck_reminder", {}).get(
-            "cards_processed_storage", "processed_cards.json"
-        )
+        self.chat_url = str(settings.rocketchat.hook_url)
+        self.nextcloud_config = settings.nextcloud
+        self.couchdb = couchdb()
 
     def remind_card_due_dates(self):
         """
@@ -33,20 +45,23 @@ class DeckReminder:
             None
         """
         try:
-            events_processed = json.load(open(self.cards_processed_storage))
-        except FileNotFoundError:
-            events_processed = {}
+            self.events = self.couchdb.get(self.cards_processed_key)
+            self.cards_processed = self.events.get("cards", {})
+        except NotFound:
+            self.cards_processed = {}
+            self.events = {
+                "_id": self.cards_processed_key,
+                "cards": self.cards_processed,
+            }
 
         now_time = time.time()
-        if (
-            now_time - events_processed.get("last_run", 0)
-            < self.config["deck_reminder"].get("sleep_minutes", 0) * 60
-        ):
-            return
 
-        events_processed["last_run"] = now_time
+        self.cards_processed["last_run"] = now_time
 
-        events_processed["cards"] = cards_processed = events_processed.get("cards", {})
+        self.cards_processed["cards"] = cards_processed = self.cards_processed.get(
+            "cards", {}
+        )
+
         for card, board_dict in self.get_due_cards():
             due_date = card["duedate"]
             due_date = datetime.strptime(due_date, "%Y-%m-%dT%H:%M:%S%z")
@@ -55,14 +70,13 @@ class DeckReminder:
 
             card_id = str(card["id"])
 
-            if now_time - cards_processed.get(card_id, 0) < 60 * 60 * 24 * self.config[
-                "deck_reminder"
-            ].get("remind_after_days", 3):
+            if (
+                now_time - cards_processed.get(card_id, 0)
+                < 60 * 60 * 24 * self.config.remind_after_days
+            ):
                 continue
 
-            if days_overdue >= -self.config["deck_reminder"].get(
-                "notify_before_days", 3
-            ):
+            if days_overdue >= -self.config.notify_before_days:
                 self.send_card_reminder(card, days_overdue, board_dict)
                 cards_processed[card_id] = now_time
 
@@ -71,11 +85,12 @@ class DeckReminder:
             if now_time - last_run > 60 * 60 * 24 * 30:
                 del cards_processed[card_id]
 
-        # save events_processed to json file
-        with open(self.cards_processed_storage, "w") as f:
-            json.dump(events_processed, f)
+        # save events_processed to db
+        self.couchdb.save(self.events)
 
-    def send_card_reminder(self, card, days_overdue: int, board_dict: dict):
+    def send_card_reminder(
+        self, card, days_overdue: int, board_dict: DeckChannelMappingItem
+    ):
         """
         Send a reminder message for a specific card to a specific channel.
 
@@ -86,8 +101,8 @@ class DeckReminder:
         Returns:
             None
         """
-        channel = board_dict["channel"]
-        board_id = board_dict["board_id"]
+        channel = board_dict.channel
+        board_id = board_dict.board_id
 
         assigned_users = card.get("assignedUsers", [])
         if not assigned_users:
@@ -99,7 +114,7 @@ class DeckReminder:
 
         pronoun = "dir" if len(assignee_names) == 1 else "euch"
 
-        card_url = f"{self.nextcloud_config['host']}/apps/deck/board/{board_id}/card/{card['id']}"
+        card_url = f"{settings.nextcloud.base_url}/apps/deck/board/{board_id}/card/{card['id']}"
 
         message = (
             f"Hallo, {', '.join([f'@{assignee}' for assignee in assignee_names])}! "
@@ -150,11 +165,11 @@ class DeckReminder:
         logger.info(f"Message sent to {channel}: {text}")
 
     def get_due_cards(self):
-        deck_mapping = self.config["deck_reminder"]["deck_channel_mapping"]
+        deck_mapping = self.config.deck_channel_mapping
         # iterate over deck_mapping and fetch all cards for this board
         for board_dict in deck_mapping:
-            board_id = board_dict["board_id"]
-            channel = board_dict["channel"]
+            board_id = board_dict.board_id
+            channel = board_dict.channel
             logger.debug(f"Fetching stacks for board {board_id} in channel {channel}")
             try:
                 stacks = self.fetch_board_stacks(board_id)
@@ -203,10 +218,10 @@ class DeckReminder:
         Returns:
             list: A list of stacks (as dicts) or raises an exception on failure.
         """
-        api_url = f"{self.nextcloud_config['host']}/index.php/apps/deck/api/{API_VERSION}/boards/{board_id}/stacks"
+        api_url = f"{settings.nextcloud.base_url}/index.php/apps/deck/api/{API_VERSION}/boards/{board_id}/stacks"
         response = requests.get(
             api_url,
-            auth=(self.nextcloud_config["username"], self.nextcloud_config["password"]),
+            auth=(settings.nextcloud.admin_username, settings.nextcloud.admin_password),
         )
         response.raise_for_status()
         return response.json()
@@ -221,10 +236,10 @@ class DeckReminder:
         Returns:
             list: A list of cards (as dicts) or raises an exception on failure.
         """
-        api_url = f"{self.nextcloud_config['host']}/index.php/apps/deck/api/{API_VERSION}/boards/{board_id}/stacks/{stack_id}"
+        api_url = f"{settings.nextcloud.base_url}/index.php/apps/deck/api/{API_VERSION}/boards/{board_id}/stacks/{stack_id}"
         response = requests.get(
             api_url,
-            auth=(self.nextcloud_config["username"], self.nextcloud_config["password"]),
+            auth=(settings.nextcloud.admin_username, settings.nextcloud.admin_password),
         )
         response.raise_for_status()
         return response.json()
@@ -241,10 +256,10 @@ class DeckReminder:
         Returns:
             list: A list of boards (as dicts) or raises an exception on failure.
         """
-        api_url = f"{self.nextcloud_config['host']}/index.php/apps/deck/api/{API_VERSION}/boards"
+        api_url = f"{settings.nextcloud.base_url}/index.php/apps/deck/api/{API_VERSION}/boards"
         response = requests.get(
             api_url,
-            auth=(self.nextcloud_config["username"], self.nextcloud_config["password"]),
+            auth=(settings.nextcloud.admin_username, settings.nextcloud.admin_password),
         )
         response.raise_for_status()
         return response.json()

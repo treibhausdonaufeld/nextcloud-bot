@@ -1,14 +1,18 @@
-import json
 import locale
 import logging
 import random
 import time
 from datetime import datetime, timedelta
+from typing import Any
 
 import caldav
 import pytz
 import requests
+from pycouchdb.client import Database
+from pycouchdb.exceptions import NotFound
 
+from lib.couchdb import couchdb
+from lib.nextcloud.config import CalendarNotifierConfig
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -44,41 +48,51 @@ kann_nicht = [
 
 
 class Notifier:
-    calendar = None
-    config = None
+    config: CalendarNotifierConfig
+    chat_url: str = ""
 
-    def __init__(self, config):
-        self.config = cal_config = config.get("calendar_notifier")
-        self.chat_url = config.get("notifier", {}).get("chat_url", "")
-        if (
-            cal_config is None
-            or not cal_config.get("caldav_url")
-            or not cal_config["enabled"]
-        ):
+    chromadb_events_key = "calendar_notifier_events"
+    events: dict[str, Any]  # document from couchdb
+    events_processed: dict[str, float]
+
+    calendar: caldav.Calendar
+    couchdb: Database
+
+    def __init__(self, config: CalendarNotifierConfig) -> None:
+        self.config = cal_config = config
+        self.chat_url = str(settings.rocketchat.hook_url)
+        self.couchdb = couchdb()
+
+        if cal_config is None or not cal_config.caldav_url or not cal_config.enabled:
             return
 
         try:
-            self.events_processed = json.load(open(self.config["processed_storage"]))
+            self.events = self.couchdb.get(self.chromadb_events_key)
+            self.events_processed = self.events.get("events", {})
 
             # cleanup events processed
             oldest = (
                 time.time()
-                - timedelta(days=self.config["search_end_days"] + 1).total_seconds()
+                - timedelta(days=cal_config.search_end_days + 1).total_seconds()
             )
             self.events_processed = {
                 uid: timestamp
                 for uid, timestamp in self.events_processed.items()
                 if timestamp > oldest
             }
-        except FileNotFoundError:
+        except NotFound:
             self.events_processed = {}
+            self.events = {
+                "_id": self.chromadb_events_key,
+                "events": self.events_processed,
+            }
 
         client = caldav.DAVClient(
-            url=cal_config["caldav_url"],
-            username=config["nextcloud"]["username"],
-            password=config["nextcloud"]["password"],
+            url=cal_config.caldav_url,
+            username=settings.nextcloud.admin_username,
+            password=settings.nextcloud.admin_password,
         )
-        self.calendar = client.calendar(url=cal_config["caldav_url"])
+        self.calendar = client.calendar(url=cal_config.caldav_url)
 
     def _local_datetime(self, date) -> str:
         localtz = pytz.timezone(settings.timezone)
@@ -91,9 +105,8 @@ class Notifier:
             return
 
         events = self.calendar.date_search(
-            start=datetime.now().date()
-            + timedelta(days=self.config.get("search_start_days", 0)),
-            end=datetime.now() + timedelta(days=self.config.get("search_end_days", 7)),
+            start=datetime.now() + timedelta(days=self.config.search_start_days or 0),
+            end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
             expand=True,
         )
 
@@ -116,10 +129,10 @@ class Notifier:
             if event_data["uid"] not in self.events_processed:
                 self.check_event(event_data)
 
-        json.dump(self.events_processed, open(self.config["processed_storage"], "w"))
+        self.couchdb.save(self.events)
 
     def check_event(self, event_data):
-        for channel, keywords in self.config["channel_keywords"].items():
+        for channel, keywords in self.config.channel_keywords.items():
             summary = event_data["summary"].lower()
             if any(s in summary for s in keywords):
                 self.send_event_notification(channel, event_data)

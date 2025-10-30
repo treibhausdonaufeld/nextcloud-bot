@@ -49,7 +49,6 @@ load_user_data()
 db = couchdb()
 
 user_list = NCUserList()
-user_list.load_users()
 
 st.title(title)
 

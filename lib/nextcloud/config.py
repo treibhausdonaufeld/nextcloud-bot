@@ -85,6 +85,7 @@ class DeckReminderConfig(BaseModel):
     enabled: bool = True
     cards_processed_storage: str = "/data/processed_cards.json"
     notify_before_days: int = 3
+    remind_after_days: int = 3
     deck_channel_mapping: List[DeckChannelMappingItem] = Field(default_factory=list)
 
 
