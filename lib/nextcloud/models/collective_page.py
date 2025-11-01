@@ -46,6 +46,9 @@ class CollectivePage(CouchDBModel):
     def __str__(self) -> str:
         return f"CollectivePage(id={self.id}, title={self.title})"
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     def build_id(self) -> str:
         if not self.ocs or not self.ocs.id:
             raise ValueError("ocs.id is required to build CollectivePage id")

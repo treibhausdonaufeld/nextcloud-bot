@@ -23,6 +23,19 @@ class Group(CouchDBModel):
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
 
+    def __equal__(self, other: object) -> bool:
+        if not isinstance(other, Group):
+            return NotImplemented
+        return self.name == other.name
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Group):
+            return NotImplemented
+        return self.name < other.name
+
     @cached_property
     def all_members(self) -> List[str]:
         """Return all members, including coordination and delegates."""

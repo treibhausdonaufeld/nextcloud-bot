@@ -1,4 +1,5 @@
 import logging
+from functools import cached_property
 from typing import Dict, List, Set
 
 import requests
@@ -63,6 +64,19 @@ class NCUser(CouchDBModel):
     def build_id(self) -> str:
         return f"{type(self).__name__}:{self.username}"
 
+    def __str__(self) -> str:
+        name_parts = self.ocs.displayname.split() if self.ocs.displayname else []
+        return (
+            f"{name_parts[0]} {name_parts[1][0]}."
+            if len(name_parts) >= 2
+            else self.ocs.displayname or self.username
+        )
+
+    @cached_property
+    def mention(self) -> str:
+        """Return a regex matching all usernames."""
+        return f"mention://user/{self.username}"
+
 
 class NCUserList:
     """Load list of Nextcloud users"""
@@ -73,6 +87,9 @@ class NCUserList:
 
     def __init__(self):
         self.load_users()
+
+    def __getitem__(self, username: str) -> NCUser:
+        return self.users[username]
 
     def load_users(self):
         db = couchdb()
