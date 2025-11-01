@@ -13,7 +13,7 @@ from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 
-def prompt_ai(protocols: List[Protocol], question: str) -> str:
+def prompt_ai(protocols: List[Protocol], question: str) -> str | None:
     context = "\n\n".join(
         [
             f"Datum: {p.date}\nGruppe: {p.group_name}\nInhalt: {p.page.content}"
