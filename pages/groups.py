@@ -49,7 +49,7 @@ def display_group(
     #         display_group(child, user_list, all_groups, level + 1)
 
 
-def add_members(group: Group, nodes: list[Node], edges: list[Edge]) -> None:
+def add_members(group: Group, nodes: list[Node], edges: list[Edge], level: int) -> None:
     for member_name in group.all_members:
         member_id = f"{group.name}:{member_name}"
 
@@ -67,6 +67,7 @@ def add_members(group: Group, nodes: list[Node], edges: list[Edge]) -> None:
                 size=10,
                 color=color,
                 title=member_name,
+                level=level,
             )
         )
         edges.append(Edge(source=group.name, target=member_id, type="CURVE_SMOOTH"))
@@ -111,6 +112,11 @@ cols = st.columns(4)
 hierarchical = cols[0].checkbox(_("Hierarchical layout"), value=False)
 with_members = cols[1].checkbox(_("With Members"), value=True)
 with_subgroups = cols[2].checkbox(_("With Subgroups"), value=True)
+solver = cols[3].selectbox(
+    _("Solver"),
+    options=["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"],
+    index=0,
+)
 
 nodes = [
     Node(
@@ -119,6 +125,7 @@ nodes = [
         size=60,
         color="#006B1D",
         shape="box",
+        level=1,
     )
 ] + [
     Node(
@@ -127,6 +134,7 @@ nodes = [
         label=f"{g}({len(g.all_members)})",
         size=40,
         color="#608FFD",
+        level=2,
     )
     for g in top_level_groups
 ]
@@ -139,7 +147,7 @@ for group in top_level_groups:
     subgroups = [cg for cg in all_groups if cg.parent_group == group.name]
 
     if with_members:
-        add_members(group, nodes, edges)
+        add_members(group, nodes, edges, level=3)
 
     if not with_subgroups:
         continue
@@ -151,12 +159,13 @@ for group in top_level_groups:
                 label=f"{subgroup} ({len(subgroup.all_members)})",
                 size=20,
                 color="#993699",
+                level=3,
             )
         )
         edges.append(Edge(source=group.name, target=subgroup.name, type="CURVE_SMOOTH"))
 
         if with_members:
-            add_members(subgroup, nodes, edges)
+            add_members(subgroup, nodes, edges, level=4)
 
 config = Config(
     width=1000,
@@ -167,6 +176,7 @@ config = Config(
     hierarchical=hierarchical,
     physics=not hierarchical,
     collapsible=True,
+    solver=solver,
     # nodeSpacing=400,
     # treeSpacing=400,
     node={"labelProperty": "label"},
