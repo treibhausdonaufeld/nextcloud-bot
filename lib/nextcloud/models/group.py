@@ -14,6 +14,7 @@ class Group(CouchDBModel):
     name: str = ""
     page_id: int
     parent_group: str | None = None
+    emoji: str = ""
 
     coordination: List[str] = []
     delegate: List[str] = []
@@ -98,6 +99,7 @@ class Group(CouchDBModel):
             raise ValueError("Cannot determine group name from page")
 
         self.name = group_names[0]
+        self.emoji = page.ocs.emoji or ""
 
         # parse content now
         lines = page.content.splitlines()

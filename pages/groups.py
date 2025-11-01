@@ -118,9 +118,16 @@ nodes = [
         label=f"{top_group} ({len(top_group.all_members)})",
         size=60,
         color="#006B1D",
+        shape="box",
     )
 ] + [
-    Node(id=g.name, label=f"{g}({len(g.all_members)})", size=40, color="#608FFD")
+    Node(
+        id=g.name,
+        shape="box",
+        label=f"{g}({len(g.all_members)})",
+        size=40,
+        color="#608FFD",
+    )
     for g in top_level_groups
 ]
 edges = [

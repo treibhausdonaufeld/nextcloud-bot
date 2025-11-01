@@ -87,7 +87,7 @@ st.title(title)
 # Display collected pages on the start page
 collective_pages = cast(
     Sequence[CollectivePage],
-    CollectivePage.get_all(limit=150, sort=[{"ocs.timestamp": "desc"}]),
+    CollectivePage.get_all(limit=10, sort=[{"ocs.timestamp": "desc"}]),
 )
 st.subheader("Newest Updates from Collectives")
 
