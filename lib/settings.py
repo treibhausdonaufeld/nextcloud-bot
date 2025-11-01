@@ -2,15 +2,27 @@ import gettext
 import locale
 import logging
 import re
-from gettext import gettext as _  # noqa: F401
 from typing import Optional
 
 import sentry_sdk
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Ensure _n is always defined for mypy
-_n = gettext.ngettext
+
+# Translation functions that will be updated by set_language()
+def _(message: str) -> str:
+    """Translate a message using the current language setting."""
+    return _gettext(message)
+
+
+def _n(singular: str, plural: str, n: int) -> str:
+    """Translate a message with plural forms using the current language setting."""
+    return _ngettext(singular, plural, n)
+
+
+# Internal references that will be updated
+_gettext = gettext.gettext
+_ngettext = gettext.ngettext
 
 
 available_languages = {"de": "Deutsch", "en": "English"}
@@ -20,20 +32,20 @@ user_regex = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
 def set_language(language: str):
-    global _
-    global _n
+    global _gettext
+    global _ngettext
 
     if language and language == "de":
         localizator = gettext.translation(
             "messages", localedir="locales", languages=[language]
         )
         localizator.install()
-        _ = localizator.gettext
-        _n = localizator.ngettext
+        _gettext = localizator.gettext
+        _ngettext = localizator.ngettext
         locale_str = "de_AT.UTF-8"
     else:
-        _ = gettext.gettext
-        _n = gettext.ngettext
+        _gettext = gettext.gettext
+        _ngettext = gettext.ngettext
         locale_str = "en_US.UTF-8"
 
     locale.setlocale(locale.LC_ALL, locale_str)

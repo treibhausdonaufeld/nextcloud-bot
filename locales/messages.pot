@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-02 00:24+0100\n"
+"POT-Creation-Date: 2025-11-02 00:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,32 +15,36 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: app.py:72
+#: app.py:70
 msgid "{common_name} Dashboard"
 msgstr ""
 
-#: app.py:119
-msgid "Language"
-msgstr ""
-
-#: lib/menu.py:22
-msgid "Home"
-msgstr ""
-
-#: lib/menu.py:23 pages/groups.py:77
-msgid "Groups"
-msgstr ""
-
-#: lib/menu.py:24 pages/protocols.py:69
-msgid "Protocols"
-msgstr ""
-
-#: lib/menu.py:25 pages/logbook.py:33
-msgid "Logbook"
+#: app.py:90
+msgid "Newest Updates"
 msgstr ""
 
 #: lib/menu.py:26
+msgid "Home"
+msgstr ""
+
+#: lib/menu.py:27 pages/groups.py:76
+msgid "Groups"
+msgstr ""
+
+#: lib/menu.py:28 pages/protocols.py:68
+msgid "Protocols"
+msgstr ""
+
+#: lib/menu.py:29 pages/logbook.py:33
+msgid "Logbook"
+msgstr ""
+
+#: lib/menu.py:30
 msgid "Pages"
+msgstr ""
+
+#: lib/menu.py:38
+msgid "Language"
 msgstr ""
 
 #: lib/streamlit_oauth.py:28
@@ -96,75 +100,75 @@ msgstr ""
 msgid "Timestamp"
 msgstr ""
 
-#: pages/groups.py:33
+#: pages/groups.py:32
 msgid "Parent Group"
 msgstr ""
 
-#: pages/groups.py:36
+#: pages/groups.py:35
 msgid "Short Names"
 msgstr ""
 
-#: pages/groups.py:40
+#: pages/groups.py:39
 msgid "Coordination"
 msgstr ""
 
-#: pages/groups.py:42
+#: pages/groups.py:41
 msgid "Delegates"
 msgstr ""
 
-#: pages/groups.py:44
+#: pages/groups.py:43
 msgid "Members"
 msgstr ""
 
-#: pages/groups.py:100
+#: pages/groups.py:99
 msgid "Hierarchical layout"
 msgstr ""
 
-#: pages/groups.py:101
+#: pages/groups.py:100
 msgid "With Members"
 msgstr ""
 
-#: pages/groups.py:102
+#: pages/groups.py:101
 msgid "With Subgroups"
 msgstr ""
 
-#: pages/groups.py:104
+#: pages/groups.py:103
 msgid "Limit to Top Group"
 msgstr ""
 
-#: pages/groups.py:108
+#: pages/groups.py:107
 msgid "Solver"
 msgstr ""
 
-#: pages/groups.py:129
+#: pages/groups.py:128
 msgid "No top-level group without members found for visualization"
 msgstr ""
 
-#: pages/groups.py:219
+#: pages/groups.py:218
 msgid "Roles in Groups"
 msgstr ""
 
-#: pages/groups.py:223
+#: pages/groups.py:222
 msgid "(Coordination)"
 msgstr ""
 
-#: pages/groups.py:225
+#: pages/groups.py:224
 msgid "(Delegate)"
 msgstr ""
 
-#: pages/groups.py:231
+#: pages/groups.py:230
 msgid "Pages mentioning User"
 msgstr ""
 
-#: pages/groups.py:241
+#: pages/groups.py:240
 msgid "Total Mentions: {count}"
 msgstr ""
 
-#: pages/logbook.py:48 pages/protocols.py:90
+#: pages/logbook.py:48 pages/protocols.py:89
 msgid "Filter by group"
 msgstr ""
 
-#: pages/logbook.py:50 pages/protocols.py:92
+#: pages/logbook.py:50 pages/protocols.py:91
 msgid "Select a group"
 msgstr ""
 
@@ -229,7 +233,7 @@ msgid "Objections"
 msgstr ""
 
 #: pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
-#: pages/protocols.py:139
+#: pages/protocols.py:138
 msgid "Link"
 msgstr ""
 
@@ -249,30 +253,30 @@ msgstr ""
 msgid "Upload XLSX file with previous decisions to import"
 msgstr ""
 
-#: pages/protocols.py:94
+#: pages/protocols.py:93
 msgid "Search protocols"
 msgstr ""
 
-#: pages/protocols.py:96
+#: pages/protocols.py:95
 msgid "Use AI to answer"
 msgstr ""
 
-#: pages/protocols.py:115
+#: pages/protocols.py:114
 msgid "Answer"
 msgstr ""
 
-#: pages/protocols.py:141
+#: pages/protocols.py:140
 msgid "Path"
 msgstr ""
 
-#: pages/protocols.py:143
+#: pages/protocols.py:142
 msgid "Moderated by"
 msgstr ""
 
-#: pages/protocols.py:145
+#: pages/protocols.py:144
 msgid "Protocol by"
 msgstr ""
 
-#: pages/protocols.py:147
+#: pages/protocols.py:146
 msgid "Participants"
 msgstr ""

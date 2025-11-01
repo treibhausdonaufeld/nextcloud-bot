@@ -1,5 +1,4 @@
 import re
-from gettext import gettext as _
 from typing import List, cast
 
 import streamlit as st
@@ -10,6 +9,7 @@ from lib.menu import menu
 from lib.nextcloud.models.decision import Decision, get_decision_collection
 from lib.nextcloud.models.group import Group
 from lib.settings import (
+    _,
     settings,
 )
 from lib.streamlit_oauth import load_user_data

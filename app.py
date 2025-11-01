@@ -1,6 +1,5 @@
 import random
 from datetime import datetime
-from gettext import gettext as _
 from typing import Sequence, cast
 
 import pandas as pd
@@ -10,8 +9,7 @@ from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.settings import (
-    available_languages,
-    set_language,
+    _,
     settings,
 )
 from lib.streamlit_oauth import load_user_data, login
@@ -89,7 +87,7 @@ collective_pages = cast(
     Sequence[CollectivePage],
     CollectivePage.get_all(limit=10, sort=[{"ocs.timestamp": "desc"}]),
 )
-st.subheader("Newest Updates from Collectives")
+st.subheader(_("Newest Updates"))
 
 for p in collective_pages:
     with st.expander(
@@ -111,23 +109,4 @@ for p in collective_pages:
 st.dataframe([p.ocs.model_dump() for p in collective_pages])
 
 with st.sidebar:
-    # if "language" not in st.session_state:
-    #     st.session_state.language = get_browser_language() or default_language
-    # language = st.session_state.language
-
-    selected_language = st.selectbox(
-        _("Language"),
-        available_languages.values(),
-        index=list(available_languages.keys()).index(st.session_state.language),
-    )
-
-    selected_language_key = {v: k for k, v in available_languages.items()}.get(
-        selected_language
-    )
-
-    if selected_language_key and selected_language_key != st.session_state.language:
-        st.session_state.language = selected_language_key
-        set_language(selected_language_key)
-        st.rerun()
-
     login()

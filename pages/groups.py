@@ -1,4 +1,3 @@
-from gettext import gettext as _
 from typing import cast
 
 import streamlit as st
@@ -9,7 +8,7 @@ from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.user import NCUserList
-from lib.settings import settings
+from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 

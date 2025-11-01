@@ -1,5 +1,4 @@
 from datetime import datetime
-from gettext import gettext as _
 from typing import List, cast
 
 import streamlit as st
@@ -10,7 +9,7 @@ from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.protocol import Protocol, get_protocol_collection
 from lib.nextcloud.models.user import NCUserList
-from lib.settings import settings
+from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 
