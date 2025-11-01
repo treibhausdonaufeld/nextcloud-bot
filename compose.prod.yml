@@ -93,10 +93,10 @@ services:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000
       - CHROMA_DB_IMPL=duckdb+parquet
-      - CHROMA_PERSIST_DIRECTORY=/chromadb
+      - CHROMA_PERSIST_DIRECTORY=/data
       - ANONYMIZED_TELEMETRY=False
     volumes:
-      - /mnt/thd-data/nc-bot/chroma-data:/chromadb
+      - /mnt/thd-data/nc-bot/chroma-data:/data
 
   imaginary:
     image: h2non/imaginary:latest
