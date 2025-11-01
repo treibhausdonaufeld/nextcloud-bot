@@ -20,7 +20,6 @@ def menu():
     set_language(language)
 
     st.sidebar.page_link("app.py", label="🏠 " + _("Home"))
-    st.sidebar.page_link("pages/users.py", label="👥 " + _("Users"))
     st.sidebar.page_link("pages/groups.py", label="⭕ " + _("Groups"))
     st.sidebar.page_link("pages/protocols.py", label="📝 " + _("Protocols"))
     st.sidebar.page_link("pages/logbook.py", label="✅ " + _("Logbook"))
