@@ -112,7 +112,10 @@ class NCUserList:
             logger.debug("Saved user %s to CouchDB", username)
 
     def mails_for_groups(self, group_names: List[str]) -> Set[str]:
-        """Return mail addresses for all users in given list of groups"""
+        """
+        Return mail addresses for all users in given list of groups
+        Can be either member of Group or nextcloud group specified on user
+        """
         user_emails: Set[str] = set()
 
         for name in group_names:
@@ -121,6 +124,9 @@ class NCUserList:
                 self.users[username].ocs.email
                 for username in group.all_members
                 if username in self.users and self.users[username].ocs
+            }
+            user_emails |= {
+                u.ocs.email for u in self.users.values() if name in u.ocs.groups
             }
 
         return user_emails
