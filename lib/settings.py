@@ -124,6 +124,9 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
 
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+
     timezone: str = "Europe/Berlin"
     locale: str = "de_AT.UTF-8"
 

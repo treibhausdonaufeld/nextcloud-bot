@@ -3,16 +3,42 @@ from gettext import gettext as _
 from typing import List, cast
 
 import streamlit as st
+from google import genai
 
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.protocol import Protocol, get_protocol_collection
 from lib.nextcloud.models.user import NCUserList
-from lib.settings import (
-    settings,
-)
+from lib.settings import settings
 from lib.streamlit_oauth import load_user_data
+
+
+def prompt_ai(protocols: List[Protocol], question: str) -> str:
+    context = "\n\n".join(
+        [
+            f"Datum: {p.date}\nGruppe: {p.group_name}\nInhalt: {p.page.content}"
+            for p in protocols
+            if p.page and p.page.content
+        ]
+    )
+
+    prompt = f"""Du bist ein hilfreicher Assistent, der Protokolle von Meetings zusammenfasst und Fragen dazu beantwortet.
+    Nutze den folgenden Kontext, um die Frage zu beantworten. Wenn die Information nicht im Kontext vorhanden ist, antworte mit "Die Information ist nicht verfügbar".
+
+    Kontext:
+    {context}
+
+    Frage: {question}
+    Antwort:"""
+
+    client = genai.Client(api_key=settings.gemini_api_key)
+    response = client.models.generate_content(
+        model=settings.gemini_model,
+        contents=prompt,
+    )
+
+    return response.text
 
 
 def display_users(user_ids: list[str]):
@@ -59,26 +85,36 @@ protocol_collection = get_protocol_collection()
 now_str = datetime.now().strftime("%Y-%m-%d")
 
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns((1, 3, 1))
 selected_group = col1.selectbox(
     label=_("Filter by group"),
     options=([""] + groups_with_count()),
     placeholder=_("Select a group"),
 )
-
 query_text = col2.text_input(_("Search protocols"), "")
+ai_enabled = col3.checkbox(
+    _("Use AI to answer"),
+    value=True if settings.gemini_api_key else False,
+    disabled=not settings.gemini_api_key,
+)
 
 if selected_group and not query_text:
     protocols = [p for p in get_all_protocols() if p.group_name == selected_group]
 elif query_text:
     results = protocol_collection.query(
         query_texts=[query_text],
-        n_results=10,
+        n_results=10 if not ai_enabled else 5,
         where={"group_name": selected_group} if selected_group else None,
     )
 
     result_ids = results["ids"][0]
     protocols = [p for p in get_all_protocols() if p.id in result_ids]
+
+    if ai_enabled:
+        answer = prompt_ai(protocols, query_text)
+        st.markdown(f"### {_('Answer')}:")
+        st.markdown(answer)
+        protocols = []
 else:
     # sort by parsed date (fallback to string) descending
     protocols = sorted(

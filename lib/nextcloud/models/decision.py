@@ -1,15 +1,26 @@
 from functools import cached_property, lru_cache
 from typing import List, cast
 
+from chromadb.utils import embedding_functions
+
 from lib.chromadb import chroma_client
-from lib.chromadb import embedding_function as ef
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
 from lib.nextcloud.models.collective_page import CollectivePage
+from lib.settings import settings
 
 
 @lru_cache(maxsize=1)
 def get_decision_collection():
+    if settings.chromadb.gemini_api_key:
+        embedding_function = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+            api_key=settings.chromadb.gemini_api_key,
+            task_type="semantic_similarity",
+            model_name="gemini-embedding-001",
+            api_key_env_var="CHROMADB__GEMINI_API_KEY",
+        )
+        ef = embedding_function
+
     return chroma_client.get_or_create_collection("decisions", embedding_function=ef)  # type: ignore
 
 
