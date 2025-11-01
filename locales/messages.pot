@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-10-30 22:14+0100\n"
+"POT-Creation-Date: 2025-11-02 00:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 msgid "{common_name} Dashboard"
 msgstr ""
 
-#: app.py:119 pages/users.py:62
+#: app.py:119
 msgid "Language"
 msgstr ""
 
@@ -27,23 +27,19 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-#: lib/menu.py:23 pages/users.py:17
-msgid "Users"
-msgstr ""
-
-#: lib/menu.py:24 pages/groups.py:14
+#: lib/menu.py:23 pages/groups.py:77
 msgid "Groups"
 msgstr ""
 
-#: lib/menu.py:25 pages/protocols.py:43
+#: lib/menu.py:24 pages/protocols.py:69
 msgid "Protocols"
 msgstr ""
 
-#: lib/menu.py:26 pages/logbook.py:33
+#: lib/menu.py:25 pages/logbook.py:33
 msgid "Logbook"
 msgstr ""
 
-#: lib/menu.py:27
+#: lib/menu.py:26
 msgid "Pages"
 msgstr ""
 
@@ -100,31 +96,75 @@ msgstr ""
 msgid "Timestamp"
 msgstr ""
 
-#: pages/groups.py:44
+#: pages/groups.py:33
 msgid "Parent Group"
 msgstr ""
 
-#: pages/groups.py:47
+#: pages/groups.py:36
 msgid "Short Names"
 msgstr ""
 
-#: pages/groups.py:51
+#: pages/groups.py:40
 msgid "Coordination"
 msgstr ""
 
-#: pages/groups.py:53
+#: pages/groups.py:42
 msgid "Delegates"
 msgstr ""
 
-#: pages/groups.py:55
+#: pages/groups.py:44
 msgid "Members"
 msgstr ""
 
-#: pages/logbook.py:48 pages/protocols.py:64
+#: pages/groups.py:100
+msgid "Hierarchical layout"
+msgstr ""
+
+#: pages/groups.py:101
+msgid "With Members"
+msgstr ""
+
+#: pages/groups.py:102
+msgid "With Subgroups"
+msgstr ""
+
+#: pages/groups.py:104
+msgid "Limit to Top Group"
+msgstr ""
+
+#: pages/groups.py:108
+msgid "Solver"
+msgstr ""
+
+#: pages/groups.py:129
+msgid "No top-level group without members found for visualization"
+msgstr ""
+
+#: pages/groups.py:219
+msgid "Roles in Groups"
+msgstr ""
+
+#: pages/groups.py:223
+msgid "(Coordination)"
+msgstr ""
+
+#: pages/groups.py:225
+msgid "(Delegate)"
+msgstr ""
+
+#: pages/groups.py:231
+msgid "Pages mentioning User"
+msgstr ""
+
+#: pages/groups.py:241
+msgid "Total Mentions: {count}"
+msgstr ""
+
+#: pages/logbook.py:48 pages/protocols.py:90
 msgid "Filter by group"
 msgstr ""
 
-#: pages/logbook.py:50 pages/protocols.py:66
+#: pages/logbook.py:50 pages/protocols.py:92
 msgid "Select a group"
 msgstr ""
 
@@ -189,7 +229,7 @@ msgid "Objections"
 msgstr ""
 
 #: pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
-#: pages/protocols.py:103
+#: pages/protocols.py:139
 msgid "Link"
 msgstr ""
 
@@ -209,34 +249,30 @@ msgstr ""
 msgid "Upload XLSX file with previous decisions to import"
 msgstr ""
 
-#: pages/protocols.py:69
+#: pages/protocols.py:94
 msgid "Search protocols"
 msgstr ""
 
-#: pages/protocols.py:105
+#: pages/protocols.py:96
+msgid "Use AI to answer"
+msgstr ""
+
+#: pages/protocols.py:115
+msgid "Answer"
+msgstr ""
+
+#: pages/protocols.py:141
 msgid "Path"
 msgstr ""
 
-#: pages/protocols.py:107
+#: pages/protocols.py:143
 msgid "Moderated by"
 msgstr ""
 
-#: pages/protocols.py:109
+#: pages/protocols.py:145
 msgid "Protocol by"
 msgstr ""
 
-#: pages/protocols.py:111
+#: pages/protocols.py:147
 msgid "Participants"
-msgstr ""
-
-#: pages/users.py:29
-msgid "Users and their mentioned pages"
-msgstr ""
-
-#: pages/users.py:39
-msgid "All users in Nextcloud"
-msgstr ""
-
-#: pages/users.py:42
-msgid "Pages mentioned by user"
 msgstr ""

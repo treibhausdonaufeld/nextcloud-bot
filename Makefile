@@ -20,5 +20,12 @@ update_po: .pot
 		fi \
 	done
 
+compile:
+	@for lang in `ls $(LOCALES_DIR)`; do \
+		if [ -d $(LOCALES_DIR)/$$lang/LC_MESSAGES ]; then \
+			msgfmt $(LOCALES_DIR)/$$lang/LC_MESSAGES/$(DOMAIN).po -o $(LOCALES_DIR)/$$lang/LC_MESSAGES/$(DOMAIN).mo; \
+		fi \
+	done
+
 # Phony targets
 .PHONY: all update_po
