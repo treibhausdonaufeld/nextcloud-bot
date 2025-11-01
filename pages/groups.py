@@ -94,29 +94,40 @@ all_groups = cast(list[Group], Group.get_all())
 #     (g for g in all_groups if len(g.all_members) == 0 and not g.parent_group), None
 # )
 # koordinationskreis as top_group
-top_group = next((g for g in all_groups if g.name == "Koordinationskreis"))
 
-if not top_group:
-    st.warning(_("No top-level group without members found for visualization"))
-    st.stop()
 
-top_level_groups = sorted(
-    [
-        g
-        for g in all_groups
-        if not g.parent_group and not g == top_group and not g.name == "Großgruppe"
-    ]
-)
-
-cols = st.columns(4)
+cols = st.columns(5)
 hierarchical = cols[0].checkbox(_("Hierarchical layout"), value=False)
 with_members = cols[1].checkbox(_("With Members"), value=True)
 with_subgroups = cols[2].checkbox(_("With Subgroups"), value=True)
-solver = cols[3].selectbox(
+limit_group = cols[3].selectbox(
+    _("Limit to Top Group"),
+    options=[""] + sorted(all_groups),
+)
+solver = cols[4].selectbox(
     _("Solver"),
     options=["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"],
     index=0,
 )
+
+if isinstance(limit_group, Group):
+    top_group = limit_group
+    top_level_groups = sorted(
+        [g for g in all_groups if g.parent_group == top_group.name]
+    )
+else:
+    top_group = next((g for g in all_groups if g.name == "Koordinationskreis"))
+    top_level_groups = sorted(
+        [
+            g
+            for g in all_groups
+            if not g.parent_group and not g == top_group and not g.name == "Großgruppe"
+        ]
+    )
+
+if not top_group:
+    st.warning(_("No top-level group without members found for visualization"))
+    st.stop()
 
 nodes = [
     Node(
@@ -142,6 +153,9 @@ edges = [
     Edge(source=top_group.name, target=g.name, type="CURVE_SMOOTH")
     for g in top_level_groups
 ]
+
+if with_members:
+    add_members(top_group, nodes, edges, level=2)
 
 for group in top_level_groups:
     subgroups = [cg for cg in all_groups if cg.parent_group == group.name]

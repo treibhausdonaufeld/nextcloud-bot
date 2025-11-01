@@ -16,6 +16,8 @@ Features:
 TODOs:
 
 - bot check that title starts with date
+- check that users are mentioned
+- review of logbook summary and decision extractions!
 
 ## Update translations
 
