@@ -36,7 +36,7 @@ def parse_groups(page: CollectivePage) -> None:
     if not page.content or not page.ocs or not config:
         return
 
-    if page.is_readme and Group.valid_name(page.title):
+    if Group.valid_name(page.title):
         page.subtype = PageSubtype.GROUP
         page.save()
 
