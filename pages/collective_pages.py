@@ -51,7 +51,7 @@ st.dataframe(
     df,
     column_config={
         _("URL"): st.column_config.LinkColumn(
-            _("URL"), display_text="Open page", max_chars=40
+            _("URL"), display_text=_("Open page"), max_chars=40
         ),
     },
 )

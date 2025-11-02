@@ -146,7 +146,7 @@ st.dataframe(
         ),
         _("Text"): st.column_config.TextColumn(_("Text"), max_chars=100),
         _("Link"): st.column_config.LinkColumn(
-            _("Link"), display_text="Open protocol", max_chars=30
+            _("Link"), display_text=_("Open protocol"), max_chars=30
         ),
     },
     hide_index=True,
