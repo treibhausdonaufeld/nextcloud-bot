@@ -48,8 +48,14 @@ def display_group(
     #         display_group(child, user_list, all_groups, level + 1)
 
 
-def add_members(group: Group, nodes: list[Node], edges: list[Edge], level: int) -> None:
-    for member_name in group.all_members:
+def add_members(
+    group: Group,
+    nodes: list[Node],
+    edges: list[Edge],
+    level: int,
+    limit_user: str | None = None,
+) -> None:
+    for member_name in [limit_user] if limit_user else group.all_members:
         member_id = f"{group.name}:{member_name}"
 
         if member_name in group.coordination:
@@ -95,7 +101,7 @@ all_groups = cast(list[Group], Group.get_all())
 # koordinationskreis as top_group
 
 
-cols = st.columns(5)
+cols = st.columns(6)
 hierarchical = cols[0].checkbox(_("Hierarchical layout"), value=False)
 with_members = cols[1].checkbox(_("With Members"), value=True)
 with_subgroups = cols[2].checkbox(_("With Subgroups"), value=True)
@@ -103,7 +109,12 @@ limit_group = cols[3].selectbox(
     _("Limit to Top Group"),
     options=[""] + sorted(all_groups),
 )
-solver = cols[4].selectbox(
+limit_user = cols[4].selectbox(
+    _("Limit to User"),
+    options=[""] + sorted([uid for uid in user_list.users.keys()]),
+    format_func=lambda uid: str(user_list[uid].ocs.displayname) if uid else "",
+)
+solver = cols[5].selectbox(
     _("Solver"),
     options=["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"],
     index=0,
@@ -124,8 +135,33 @@ else:
         ]
     )
 
+# Filter groups by selected user if limit_user is set
+if limit_user:
+    user_groups = [g for g in all_groups if limit_user in g.all_members]
+
+    # Filter top_level_groups to only include groups where user is member
+    top_level_groups = [g for g in top_level_groups if limit_user in g.all_members]
+
+    # Check if user is in top_group
+    if limit_user not in top_group.all_members:
+        # If user is not in top_group, try to find the best top-level group
+        if top_level_groups:
+            top_group = top_level_groups[0]
+            top_level_groups = [
+                g for g in user_groups if g.parent_group == top_group.name
+            ]
+        elif user_groups:
+            # Use first group where user is member as top_group
+            top_group = user_groups[0]
+            top_level_groups = [
+                g for g in user_groups if g.parent_group == top_group.name
+            ]
+        else:
+            st.warning(_("No groups could be found"))
+            st.stop()
+
 if not top_group:
-    st.warning(_("No top-level group without members found for visualization"))
+    st.warning(_("No groups could be found"))
     st.stop()
 
 nodes = [
@@ -133,7 +169,7 @@ nodes = [
         id=top_group.name,
         label=f"{top_group} ({len(top_group.all_members)})",
         size=60,
-        color="#006B1D",
+        color="#2FA24E",
         shape="box",
         level=1,
     )
@@ -154,13 +190,42 @@ edges = [
 ]
 
 if with_members:
-    add_members(top_group, nodes, edges, level=2)
+    if limit_user:
+        # Only add the selected user
+        if limit_user in top_group.all_members:
+            member_id = f"{top_group.name}:{limit_user}"
+            if limit_user in top_group.coordination:
+                color = "#FF5733"  # Red for coordination
+            elif limit_user in top_group.delegate:
+                color = "#33C1FF"  # Blue for delegates
+            else:
+                color = "#DAA520"  # Goldenrod for regular members
+
+            nodes.append(
+                Node(
+                    id=member_id,
+                    label=str(user_list[limit_user]),
+                    size=10,
+                    color=color,
+                    title=limit_user,
+                    level=2,
+                )
+            )
+            edges.append(
+                Edge(source=top_group.name, target=member_id, type="CURVE_SMOOTH")
+            )
+    else:
+        add_members(top_group, nodes, edges, level=2)
 
 for group in top_level_groups:
     subgroups = [cg for cg in all_groups if cg.parent_group == group.name]
 
+    # Filter subgroups if limit_user is set
+    if limit_user:
+        subgroups = [cg for cg in subgroups if limit_user in cg.all_members]
+
     if with_members:
-        add_members(group, nodes, edges, level=3)
+        add_members(group, nodes, edges, level=3, limit_user=limit_user)
 
     if not with_subgroups:
         continue
@@ -178,7 +243,7 @@ for group in top_level_groups:
         edges.append(Edge(source=group.name, target=subgroup.name, type="CURVE_SMOOTH"))
 
         if with_members:
-            add_members(subgroup, nodes, edges, level=4)
+            add_members(subgroup, nodes, edges, level=4, limit_user=limit_user)
 
 config = Config(
     width=1000,
