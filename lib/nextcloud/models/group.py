@@ -44,7 +44,8 @@ class Group(CouchDBModel):
 
     @cached_property
     def abbreviated(self) -> str:
-        return str(self)[:20] + ("..." if len(str(self)) > 20 else "")
+        max_len = 30
+        return str(self)[:max_len] + ("..." if len(str(self)) > max_len else "")
 
     @classmethod
     def get(cls, doc_id: str) -> "Group":

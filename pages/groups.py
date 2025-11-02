@@ -16,13 +16,13 @@ node_label_font = "#E0E0E0" if st.context.theme.type == "dark" else "#2C2C2C"
 
 def display_users(title: str, user_ids: list[str]):
     if user_ids:
-        st.write(f"**{title}:**")
-        for user_id in user_ids:
-            user = user_list.get_user_by_uid(user_id)
-            displayname = user_id
-            if user and user.ocs and user.ocs.displayname:
-                displayname = user.ocs.displayname
-            st.write(f"- {displayname}")
+        # for user_id in user_ids:
+        #     user = user_list.get_user_by_uid(user_id)
+        #     displayname = user_id
+        #     if user and user.ocs and user.ocs.displayname:
+        #         displayname = user.ocs.displayname
+        users = [str(user_list[user_id].ocs.displayname) for user_id in user_ids]
+        st.write(f"- **{title}** ({len(users)}): {', '.join(users)}")
 
 
 def display_group(
@@ -36,13 +36,9 @@ def display_group(
     if group.short_names:
         st.write(f"**{_('Short Names')}:** {', '.join(group.short_names)}")
 
-    cols = st.columns(3)
-    with cols[0]:
-        display_users(_("Coordination"), group.coordination)
-    with cols[1]:
-        display_users(_("Delegates"), group.delegate)
-    with cols[2]:
-        display_users(_("Members"), group.members)
+    display_users(_("Coordination"), group.coordination)
+    display_users(_("Delegates"), group.delegate)
+    display_users(_("Members"), group.members)
 
     # children = [g for g in all_groups if g.parent_group == group.name]
     # for child in children:
@@ -57,7 +53,8 @@ def add_members(
     level: int,
     limit_user: str | None = None,
 ) -> None:
-    for member_name in [limit_user] if limit_user else group.all_members:
+    members = [m for m in group.all_members if not limit_user or m == limit_user]
+    for member_name in members:
         member_id = f"{group.name}:{member_name}"
 
         if member_name in group.coordination:
@@ -138,31 +135,6 @@ else:
         ]
     )
 
-# Filter groups by selected user if limit_user is set
-if limit_user:
-    user_groups = [g for g in all_groups if limit_user in g.all_members]
-
-    # Filter top_level_groups to only include groups where user is member
-    top_level_groups = [g for g in top_level_groups if limit_user in g.all_members]
-
-    # Check if user is in top_group
-    if limit_user not in top_group.all_members:
-        # If user is not in top_group, try to find the best top-level group
-        if top_level_groups:
-            top_group = top_level_groups[0]
-            top_level_groups = [
-                g for g in user_groups if g.parent_group == top_group.name
-            ]
-        elif user_groups:
-            # Use first group where user is member as top_group
-            top_group = user_groups[0]
-            top_level_groups = [
-                g for g in user_groups if g.parent_group == top_group.name
-            ]
-        else:
-            st.warning(_("No groups could be found"))
-            st.stop()
-
 if not top_group:
     st.warning(_("No groups could be found"))
     st.stop()
@@ -170,7 +142,7 @@ if not top_group:
 nodes = [
     Node(
         id=top_group.name,
-        label=f"{top_group} ({len(top_group.all_members)})",
+        label=f"{top_group.abbreviated} ({len(top_group.all_members)})",
         size=60,
         color="#2FA24E",
         shape="box",
@@ -180,12 +152,13 @@ nodes = [
     Node(
         id=g.name,
         shape="box",
-        label=f"{g}({len(g.all_members)})",
+        label=f"{g.abbreviated}({len(g.all_members)})",
         size=40,
         color="#608FFD",
         level=2,
     )
     for g in top_level_groups
+    if not limit_user or limit_user in g.all_members
 ]
 edges = [
     Edge(source=top_group.name, target=g.name, type="CURVE_SMOOTH")
@@ -252,6 +225,12 @@ if selected_node:
         st.write(f"### {parent}{selected_node}")
 
         display_group(group, user_list, all_groups)
+
+        subgroups = sorted([cg for cg in all_groups if cg.parent_group == group.name])
+        if subgroups:
+            st.write("#### " + _("Subgroups"))
+            for subgroup in subgroups:
+                st.write(f"- {subgroup.name} ({len(subgroup.all_members)})")
     except ValueError:
         # person selected show some details
         member_name = selected_node.split(":")[-1]
