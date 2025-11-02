@@ -21,7 +21,6 @@ st.title(title)
 
 
 # load collective pages
-@st.cache_data(ttl=3600)
 def load_collective_pages() -> List[CollectivePage]:
     return CollectivePage.get_all(limit=1000)
 

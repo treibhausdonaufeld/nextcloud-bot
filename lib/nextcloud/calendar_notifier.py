@@ -99,35 +99,46 @@ class Notifier:
         locale.setlocale(locale.LC_ALL, settings.locale)
         return date.astimezone(localtz).strftime("%A, %d. %B %Y, %H:%M h")
 
+    def fill_event(self, component) -> dict[str, str]:
+        ## quite some data is tossed away here - like, the recurring rule.
+        cur = {}
+        # cur["calendar"] = f"{calendar}"
+        cur["summary"] = component.get("summary")
+        cur["uid"] = component.get("uid")
+        cur["description"] = component.get("description")
+        ## month/day/year time? Never ever do that!
+        ## It's one of the most confusing date formats ever!
+        ## Use year-month-day time instead ... https://xkcd.com/1179/
+        cur["start"] = component.start
+        endDate = component.end
+        if endDate:
+            cur["end"] = endDate
+        ## For me the following line breaks because some imported calendar events
+        ## came without dtstamp.  But dtstamp is mandatory according to the RFC
+        cur["datestamp"] = component.get("dtstamp").dt.strftime("%m/%d/%Y %H:%M")
+        return cur
+
     def notify_upcoming_events(self) -> None:
         """Send notifications to rocketchat for upcoming events to channels"""
         if not self.calendar:
             return
 
-        events = self.calendar.date_search(
+        events = self.calendar.search(
             start=datetime.now() + timedelta(days=self.config.search_start_days or 0),
             end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
             expand=True,
+            event=True,
         )
 
         for e in events:
-            vevent = e.vobject_instance.vevent
+            for component in e.icalendar_instance.walk():
+                if component.name != "VEVENT":
+                    continue
 
-            event_data = {
-                prop: getattr(vevent, prop).value
-                for prop in (
-                    "summary",
-                    "description",
-                    "location",
-                    "dtstart",
-                    "dtend",
-                    "uid",
-                )
-                if hasattr(vevent, prop)
-            }
+                event_data = self.fill_event(component)
 
-            if event_data["uid"] not in self.events_processed:
-                self.check_event(event_data)
+                if event_data["uid"] not in self.events_processed:
+                    self.check_event(event_data)
 
         self.couchdb.save(self.events)
 
@@ -141,8 +152,8 @@ class Notifier:
     def send_event_notification(self, channel, event_data):
         text = (
             f"Nächster Termin: **{event_data['summary']}**"
-            f"\n - Start: **{self._local_datetime(event_data['dtstart'])}**"
-            f"\n - Ende: **{self._local_datetime(event_data['dtend'])}**"
+            f"\n - Start: **{self._local_datetime(event_data['start'])}**"
+            f"\n - Ende: **{self._local_datetime(event_data['end'])}**"
         )
         if "location" in event_data:
             text += f"\n - Ort: {event_data['location']}"
