@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-02 00:52+0100\n"
+"POT-Creation-Date: 2025-11-02 23:12+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,23 +16,88 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: app.py:70
+#: app.py:44
 msgid "{common_name} Dashboard"
 msgstr "{common_name} Dashboard"
 
+#: app.py:55
+msgid "Ask a Question"
+msgstr "Frage stellen"
+
+#: app.py:61
+msgid "Search or ask about collective pages"
+msgstr "Suche oder frage zu Kollektiv-Seiten"
+
+#: app.py:62
+msgid "e.g., What decisions were made about...?"
+msgstr "z. B. Welche Entscheidungen wurden zu ... getroffen?"
+
+#: app.py:66
+msgid "Context size"
+msgstr "Kontextgröße"
+
+#: app.py:70
+msgid "Number of documents to include in context"
+msgstr "Anzahl der Dokumente, die in den Kontext aufgenommen werden sollen"
+
 #: app.py:90
-msgid "Newest Updates"
-msgstr "Kürzlich geänderte Seiten"
+msgid "Thinking..."
+msgstr "Denke..."
+
+#: app.py:92 pages/protocols.py:122
+msgid "Answer"
+msgstr "Antwort"
+
+#: app.py:95
+msgid "Source Documents"
+msgstr "Quell-Dokumente"
+
+#: app.py:102 pages/collective_pages.py:42 pages/logbook.py:130
+#: pages/protocols.py:154
+msgid "Title"
+msgstr "Titel"
+
+#: app.py:103 pages/logbook.py:129 pages/logbook.py:143 pages/logbook.py:144
+#: pages/protocols.py:152
+msgid "Date"
+msgstr "Datum"
+
+#: app.py:104 pages/collective_pages.py:41
+msgid "ID"
+msgstr "ID"
+
+#: app.py:105
+#, fuzzy
+msgid "File Path"
+msgstr "Dateipfad"
+
+#: app.py:106 app.py:113 pages/collective_pages.py:46
+#: pages/collective_pages.py:53 pages/collective_pages.py:54
+msgid "URL"
+msgstr "URL"
+
+#: app.py:114 pages/collective_pages.py:54
+msgid "Open page"
+msgstr "Seite öffnen"
+
+#: app.py:114 pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
+#: pages/protocols.py:158 pages/protocols.py:165 pages/protocols.py:166
+msgid "Link"
+msgstr "Link"
+
+#: app.py:121
+msgid "No matching pages found."
+msgstr "Keine passenden Seiten gefunden."
 
 #: lib/menu.py:26
 msgid "Home"
 msgstr "Startseite"
 
-#: lib/menu.py:27 pages/groups.py:76
+#: lib/menu.py:27 pages/groups.py:77
 msgid "Groups"
 msgstr "Gruppen"
 
-#: lib/menu.py:28 pages/protocols.py:68
+#: lib/menu.py:28 pages/protocols.py:72
 msgid "Protocols"
 msgstr "Protokolle"
 
@@ -70,109 +135,103 @@ msgstr ""
 msgid "Collective Pages"
 msgstr "Collective-Seiten"
 
-#: pages/collective_pages.py:32
+#: pages/collective_pages.py:31
 msgid "Search filePath"
 msgstr "Dateipfad suchen"
 
-#: pages/collective_pages.py:42
-msgid "ID"
-msgstr "ID"
-
-#: pages/collective_pages.py:43 pages/logbook.py:130
-msgid "Title"
-msgstr "Titel"
-
-#: pages/collective_pages.py:44
+#: pages/collective_pages.py:43
 msgid "filePath"
 msgstr "Dateipfad"
 
-#: pages/collective_pages.py:45
-msgid "collectivePath"
-msgstr "Collective-Pfad"
+#: pages/collective_pages.py:44
+msgid "subtype"
+msgstr "Untertyp"
 
-#: pages/collective_pages.py:46
+#: pages/collective_pages.py:45
 msgid "is_readme"
 msgstr "Ist Readme"
 
-#: pages/collective_pages.py:47 pages/collective_pages.py:54
-#: pages/collective_pages.py:55
-msgid "URL"
-msgstr "URL"
-
-#: pages/collective_pages.py:48
+#: pages/collective_pages.py:47
 msgid "Timestamp"
 msgstr "Zeitstempel"
 
-#: pages/groups.py:32
+#: pages/groups.py:29
 msgid "Parent Group"
 msgstr "Übergeordnete Gruppe"
 
-#: pages/groups.py:35
+#: pages/groups.py:32
 msgid "Short Names"
 msgstr "Kurzbezeichnungen"
 
-#: pages/groups.py:39
+#: pages/groups.py:34
 msgid "Coordination"
 msgstr "Koordination"
 
-#: pages/groups.py:41
+#: pages/groups.py:35
 msgid "Delegates"
 msgstr "Delegierte"
 
-#: pages/groups.py:43
+#: pages/groups.py:36
 msgid "Members"
 msgstr "Mitglieder"
 
-#: pages/groups.py:99
+#: pages/groups.py:100
 msgid "Hierarchical layout"
 msgstr "Hierarchische Darstellung"
 
-#: pages/groups.py:100
+#: pages/groups.py:101
 msgid "With Members"
 msgstr "Mit Mitgliedern"
 
-#: pages/groups.py:101
+#: pages/groups.py:102
 msgid "With Subgroups"
 msgstr "Mit Untergruppen"
 
-#: pages/groups.py:103
+#: pages/groups.py:104
 msgid "Limit to Top Group"
 msgstr "Auf oberste Gruppe begrenzen"
 
-#: pages/groups.py:107
+#: pages/groups.py:108
+msgid "Limit to User"
+msgstr "Auf Benutzer begrenzen"
+
+#: pages/groups.py:113
 msgid "Solver"
 msgstr "Löser"
 
-#: pages/groups.py:128
-msgid "No top-level group without members found for visualization"
-msgstr ""
-"Für die Visualisierung wurde keine oberste Gruppe ohne Mitglieder gefunden"
+#: pages/groups.py:132
+msgid "No groups could be found"
+msgstr "Es konnten keine Gruppen gefunden werden"
 
-#: pages/groups.py:218
+#: pages/groups.py:225
+msgid "Subgroups"
+msgstr "Untergruppen"
+
+#: pages/groups.py:235
 msgid "Roles in Groups"
 msgstr "Rollen in Gruppen"
 
-#: pages/groups.py:222
+#: pages/groups.py:239
 msgid "(Coordination)"
 msgstr "(Koordination)"
 
-#: pages/groups.py:224
+#: pages/groups.py:241
 msgid "(Delegate)"
 msgstr "(Delegierte)"
 
-#: pages/groups.py:230
+#: pages/groups.py:247
 msgid "Pages mentioning User"
 msgstr "Vom Benutzer erwähnte Seiten"
 
-#: pages/groups.py:240
+#: pages/groups.py:257
 msgid "Total Mentions: {count}"
 msgstr "Gesamt-Erwähnungen: {count}"
 
-#: pages/logbook.py:48 pages/protocols.py:89
+#: pages/logbook.py:48 pages/protocols.py:93
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
 
-#: pages/logbook.py:50 pages/protocols.py:91
+#: pages/logbook.py:50 pages/protocols.py:95
 msgid "Select a group"
 msgstr "Gruppe auswählen"
 
@@ -216,10 +275,6 @@ msgstr "Exakte Übereinstimmung"
 msgid "Semantic Search"
 msgstr "Semantische Suche"
 
-#: pages/logbook.py:129 pages/logbook.py:143 pages/logbook.py:144
-msgid "Date"
-msgstr "Datum"
-
 #: pages/logbook.py:131 pages/logbook.py:147
 msgid "Text"
 msgstr "Text"
@@ -228,7 +283,7 @@ msgstr "Text"
 msgid "Valid Until"
 msgstr "Gültig bis"
 
-#: pages/logbook.py:133
+#: pages/logbook.py:133 pages/protocols.py:153
 msgid "Group"
 msgstr "Gruppe"
 
@@ -236,54 +291,62 @@ msgstr "Gruppe"
 msgid "Objections"
 msgstr "Einwände"
 
-#: pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
-#: pages/protocols.py:138
-msgid "Link"
-msgstr "Link"
-
 #: pages/logbook.py:138
 msgid "Distance"
 msgstr "Distanz"
 
-#: pages/logbook.py:155
+#: pages/logbook.py:149
+msgid "Open protocol"
+msgstr "Protokoll öffnen"
+
+#: pages/logbook.py:156
 msgid "Page"
 msgstr "Seite"
 
-#: pages/logbook.py:159
+#: pages/logbook.py:160
 msgid "Page size"
 msgstr "Seitengröße"
 
-#: pages/logbook.py:198
+#: pages/logbook.py:199
 msgid "Upload XLSX file with previous decisions to import"
 msgstr "XLSX-Datei mit Entscheidungen zum Import hochladen"
 
-#: pages/protocols.py:93
+#: pages/protocols.py:97
 msgid "Search protocols"
 msgstr "Protokolle durchsuchen"
 
-#: pages/protocols.py:95
+#: pages/protocols.py:99
 msgid "Use AI to answer"
 msgstr "KI zur Beantwortung verwenden"
 
-#: pages/protocols.py:114
-msgid "Answer"
-msgstr "Antwort"
-
-#: pages/protocols.py:140
-msgid "Path"
-msgstr "Pfad"
-
-#: pages/protocols.py:142
+#: pages/protocols.py:155
 msgid "Moderated by"
 msgstr "Moderiert von"
 
-#: pages/protocols.py:144
+#: pages/protocols.py:156
 msgid "Protocol by"
 msgstr "Protokolliert von"
 
-#: pages/protocols.py:146
+#: pages/protocols.py:157
 msgid "Participants"
 msgstr "Teilnehmer"
+
+#: pages/protocols.py:167
+msgid "Open"
+msgstr "Öffnen"
+
+#~ msgid "Newest Updates"
+#~ msgstr "Kürzlich geänderte Seiten"
+
+#~ msgid "collectivePath"
+#~ msgstr "Collective-Pfad"
+
+#~ msgid "No top-level group without members found for visualization"
+#~ msgstr ""
+#~ "Für die Visualisierung wurde keine oberste Gruppe ohne Mitglieder gefunden"
+
+#~ msgid "Path"
+#~ msgstr "Pfad"
 
 #~ msgid "Users"
 #~ msgstr "Benutzer"
@@ -529,9 +592,6 @@ msgstr "Teilnehmer"
 #~ msgid "Error loading data from bank"
 #~ msgstr "Fehler beim Laden der Bankdaten"
 
-#~ msgid "No transactions found"
-#~ msgstr "Keine Transaktionen gefunden"
-
 #~ msgid "Bank data saved to disk"
 #~ msgstr "Bank Daten gespeichert"
 
@@ -663,9 +723,6 @@ msgstr "Teilnehmer"
 
 #~ msgid "Money Distribution by Category"
 #~ msgstr "Geld-Verteilung nach Kategorie"
-
-#~ msgid "Show comments"
-#~ msgstr "Kommentare anzeigen"
 
 #~ msgid "{common_name} Debts"
 #~ msgstr "{common_name} Schulden"
