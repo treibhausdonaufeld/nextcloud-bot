@@ -117,14 +117,12 @@ limit_user = cols[4].selectbox(
 solver = cols[5].selectbox(
     _("Solver"),
     options=["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"],
-    index=0,
+    index=2,
 )
 
 if isinstance(limit_group, Group):
     top_group = limit_group
-    top_level_groups = sorted(
-        [g for g in all_groups if g.parent_group == top_group.name]
-    )
+    top_level_groups = []
 else:
     top_group = next((g for g in all_groups if g.name == "Koordinationskreis"))
     top_level_groups = sorted(
@@ -139,16 +137,20 @@ if not top_group:
     st.warning(_("No groups could be found"))
     st.stop()
 
-nodes = [
-    Node(
-        id=top_group.name,
-        label=f"{top_group.abbreviated} ({len(top_group.all_members)})",
-        size=60,
-        color="#2FA24E",
-        shape="box",
-        level=1,
-    )
-] + [
+nodes = (
+    [
+        Node(
+            id=top_group.name,
+            label=f"{top_group.abbreviated} ({len(top_group.all_members)})",
+            size=60,
+            color="#2FA24E",
+            shape="box",
+            level=1,
+        )
+    ]
+    if not limit_user or limit_user in top_group.all_members
+    else []
+) + [
     Node(
         id=g.name,
         shape="box",
@@ -165,10 +167,7 @@ edges = [
     for g in top_level_groups
 ]
 
-if with_members:
-    add_members(top_group, nodes, edges, level=2, limit_user=limit_user)
-
-for group in top_level_groups:
+for group in top_level_groups + [top_group]:
     subgroups = [cg for cg in all_groups if cg.parent_group == group.name]
 
     # Filter subgroups if limit_user is set
