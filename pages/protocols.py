@@ -48,11 +48,10 @@ def prompt_ai(protocols: List[Protocol], question: str) -> str | None:
 def display_users(user_ids: list[str]):
     names = []
     for user_id in user_ids:
-        user = user_list.get_user_by_uid(user_id)
-        displayname = user_id
-        if user and user.ocs and user.ocs.displayname:
-            displayname = user.ocs.displayname
-        names.append(displayname)
+        try:
+            names.append(str(user_list[user_id]))
+        except KeyError:
+            names.append(user_id)
     return ", ".join(names)
 
 
@@ -131,11 +130,10 @@ else:
         reverse=True,
     )
 
-for protocol in protocols:
-    with st.expander(f"{protocol.date} - {protocol.group_name}"):
-        # show link to the protocol page when available
-        col1, col2 = st.columns([1, 3])
-
+if protocols:
+    # Create dataframe with protocol information
+    protocol_data = []
+    for protocol in protocols:
         page = None
         try:
             if protocol.page_id:
@@ -143,17 +141,33 @@ for protocol in protocols:
         except Exception:
             page = None
 
+        # Create link to protocol
         if page and getattr(page, "url", None):
-            col1.markdown(f"**{_('Link')}:** [{protocol.protocol_path}]({page.url})")
+            link = page.url
         else:
-            col1.markdown(f"**{_('Path')}:** `{protocol.protocol_path}`")
-        col1.markdown(
-            f"**{_('Moderated by')}:** {display_users(protocol.moderated_by)}"
-        )
-        col1.markdown(f"**{_('Protocol by')}:** {display_users(protocol.protocol_by)}")
-        col1.markdown(
-            f"**{_('Participants')}:** {display_users(protocol.participants)}"
+            link = ""
+
+        protocol_data.append(
+            {
+                _("Date"): protocol.date,
+                _("Group"): protocol.group_name,
+                _("Title"): page.title if page else "",
+                _("Moderated by"): display_users(protocol.moderated_by),
+                _("Protocol by"): display_users(protocol.protocol_by),
+                _("Participants"): display_users(protocol.participants),
+                _("Link"): link,
+            }
         )
 
-        if protocol.page:
-            col2.markdown(protocol.page.content)
+    st.dataframe(
+        protocol_data,
+        column_config={
+            _("Link"): st.column_config.LinkColumn(
+                _("Link"),
+                display_text=_("Open"),
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+        height=600,
+    )

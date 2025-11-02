@@ -16,11 +16,6 @@ node_label_font = "#E0E0E0" if st.context.theme.type == "dark" else "#2C2C2C"
 
 def display_users(title: str, user_ids: list[str]):
     if user_ids:
-        # for user_id in user_ids:
-        #     user = user_list.get_user_by_uid(user_id)
-        #     displayname = user_id
-        #     if user and user.ocs and user.ocs.displayname:
-        #         displayname = user.ocs.displayname
         users = [str(user_list[user_id].ocs.displayname) for user_id in user_ids]
         st.write(f"- **{title}** ({len(users)}): {', '.join(users)}")
 

@@ -149,14 +149,15 @@ st.dataframe(
             _("Link"), display_text=_("Open protocol"), max_chars=30
         ),
     },
-    hide_index=True,
+    hide_index=False,
+    height=500,
 )
 
 st.markdown("**" + _("Page") + "**: " + str(current_page))
 flex = st.container(horizontal=True, horizontal_alignment="right")
 
 page_size = flex.selectbox(
-    _("Page size"), options=[10, 25, 50, 100], key="page_size", width=140
+    _("Page size"), options=[10, 25, 50, 100], key="page_size", index=1, width=140
 )
 # total_pages = int(total_count / page_size) if int(total_count / page_size) > 0 else 1
 current_page = flex.number_input(

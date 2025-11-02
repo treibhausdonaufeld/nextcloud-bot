@@ -22,7 +22,7 @@ st.title(title)
 
 # load collective pages
 def load_collective_pages() -> List[CollectivePage]:
-    return CollectivePage.get_all(limit=1000)
+    return CollectivePage.get_all(limit=1000, sort=[{"ocs.timestamp": "desc"}])
 
 
 pages = load_collective_pages()
@@ -41,7 +41,7 @@ df = {
     _("ID"): [p.id for p in pages],
     _("Title"): [p.title for p in pages],
     _("filePath"): [p.ocs.filePath if p.ocs else "" for p in pages],
-    _("collectivePath"): [p.ocs.collectivePath if p.ocs else "" for p in pages],
+    _("subtype"): [p.subtype for p in pages],
     _("is_readme"): [p.is_readme for p in pages],
     _("URL"): [p.url or "" for p in pages],
     _("Timestamp"): [p.formatted_timestamp or "" for p in pages],
