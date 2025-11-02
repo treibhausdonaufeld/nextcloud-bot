@@ -11,6 +11,8 @@ from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
+node_label_font = "#E0E0E0" if st.context.theme.type == "dark" else "#2C2C2C"
+
 
 def display_users(title: str, user_ids: list[str]):
     if user_ids:
@@ -73,6 +75,7 @@ def add_members(
                 color=color,
                 title=member_name,
                 level=level,
+                font={"color": node_label_font},
             )
         )
         edges.append(Edge(source=group.name, target=member_id, type="CURVE_SMOOTH"))
@@ -190,32 +193,7 @@ edges = [
 ]
 
 if with_members:
-    if limit_user:
-        # Only add the selected user
-        if limit_user in top_group.all_members:
-            member_id = f"{top_group.name}:{limit_user}"
-            if limit_user in top_group.coordination:
-                color = "#FF5733"  # Red for coordination
-            elif limit_user in top_group.delegate:
-                color = "#33C1FF"  # Blue for delegates
-            else:
-                color = "#DAA520"  # Goldenrod for regular members
-
-            nodes.append(
-                Node(
-                    id=member_id,
-                    label=str(user_list[limit_user]),
-                    size=10,
-                    color=color,
-                    title=limit_user,
-                    level=2,
-                )
-            )
-            edges.append(
-                Edge(source=top_group.name, target=member_id, type="CURVE_SMOOTH")
-            )
-    else:
-        add_members(top_group, nodes, edges, level=2)
+    add_members(top_group, nodes, edges, level=2, limit_user=limit_user)
 
 for group in top_level_groups:
     subgroups = [cg for cg in all_groups if cg.parent_group == group.name]
@@ -234,10 +212,11 @@ for group in top_level_groups:
         nodes.append(
             Node(
                 id=subgroup.name,
-                label=f"{subgroup} ({len(subgroup.all_members)})",
+                label=f"{subgroup.abbreviated} ({len(subgroup.all_members)})",
                 size=20,
                 color="#993699",
                 level=3,
+                font={"color": node_label_font},
             )
         )
         edges.append(Edge(source=group.name, target=subgroup.name, type="CURVE_SMOOTH"))
@@ -257,7 +236,7 @@ config = Config(
     solver=solver,
     # nodeSpacing=400,
     # treeSpacing=400,
-    node={"labelProperty": "label"},
+    node={"labelProperty": "label", "fontColor": "#F0F0F0"},
     link={"labelProperty": "label", "renderLabel": True},
 )
 

@@ -42,6 +42,10 @@ class Group(CouchDBModel):
         """Return all members, including coordination and delegates."""
         return sorted(set(self.coordination + self.delegate + self.members))
 
+    @cached_property
+    def abbreviated(self) -> str:
+        return str(self)[:20] + ("..." if len(str(self)) > 20 else "")
+
     @classmethod
     def get(cls, doc_id: str) -> "Group":
         """Get a Group by its id."""
