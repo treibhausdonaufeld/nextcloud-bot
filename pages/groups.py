@@ -209,14 +209,17 @@ config = Config(
 
 selected_node = agraph(nodes=nodes, edges=edges, config=config)
 
-# for group in top_level_groups:
-#     display_group(group, user_list, all_groups)
-
-if selected_node:
+if selected_node or limit_user or limit_group:
     try:
-        group = Group.get_by_name(selected_node)
+        group = (
+            Group.get_by_name(selected_node)
+            if selected_node
+            else cast(Group, limit_group)
+        )
+        if not group:
+            raise ValueError("Not a group")
         parent = f"{group.parent_group} :arrow_right: " if group.parent_group else ""
-        st.write(f"### {parent}{selected_node}")
+        st.write(f"### {parent}{group.name}")
 
         display_group(group, user_list, all_groups)
 
@@ -227,7 +230,7 @@ if selected_node:
                 st.write(f"- {subgroup.name} ({len(subgroup.all_members)})")
     except ValueError:
         # person selected show some details
-        member_name = selected_node.split(":")[-1]
+        member_name = selected_node.split(":")[-1] if selected_node else limit_user
         user = user_list[member_name]
 
         st.write(f"### {user.ocs.displayname}")
