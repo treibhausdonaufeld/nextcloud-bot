@@ -1,11 +1,9 @@
 import logging
 import re
 from datetime import datetime
-from functools import cached_property, lru_cache
+from functools import cached_property
 from typing import List
 
-from lib.chromadb import chroma_client
-from lib.chromadb import embedding_function as ef
 from lib.nextcloud.config import bot_config
 from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
@@ -15,11 +13,6 @@ from .base import CouchDBModel
 from .collective_page import CollectivePage
 
 logger = logging.getLogger(__name__)
-
-
-@lru_cache(maxsize=1)
-def get_protocol_collection():
-    return chroma_client.get_or_create_collection("protocols", embedding_function=ef)  # type: ignore
 
 
 class Protocol(CouchDBModel):
@@ -89,26 +82,6 @@ class Protocol(CouchDBModel):
                 and page.ocs.filePath.split("/")[-1].lower() in protocol_kws
             )
         )
-
-    def save(self) -> None:
-        super().save()
-
-        # Update ChromaDB collection
-        if self.page and self.page.content:
-            protocol_collection = get_protocol_collection()
-
-            protocol_collection.upsert(
-                ids=[self.build_id()],
-                documents=[self.page.content],
-                metadatas=[
-                    {
-                        "page_id": self.page.id,
-                        "title": self.page.title,
-                        "date": self.date,
-                        "group_name": self.group_name,
-                    },
-                ],
-            )
 
     def extract_decisions(self) -> None:
         """Get all decisions marked with ::: success"""

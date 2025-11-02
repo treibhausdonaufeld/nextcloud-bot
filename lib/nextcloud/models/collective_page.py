@@ -1,13 +1,26 @@
+import logging
 from enum import Enum
+from functools import lru_cache
 from typing import Any, List, cast
 
 from pydantic import BaseModel
 
+from lib.chromadb import chroma_client
+from lib.chromadb import embedding_function as ef
 from lib.nextcloud.models.base import (
     CouchDBModel,
     format_timestamp,
 )
 from lib.settings import settings
+
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def get_collective_page_collection():
+    return chroma_client.get_or_create_collection(
+        "collective_page", embedding_function=ef
+    )  # type: ignore
 
 
 class OCSCollectivePage(BaseModel):
@@ -106,3 +119,31 @@ class CollectivePage(CouchDBModel):
     @classmethod
     def get_all(cls, *args, **kwargs) -> List["CollectivePage"]:
         return cast(List[CollectivePage], super().get_all(*args, **kwargs))
+
+    def save(self) -> None:
+        from lib.nextcloud.models.group import Group
+
+        super().save()
+
+        # Update ChromaDB collection
+        if self.ocs and self.content:
+            protocol_collection = get_collective_page_collection()
+
+            try:
+                group = Group.get_for_page(self)
+            except ValueError:
+                group = None
+
+            protocol_collection.upsert(
+                ids=[self.build_id()],
+                documents=[self.content],
+                metadatas=[
+                    {
+                        "page_id": self.id,
+                        "title": self.ocs.title,
+                        "timestamp": self.ocs.timestamp,
+                        "subtype": self.subtype,
+                        "group_id": group.build_id() if group else None,
+                    },
+                ],
+            )

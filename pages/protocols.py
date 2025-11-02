@@ -2,12 +2,17 @@ from datetime import datetime
 from typing import List, cast
 
 import streamlit as st
+from chromadb import Where
 from google import genai
 
 from lib.couchdb import couchdb
 from lib.menu import menu
-from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.models.protocol import Protocol, get_protocol_collection
+from lib.nextcloud.models.collective_page import (
+    CollectivePage,
+    PageSubtype,
+    get_collective_page_collection,
+)
+from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
@@ -77,7 +82,7 @@ user_list = NCUserList()
 
 st.title(title)
 
-protocol_collection = get_protocol_collection()
+protocol_collection = get_collective_page_collection()
 
 
 # filter out protocols in the future
@@ -100,10 +105,14 @@ ai_enabled = col3.checkbox(
 if selected_group and not query_text:
     protocols = [p for p in get_all_protocols() if p.group_name == selected_group]
 elif query_text:
+    where = {"subtype": PageSubtype.PROTOCOL.value}
+    if selected_group:
+        where["group_name"] = selected_group
+
     results = protocol_collection.query(
         query_texts=[query_text],
         n_results=10 if not ai_enabled else 5,
-        where={"group_name": selected_group} if selected_group else None,
+        where=cast(Where, where),
     )
 
     result_ids = results["ids"][0]
