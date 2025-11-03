@@ -163,7 +163,7 @@ class CollectivePage(CouchDBModel):
                 cast(
                     Metadata,
                     {
-                        "page_id": self.id,
+                        "page_id": self.ocs.id,
                         "title": self.ocs.title,
                         "timestamp": self.ocs.timestamp or 0,
                         "subtype": self.subtype or "",

@@ -11,23 +11,20 @@ from langchain_core.documents import Document
 from lib.chromadb import chroma_client, langchain_embeddings
 from lib.couchdb import couchdb
 from lib.menu import menu
-from lib.nextcloud.models.collective_page import (
-    CollectivePage,
-)
+from lib.nextcloud.models.collective_page import CollectivePage
 from lib.settings import _, settings
 
 logger = logging.getLogger(__name__)
 
 
-def prompt_ai_stream(
-    pages: List[CollectivePage], question: str
-) -> Generator[str, None, None]:
+def prompt_ai_stream(docs: List[Document], question: str) -> Generator[str, None, None]:
     """Ask AI a question and stream the response token by token."""
     context = "\n\n".join(
         [
-            f"Titel: {p.title}\nDatum: {p.formatted_timestamp}\nInhalt: {p.content}"
-            for p in pages
-            if p.content
+            f"Titel: {doc.metadata.get('title', 'N/A')}\n"
+            f"Datum: {doc.metadata.get('timestamp', 'N/A')}\n"
+            f"Inhalt: {doc.page_content}"
+            for doc in docs
         ]
     )
 
@@ -53,38 +50,6 @@ def prompt_ai_stream(
     ):
         if chunk.text:
             yield chunk.text
-
-
-def prompt_ai(pages: List[CollectivePage], question: str) -> str | None:
-    """Ask AI a question based on collective pages context (non-streaming fallback)."""
-    context = "\n\n".join(
-        [
-            f"Titel: {p.title}\nDatum: {p.formatted_timestamp}\nInhalt: {p.content}"
-            for p in pages
-            if p.content
-        ]
-    )
-
-    prompt = f"""Du bist ein hilfreicher Assistent, der Informationen aus Kollektiv-Seiten
-    zusammenfasst und Fragen dazu beantwortet.
-    Nutze den folgenden Kontext, um die Frage zu beantworten.
-    Wenn die Information nicht im Kontext vorhanden ist,
-    antworte mit "Die Information ist nicht verfügbar".
-    Antworte immer in der Sprache in der die Frage gestellt wurde.
-
-    Kontext:
-    {context}
-
-    Frage: {question}
-    Antwort:"""
-
-    client = genai.Client(api_key=settings.gemini_api_key)
-    response = client.models.generate_content(
-        model=settings.gemini_model,
-        contents=prompt,
-    )
-
-    return response.text
 
 
 @st.cache_resource(ttl="1d")
@@ -162,16 +127,16 @@ question = col1.text_input(
     label_visibility="collapsed",
 )
 num_results = col2.slider(
-    _("Context size"),
+    _("Chunks size"),
     min_value=1,
-    max_value=20,
-    value=5,
-    help=_("Number of documents to include in context"),
+    max_value=50,
+    value=25,
+    help=_("Number of chunks to include in context"),
 )
-use_streaming = col3.checkbox(
-    _("Stream response"),
-    value=True,
-    help=_("Show answer as it's being generated"),
+load_full_pages = col3.checkbox(
+    _("Full pages"),
+    value=False,
+    help=_("Load full pages instead of excerpts"),
 )
 
 if question:
@@ -181,70 +146,88 @@ if question:
         retrieved_docs = retriever.invoke(question)[:num_results]
 
     if retrieved_docs:
-        # Get unique page IDs from metadata
-        unique_page_ids = list(
-            set(
-                doc.metadata.get("page_id")
-                for doc in retrieved_docs
-                if doc.metadata.get("page_id") is not None
-            )
-        )
+        st.markdown(f"### {_('Answer')}")
 
-        # Load the actual pages
-        matching_pages = []
-        for page_id in unique_page_ids:
-            try:
-                if isinstance(page_id, int):
+        if load_full_pages:
+            # Load full pages for each retrieved chunk
+            full_pages = {}
+            for doc in retrieved_docs:
+                page_id = doc.metadata.get("page_id")
+                if page_id in full_pages:
+                    continue  # Already loaded
+
+                if page_id:
+                    try:
+                        page = CollectivePage.get_from_page_id(page_id)
+                        full_content = (
+                            f"Titel: {page.title}\n"
+                            f"Datum: {page.formatted_timestamp or ''}\n"
+                            f"Inhalt: {page.content if page.content else ''}"
+                        )
+                        full_pages[page_id] = Document(
+                            page_content=full_content,
+                            metadata=doc.metadata,
+                        )
+                    except Exception as e:
+                        logger.warning(f"Could not load full page {page_id}: {e}")
+            retrieved_docs = list(full_pages.values())
+
+        # answer_placeholder = st.empty()
+        # full_answer = ""
+
+        # for chunk in prompt_ai_stream(retrieved_docs, question):
+        #     full_answer += chunk
+        #     answer_placeholder.markdown(full_answer + "▌")
+
+        # # Remove cursor after streaming is complete
+        # answer_placeholder.markdown(full_answer)
+
+        st.write_stream(prompt_ai_stream(retrieved_docs, question))
+
+        st.markdown(f"### {_('Source Documents')}")
+
+        # Create dataframe with source document chunks
+        source_data = []
+        for i, doc in enumerate(retrieved_docs, 1):
+            metadata = doc.metadata
+            # Create URL from page_id if available
+            page_id = metadata.get("page_id")
+            url = ""
+            if page_id:
+                try:
+                    # Build URL from page_id
                     page = CollectivePage.get_from_page_id(page_id)
-                    matching_pages.append(page)
-            except Exception as e:
-                logger.warning(f"Could not load page {page_id}: {e}")
+                    url = page.url or ""
+                except Exception as e:
+                    logger.warning(f"Could not load page {page_id} for URL: {e}")
 
-        if matching_pages:
-            st.markdown(f"### {_('Answer')}:")
-
-            # Stream or display full answer
-            if use_streaming:
-                answer_placeholder = st.empty()
-                full_answer = ""
-
-                for chunk in prompt_ai_stream(matching_pages, question):
-                    full_answer += chunk
-                    answer_placeholder.markdown(full_answer + "▌")
-
-                # Remove cursor after streaming is complete
-                answer_placeholder.markdown(full_answer)
-            else:
-                with st.spinner(_("Thinking...")):
-                    answer = prompt_ai(matching_pages, question)
-                st.markdown(answer)
-
-            st.markdown(f"### {_('Source Documents')}:")
-
-            # Create dataframe with source documents
-            source_data = []
-            for p in matching_pages:
-                source_data.append(
-                    {
-                        _("Title"): p.title,
-                        _("Date"): p.formatted_timestamp,
-                        _("ID"): p.id,
-                        _("File Path"): p.ocs.filePath if p.ocs else "",
-                        _("URL"): p.url or "",
-                    }
-                )
-
-            st.dataframe(
-                source_data,
-                column_config={
-                    _("URL"): st.column_config.LinkColumn(
-                        _("Link"), display_text=_("Open page")
-                    ),
-                },
-                use_container_width=True,
-                hide_index=True,
+            source_data.append(
+                {
+                    "#": i,
+                    _("Title"): metadata.get("title", "N/A"),
+                    _(
+                        "Chunk"
+                    ): f"{metadata.get('chunk_index', 0) + 1}/{metadata.get('total_chunks', 1)}",
+                    _("Content"): doc.page_content,
+                    _("Page ID"): page_id or "N/A",
+                    _("URL"): url,
+                }
             )
-        else:
-            st.warning(_("No matching pages found."))
+
+        st.dataframe(
+            source_data,
+            column_config={
+                "#": st.column_config.NumberColumn("#", width="small"),
+                _("Title"): st.column_config.TextColumn(_("Title"), width="medium"),
+                _("Chunk"): st.column_config.TextColumn(_("Chunk"), width="small"),
+                _("Content"): st.column_config.TextColumn(_("Content"), width="large"),
+                _("Page ID"): st.column_config.TextColumn(_("Page ID"), width="small"),
+                _("URL"): st.column_config.LinkColumn(
+                    _("Link"), display_text=_("Open page"), width="small"
+                ),
+            },
+            width="content",
+            hide_index=True,
+        )
     else:
         st.warning(_("No matching pages found."))
