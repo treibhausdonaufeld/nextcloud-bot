@@ -13,6 +13,7 @@ from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.decision import Decision
+from lib.nextcloud.models.protocol import Protocol
 from lib.settings import _, settings
 
 logger = logging.getLogger(__name__)
@@ -207,6 +208,12 @@ if question:
             else:
                 chunk_info = "—"
 
+            date = ""
+            if source_type == Decision.__name__:
+                date = metadata.get("date", "")[0:10]
+            elif Protocol.valid_title(metadata.get("title", "")):
+                date = metadata.get("title", "").split(" ")[0]
+
             source_data.append(
                 {
                     "#": i,
@@ -214,6 +221,7 @@ if question:
                     if source_type == Decision.__name__
                     else _("Page"),
                     _("Title"): metadata.get("title", "N/A"),
+                    _("Date"): date,
                     _("Chunk"): chunk_info,
                     _("Content"): doc.page_content,
                     _("Page ID"): page_id or "N/A",
@@ -234,7 +242,7 @@ if question:
                     _("Link"), display_text=_("Open page"), width="small"
                 ),
             },
-            width="content",
+            width="stretch",
             hide_index=True,
         )
     else:
