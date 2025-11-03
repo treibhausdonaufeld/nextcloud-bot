@@ -159,13 +159,16 @@ class CouchDBModel(BaseModel):
 
     @classmethod
     def get_all(
-        cls, limit: int = 100, sort: List[str | dict] = [{"updated_at": "desc"}]
+        cls,
+        limit: int = 100,
+        sort: List[str | dict] = [{"updated_at": "desc"}],
+        selector: dict | None = None,
     ) -> List["CouchDBModel"]:
         """Load all documents of this model type from CouchDB."""
         db = couchdb()
 
         lookup = {
-            "selector": {"type": cls.__name__},
+            "selector": {"type": cls.__name__} | (selector or {}),
             "sort": sort,
             "limit": limit,
         }

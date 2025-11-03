@@ -37,8 +37,9 @@ def parse_groups(page: CollectivePage) -> None:
         return
 
     if Group.valid_name(page.title):
-        page.subtype = PageSubtype.GROUP
-        page.save()
+        if page.subtype != PageSubtype.GROUP:
+            page.subtype = PageSubtype.GROUP
+            page.save()
 
         if page.id and page.ocs:
             group = Group(page_id=page.ocs.id)
@@ -69,8 +70,9 @@ def parse_protocols(page: CollectivePage) -> None:
         )
         and Protocol.valid_title(page.title)
     ):
-        page.subtype = PageSubtype.PROTOCOL
-        page.save()
+        if page.subtype != PageSubtype.PROTOCOL:
+            page.subtype = PageSubtype.PROTOCOL
+            page.save()
 
         protocol = Protocol(page_id=page.ocs.id, date="")
         try:

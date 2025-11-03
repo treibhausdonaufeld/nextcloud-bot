@@ -1,11 +1,17 @@
-import pandas as pd
+from typing import Generator
+
+from pandas import DataFrame
 
 from lib.nextcloud.models.decision import Decision
 
 
-def import_decisions_from_excel(uploaded_file) -> tuple[int, list[str]]:
-    # Read the Excel file
-    df = pd.read_excel(uploaded_file)
+def import_decisions_from_excel(df: DataFrame) -> Generator[str]:
+    """
+    Import decisions from Excel file.
+
+    Yields:
+        str: Empty string on successful row import, error message on failure
+    """
 
     # Expected columns mapping (flexible column names)
     expected_columns = {
@@ -25,9 +31,6 @@ def import_decisions_from_excel(uploaded_file) -> tuple[int, list[str]]:
             if col in possible_names:
                 column_mapping[field] = col
                 break
-
-    created_count = 0
-    errors = []
 
     for row_idx in range(len(df)):
         try:
@@ -52,11 +55,11 @@ def import_decisions_from_excel(uploaded_file) -> tuple[int, list[str]]:
 
             # Ensure required fields
             if not decision_data.get("title") and not decision_data.get("text"):
-                errors.append(f"Row {row_num}: Missing both title and text")
+                yield f"Row {row_num}: Missing both title and text"
                 continue
 
             if not decision_data.get("date"):
-                errors.append(f"Row {row_num}: Missing date")
+                yield f"Row {row_num}: Missing date"
                 continue
 
             decision_data["group_name"] = decision_data.get("group_name", "").split(
@@ -66,9 +69,10 @@ def import_decisions_from_excel(uploaded_file) -> tuple[int, list[str]]:
             # Create and save the decision
             decision = Decision(**decision_data)
             decision.save()
-            created_count += 1
+
+            # Yield empty string on success
+            yield ""
+
         except Exception as e:
             row_num = row_idx + 1
-            errors.append(f"Row {row_num}: {str(e)}")
-
-    return created_count, errors
+            yield f"Row {row_num}: {str(e)}"

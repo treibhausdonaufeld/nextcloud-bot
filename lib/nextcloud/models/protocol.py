@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import date as dateType
 from datetime import datetime
 from functools import cached_property
 from typing import List
@@ -44,9 +45,9 @@ class Protocol(CouchDBModel):
             return None
 
     @cached_property
-    def date_obj(self) -> datetime | None:
+    def date_obj(self) -> dateType | None:
         if self.date:
-            return datetime.strptime(self.date.split()[0], "%Y-%m-%d")
+            return datetime.strptime(self.date.split()[0], "%Y-%m-%d").date()
         return None
 
     @property
@@ -88,11 +89,15 @@ class Protocol(CouchDBModel):
         if not self.page or not self.page.content:
             return
 
-        if self.date_obj and self.date_obj > datetime.now():
+        if self.date_obj and self.date_obj > datetime.now().date():
             logger.info(
                 "Skipping decision extraction for future protocol %s", self.build_id()
             )
             return
+
+        # delete existing decision for this page
+        for decision in Decision.get_all(selector={"page_id": self.page_id}):
+            decision.delete()
 
         # Simple regex to find ::: success blocks
         decision_blocks = re.findall(
