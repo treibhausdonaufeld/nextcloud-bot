@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-02 23:12+0100\n"
+"POT-Creation-Date: 2025-11-03 17:56+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,76 +16,107 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: app.py:44
+#: app.py:113
 msgid "{common_name} Dashboard"
 msgstr "{common_name} Dashboard"
 
-#: app.py:55
+#: app.py:124
 msgid "Ask a Question"
 msgstr "Frage stellen"
 
-#: app.py:61
+#: app.py:130
 msgid "Search or ask about collective pages"
 msgstr "Suche oder frage zu Kollektiv-Seiten"
 
-#: app.py:62
+#: app.py:131
 msgid "e.g., What decisions were made about...?"
 msgstr "z. B. Welche Entscheidungen wurden zu ... getroffen?"
 
-#: app.py:66
-msgid "Context size"
-msgstr "Kontextgröße"
+#: app.py:135
+msgid "Chunks size"
+msgstr "Chunk-Größe"
 
-#: app.py:70
-msgid "Number of documents to include in context"
-msgstr "Anzahl der Dokumente, die in den Kontext aufgenommen werden sollen"
+#: app.py:139
+msgid "Number of chunks to include in context"
+msgstr "Anzahl der Chunks, die in den Kontext aufgenommen werden sollen"
 
-#: app.py:90
-msgid "Thinking..."
-msgstr "Denke..."
+#: app.py:142
+msgid "Full pages"
+msgstr "Vollständige Seiten"
 
-#: app.py:92 pages/protocols.py:122
+#: app.py:144
+msgid "Load full pages instead of excerpts"
+msgstr "Vollständige Seiten statt Auszügen laden"
+
+#: app.py:147
+msgid "AI Summary"
+msgstr "KI-Zusammenfassung"
+
+#: app.py:149
+msgid "Generate AI summary of results"
+msgstr "KI-Zusammenfassung der Ergebnisse erstellen"
+
+#: app.py:154
+msgid "Searching documents..."
+msgstr "Dokumente werden durchsucht..."
+
+#: app.py:185 pages/protocols.py:154
 msgid "Answer"
 msgstr "Antwort"
 
-#: app.py:95
+#: app.py:188
 msgid "Source Documents"
 msgstr "Quell-Dokumente"
 
-#: app.py:102 pages/collective_pages.py:42 pages/logbook.py:130
-#: pages/protocols.py:154
+#: app.py:220
+msgid "Decision"
+msgstr "Entscheidung"
+
+#: app.py:220 app.py:236
+msgid "Type"
+msgstr "Typ"
+
+#: app.py:222
+msgid "Page"
+msgstr "Seite"
+
+#: app.py:223 app.py:237 pages/collective_pages.py:42 pages/logbook.py:123
+#: pages/protocols.py:186
 msgid "Title"
 msgstr "Titel"
 
-#: app.py:103 pages/logbook.py:129 pages/logbook.py:143 pages/logbook.py:144
-#: pages/protocols.py:152
+#: app.py:224 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
+#: pages/protocols.py:184
 msgid "Date"
 msgstr "Datum"
 
-#: app.py:104 pages/collective_pages.py:41
-msgid "ID"
-msgstr "ID"
+#: app.py:225 app.py:238
+msgid "Chunk"
+msgstr "Chunk"
 
-#: app.py:105
-#, fuzzy
-msgid "File Path"
-msgstr "Dateipfad"
+#: app.py:226 app.py:239
+msgid "Content"
+msgstr "Inhalt"
 
-#: app.py:106 app.py:113 pages/collective_pages.py:46
+#: app.py:227 app.py:240
+msgid "Page ID"
+msgstr "Seiten-ID"
+
+#: app.py:228 app.py:241 pages/collective_pages.py:46
 #: pages/collective_pages.py:53 pages/collective_pages.py:54
 msgid "URL"
 msgstr "URL"
 
-#: app.py:114 pages/collective_pages.py:54
+#: app.py:242 pages/collective_pages.py:54
 msgid "Open page"
 msgstr "Seite öffnen"
 
-#: app.py:114 pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
-#: pages/protocols.py:158 pages/protocols.py:165 pages/protocols.py:166
+#: app.py:242 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
+#: pages/protocols.py:190 pages/protocols.py:197 pages/protocols.py:198
 msgid "Link"
 msgstr "Link"
 
-#: app.py:121
+#: app.py:249
 msgid "No matching pages found."
 msgstr "Keine passenden Seiten gefunden."
 
@@ -97,11 +128,11 @@ msgstr "Startseite"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: lib/menu.py:28 pages/protocols.py:72
+#: lib/menu.py:28 pages/protocols.py:74
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: lib/menu.py:29 pages/logbook.py:33
+#: lib/menu.py:29 pages/logbook.py:31
 msgid "Logbook"
 msgstr "Logbuch"
 
@@ -138,6 +169,10 @@ msgstr "Collective-Seiten"
 #: pages/collective_pages.py:31
 msgid "Search filePath"
 msgstr "Dateipfad suchen"
+
+#: pages/collective_pages.py:41
+msgid "ID"
+msgstr "ID"
 
 #: pages/collective_pages.py:43
 msgid "filePath"
@@ -203,137 +238,143 @@ msgstr "Löser"
 msgid "No groups could be found"
 msgstr "Es konnten keine Gruppen gefunden werden"
 
-#: pages/groups.py:225
+#: pages/groups.py:228
 msgid "Subgroups"
 msgstr "Untergruppen"
 
-#: pages/groups.py:235
+#: pages/groups.py:238
 msgid "Roles in Groups"
 msgstr "Rollen in Gruppen"
 
-#: pages/groups.py:239
+#: pages/groups.py:242
 msgid "(Coordination)"
 msgstr "(Koordination)"
 
-#: pages/groups.py:241
+#: pages/groups.py:244
 msgid "(Delegate)"
 msgstr "(Delegierte)"
 
-#: pages/groups.py:247
+#: pages/groups.py:250
 msgid "Pages mentioning User"
 msgstr "Vom Benutzer erwähnte Seiten"
 
-#: pages/groups.py:257
+#: pages/groups.py:260
 msgid "Total Mentions: {count}"
 msgstr "Gesamt-Erwähnungen: {count}"
 
-#: pages/logbook.py:48 pages/protocols.py:93
+#: pages/logbook.py:44 pages/protocols.py:99
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
 
-#: pages/logbook.py:50 pages/protocols.py:95
+#: pages/logbook.py:46 pages/protocols.py:101
 msgid "Select a group"
 msgstr "Gruppe auswählen"
 
-#: pages/logbook.py:55
+#: pages/logbook.py:50
 msgid "Search"
 msgstr "Suchen"
 
-#: pages/logbook.py:60
+#: pages/logbook.py:54
 msgid "Search Type"
 msgstr "Suchtyp"
 
-#: pages/logbook.py:61 pages/logbook.py:83
+#: pages/logbook.py:55 pages/logbook.py:77
 msgid "Any"
 msgstr "Beliebig"
 
-#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:85
+#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:79
 msgid "Exact"
 msgstr "Exakt"
 
-#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:88
+#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:82
 msgid "All"
 msgstr "Alle"
 
-#: pages/logbook.py:61 pages/logbook.py:105
+#: pages/logbook.py:55 pages/logbook.py:98
 msgid "Semantic"
 msgstr "Semantisch"
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "All words"
 msgstr "Alle Wörter"
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Any word"
 msgstr "Beliebiges Wort"
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Exact Match"
 msgstr "Exakte Übereinstimmung"
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Semantic Search"
 msgstr "Semantische Suche"
 
-#: pages/logbook.py:131 pages/logbook.py:147
-msgid "Text"
-msgstr "Text"
-
-#: pages/logbook.py:132
-msgid "Valid Until"
-msgstr "Gültig bis"
-
-#: pages/logbook.py:133 pages/protocols.py:153
+#: pages/logbook.py:122 pages/protocols.py:185
 msgid "Group"
 msgstr "Gruppe"
 
-#: pages/logbook.py:134
+#: pages/logbook.py:124 pages/logbook.py:139
+msgid "Text"
+msgstr "Text"
+
+#: pages/logbook.py:125
+msgid "Valid Until"
+msgstr "Gültig bis"
+
+#: pages/logbook.py:126
 msgid "Objections"
 msgstr "Einwände"
 
-#: pages/logbook.py:138
+#: pages/logbook.py:130
 msgid "Distance"
 msgstr "Distanz"
 
-#: pages/logbook.py:149
+#: pages/logbook.py:141
 msgid "Open protocol"
 msgstr "Protokoll öffnen"
 
-#: pages/logbook.py:156
-msgid "Page"
-msgstr "Seite"
-
-#: pages/logbook.py:160
-msgid "Page size"
-msgstr "Seitengröße"
-
-#: pages/logbook.py:199
+#: pages/logbook.py:153
 msgid "Upload XLSX file with previous decisions to import"
 msgstr "XLSX-Datei mit Entscheidungen zum Import hochladen"
 
-#: pages/protocols.py:97
+#: pages/logbook.py:166
+msgid "Importing file..."
+msgstr "Datei wird importiert..."
+
+#: pages/protocols.py:103
 msgid "Search protocols"
 msgstr "Protokolle durchsuchen"
 
-#: pages/protocols.py:99
+#: pages/protocols.py:105
 msgid "Use AI to answer"
 msgstr "KI zur Beantwortung verwenden"
 
-#: pages/protocols.py:155
+#: pages/protocols.py:187
 msgid "Moderated by"
 msgstr "Moderiert von"
 
-#: pages/protocols.py:156
+#: pages/protocols.py:188
 msgid "Protocol by"
 msgstr "Protokolliert von"
 
-#: pages/protocols.py:157
+#: pages/protocols.py:189
 msgid "Participants"
 msgstr "Teilnehmer"
 
-#: pages/protocols.py:167
+#: pages/protocols.py:199
 msgid "Open"
 msgstr "Öffnen"
+
+#~ msgid "Thinking..."
+#~ msgstr "Denke..."
+
+#, fuzzy
+#~ msgid "File Path"
+#~ msgstr "Dateipfad"
+
+#~ msgid "Page size"
+#~ msgstr "Seitengröße"
 
 #~ msgid "Newest Updates"
 #~ msgstr "Kürzlich geänderte Seiten"

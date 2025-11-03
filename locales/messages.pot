@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-02 23:12+0100\n"
+"POT-Creation-Date: 2025-11-03 17:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,75 +15,107 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: app.py:44
+#: app.py:113
 msgid "{common_name} Dashboard"
 msgstr ""
 
-#: app.py:55
+#: app.py:124
 msgid "Ask a Question"
 msgstr ""
 
-#: app.py:61
+#: app.py:130
 msgid "Search or ask about collective pages"
 msgstr ""
 
-#: app.py:62
+#: app.py:131
 msgid "e.g., What decisions were made about...?"
 msgstr ""
 
-#: app.py:66
-msgid "Context size"
+#: app.py:135
+msgid "Chunks size"
 msgstr ""
 
-#: app.py:70
-msgid "Number of documents to include in context"
+#: app.py:139
+msgid "Number of chunks to include in context"
 msgstr ""
 
-#: app.py:90
-msgid "Thinking..."
+#: app.py:142
+msgid "Full pages"
 msgstr ""
 
-#: app.py:92 pages/protocols.py:122
+#: app.py:144
+msgid "Load full pages instead of excerpts"
+msgstr ""
+
+#: app.py:147
+msgid "AI Summary"
+msgstr ""
+
+#: app.py:149
+msgid "Generate AI summary of results"
+msgstr ""
+
+#: app.py:154
+msgid "Searching documents..."
+msgstr ""
+
+#: app.py:185 pages/protocols.py:154
 msgid "Answer"
 msgstr ""
 
-#: app.py:95
+#: app.py:188
 msgid "Source Documents"
 msgstr ""
 
-#: app.py:102 pages/collective_pages.py:42 pages/logbook.py:130
-#: pages/protocols.py:154
+#: app.py:220
+msgid "Decision"
+msgstr ""
+
+#: app.py:220 app.py:236
+msgid "Type"
+msgstr ""
+
+#: app.py:222
+msgid "Page"
+msgstr ""
+
+#: app.py:223 app.py:237 pages/collective_pages.py:42 pages/logbook.py:123
+#: pages/protocols.py:186
 msgid "Title"
 msgstr ""
 
-#: app.py:103 pages/logbook.py:129 pages/logbook.py:143 pages/logbook.py:144
-#: pages/protocols.py:152
+#: app.py:224 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
+#: pages/protocols.py:184
 msgid "Date"
 msgstr ""
 
-#: app.py:104 pages/collective_pages.py:41
-msgid "ID"
+#: app.py:225 app.py:238
+msgid "Chunk"
 msgstr ""
 
-#: app.py:105
-msgid "File Path"
+#: app.py:226 app.py:239
+msgid "Content"
 msgstr ""
 
-#: app.py:106 app.py:113 pages/collective_pages.py:46
+#: app.py:227 app.py:240
+msgid "Page ID"
+msgstr ""
+
+#: app.py:228 app.py:241 pages/collective_pages.py:46
 #: pages/collective_pages.py:53 pages/collective_pages.py:54
 msgid "URL"
 msgstr ""
 
-#: app.py:114 pages/collective_pages.py:54
+#: app.py:242 pages/collective_pages.py:54
 msgid "Open page"
 msgstr ""
 
-#: app.py:114 pages/logbook.py:135 pages/logbook.py:148 pages/logbook.py:149
-#: pages/protocols.py:158 pages/protocols.py:165 pages/protocols.py:166
+#: app.py:242 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
+#: pages/protocols.py:190 pages/protocols.py:197 pages/protocols.py:198
 msgid "Link"
 msgstr ""
 
-#: app.py:121
+#: app.py:249
 msgid "No matching pages found."
 msgstr ""
 
@@ -95,11 +127,11 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-#: lib/menu.py:28 pages/protocols.py:72
+#: lib/menu.py:28 pages/protocols.py:74
 msgid "Protocols"
 msgstr ""
 
-#: lib/menu.py:29 pages/logbook.py:33
+#: lib/menu.py:29 pages/logbook.py:31
 msgid "Logbook"
 msgstr ""
 
@@ -133,6 +165,10 @@ msgstr ""
 
 #: pages/collective_pages.py:31
 msgid "Search filePath"
+msgstr ""
+
+#: pages/collective_pages.py:41
+msgid "ID"
 msgstr ""
 
 #: pages/collective_pages.py:43
@@ -199,134 +235,130 @@ msgstr ""
 msgid "No groups could be found"
 msgstr ""
 
-#: pages/groups.py:225
+#: pages/groups.py:228
 msgid "Subgroups"
 msgstr ""
 
-#: pages/groups.py:235
+#: pages/groups.py:238
 msgid "Roles in Groups"
 msgstr ""
 
-#: pages/groups.py:239
+#: pages/groups.py:242
 msgid "(Coordination)"
 msgstr ""
 
-#: pages/groups.py:241
+#: pages/groups.py:244
 msgid "(Delegate)"
 msgstr ""
 
-#: pages/groups.py:247
+#: pages/groups.py:250
 msgid "Pages mentioning User"
 msgstr ""
 
-#: pages/groups.py:257
+#: pages/groups.py:260
 msgid "Total Mentions: {count}"
 msgstr ""
 
-#: pages/logbook.py:48 pages/protocols.py:93
+#: pages/logbook.py:44 pages/protocols.py:99
 msgid "Filter by group"
 msgstr ""
 
-#: pages/logbook.py:50 pages/protocols.py:95
+#: pages/logbook.py:46 pages/protocols.py:101
 msgid "Select a group"
 msgstr ""
 
-#: pages/logbook.py:55
+#: pages/logbook.py:50
 msgid "Search"
 msgstr ""
 
-#: pages/logbook.py:60
+#: pages/logbook.py:54
 msgid "Search Type"
 msgstr ""
 
-#: pages/logbook.py:61 pages/logbook.py:83
+#: pages/logbook.py:55 pages/logbook.py:77
 msgid "Any"
 msgstr ""
 
-#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:85
+#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:79
 msgid "Exact"
 msgstr ""
 
-#: pages/logbook.py:61 pages/logbook.py:83 pages/logbook.py:88
+#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:82
 msgid "All"
 msgstr ""
 
-#: pages/logbook.py:61 pages/logbook.py:105
+#: pages/logbook.py:55 pages/logbook.py:98
 msgid "Semantic"
 msgstr ""
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "All words"
 msgstr ""
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Any word"
 msgstr ""
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Exact Match"
 msgstr ""
 
-#: pages/logbook.py:62
+#: pages/logbook.py:56
 msgid "Semantic Search"
 msgstr ""
 
-#: pages/logbook.py:131 pages/logbook.py:147
-msgid "Text"
-msgstr ""
-
-#: pages/logbook.py:132
-msgid "Valid Until"
-msgstr ""
-
-#: pages/logbook.py:133 pages/protocols.py:153
+#: pages/logbook.py:122 pages/protocols.py:185
 msgid "Group"
 msgstr ""
 
-#: pages/logbook.py:134
+#: pages/logbook.py:124 pages/logbook.py:139
+msgid "Text"
+msgstr ""
+
+#: pages/logbook.py:125
+msgid "Valid Until"
+msgstr ""
+
+#: pages/logbook.py:126
 msgid "Objections"
 msgstr ""
 
-#: pages/logbook.py:138
+#: pages/logbook.py:130
 msgid "Distance"
 msgstr ""
 
-#: pages/logbook.py:149
+#: pages/logbook.py:141
 msgid "Open protocol"
 msgstr ""
 
-#: pages/logbook.py:156
-msgid "Page"
-msgstr ""
-
-#: pages/logbook.py:160
-msgid "Page size"
-msgstr ""
-
-#: pages/logbook.py:199
+#: pages/logbook.py:153
 msgid "Upload XLSX file with previous decisions to import"
 msgstr ""
 
-#: pages/protocols.py:97
+#: pages/logbook.py:166
+msgid "Importing file..."
+msgstr ""
+
+#: pages/protocols.py:103
 msgid "Search protocols"
 msgstr ""
 
-#: pages/protocols.py:99
+#: pages/protocols.py:105
 msgid "Use AI to answer"
 msgstr ""
 
-#: pages/protocols.py:155
+#: pages/protocols.py:187
 msgid "Moderated by"
 msgstr ""
 
-#: pages/protocols.py:156
+#: pages/protocols.py:188
 msgid "Protocol by"
 msgstr ""
 
-#: pages/protocols.py:157
+#: pages/protocols.py:189
 msgid "Participants"
 msgstr ""
 
-#: pages/protocols.py:167
+#: pages/protocols.py:199
 msgid "Open"
 msgstr ""
