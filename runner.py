@@ -4,7 +4,7 @@ from datetime import datetime
 
 import click
 
-from lib.chromadb import chroma_client
+from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client
 from lib.mail.fetcher import MailFetcher
 from lib.nextcloud.avatar_fetcher import AvatarFetcher
 from lib.nextcloud.calendar_notifier import Notifier
@@ -12,11 +12,8 @@ from lib.nextcloud.collectives_loader import fetch_and_store_all_pages
 from lib.nextcloud.collectives_parser import parse_groups, parse_protocols
 from lib.nextcloud.config import BotConfig
 from lib.nextcloud.deck_reminder import DeckReminder
-from lib.nextcloud.models.collective_page import (
-    COLLECTIVEPAGE_COLLECTION_NAME,
-    CollectivePage,
-)
-from lib.nextcloud.models.decision import DECISIONS_COLLECTION_NAME, Decision
+from lib.nextcloud.models.collective_page import CollectivePage
+from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
@@ -29,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 def delete_all_parsed_data():
-    for group in Group.get_all():
+    for group in Group.get_all(limit=1000):
         group.delete()
-    for p in Protocol.get_all():
+    for p in Protocol.get_all(limit=1000):
         p.delete()
-    for d in Decision.get_all():
+    for d in Decision.get_all(limit=1000):
         d.delete()
 
 
@@ -53,8 +50,7 @@ def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: 
 
     if clear_chromadb:
         logger.info("Clearing all ChromaDB data...")
-        chroma_client.delete_collection(COLLECTIVEPAGE_COLLECTION_NAME)
-        chroma_client.delete_collection(DECISIONS_COLLECTION_NAME)
+        chroma_client.delete_collection(UNIFIED_COLLECTION_NAME)
         return
 
     if clear_parsed_data:
@@ -85,13 +81,11 @@ def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: 
 
         config = BotConfig.load_config()
 
-        nc_users = NCUserList()
-
         if config.avatare.fetch_avatar:
-            AvatarFetcher(config.avatare).fetch_images(nc_users)
+            AvatarFetcher(config.avatare).fetch_images(userlist)
 
         if settings.mailinglist.imap_server:
-            fetcher.fetch_maildata(nc_users, config.mailer)
+            fetcher.fetch_maildata(userlist, config.mailer)
 
         if (8 < datetime.now().hour < 20) and config.calendar_notifier.enabled:
             Notifier(config=config.calendar_notifier).notify_upcoming_events()

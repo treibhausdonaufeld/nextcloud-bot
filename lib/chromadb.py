@@ -9,6 +9,9 @@ from pydantic import SecretStr
 
 from lib.settings import settings
 
+# Single unified collection name for all embeddings
+UNIFIED_COLLECTION_NAME = "collection"
+
 
 class LangChainEmbeddingAdapter(EmbeddingFunction):
     """Adapter to make LangChain embeddings compatible with ChromaDB."""
@@ -55,4 +58,12 @@ elif settings.chromadb.hf_embedding_server_url:
     )
     embedding_function = LangChainEmbeddingAdapter(
         langchain_embeddings, "huggingface-embeddings"
+    )
+
+
+def get_unified_collection():
+    """Get or create the unified collection for all embeddings."""
+    return chroma_client.get_or_create_collection(
+        UNIFIED_COLLECTION_NAME,
+        embedding_function=embedding_function,  # type: ignore
     )

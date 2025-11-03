@@ -2,16 +2,14 @@ import re
 from typing import List, cast
 
 import streamlit as st
-from chromadb import WhereDocument
+from chromadb import Where, WhereDocument
 
+from lib.chromadb import get_unified_collection
 from lib.logbook_xlsx_import import import_decisions_from_excel
 from lib.menu import menu
-from lib.nextcloud.models.decision import Decision, get_decision_collection
+from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
-from lib.settings import (
-    _,
-    settings,
-)
+from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 
@@ -75,10 +73,16 @@ if not current_page:
 
 
 if search_text:
-    decision_collection = get_decision_collection()
+    decision_collection = get_unified_collection()
+
+    # Build where clause to filter by source_type = "decision" and optionally by group
+    where_clause = {"source_type": Decision.__name__}
+    if selected_group:
+        where_clause["group_name"] = selected_group
+    where_clause = cast(Where, where_clause)
 
     query_kwargs = {
-        "where": {"group_name": selected_group} if selected_group else None,
+        "where": where_clause,
     }
     if search_type in (_("Any"), _("All"), _("Exact")):
         where_document = None
@@ -96,6 +100,7 @@ if search_text:
         results = decision_collection.get(
             limit=page_size,
             offset=page_size * (current_page - 1),
+            where=where_clause,
             where_document=cast(WhereDocument, where_document)
             if where_document
             else None,
@@ -106,6 +111,7 @@ if search_text:
         results = decision_collection.query(
             query_texts=[search_text],
             n_results=page_size,
+            where=where_clause,
         )
 
         result_ids = results["ids"][0]

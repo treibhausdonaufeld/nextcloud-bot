@@ -67,7 +67,7 @@ def parse_protocols(page: CollectivePage) -> None:
             not page.is_readme
             and page.ocs.filePath.split("/")[-1].lower() in protocol_kws
         )
-        # and Protocol.valid_title(page.title)
+        and Protocol.valid_title(page.title)
     ):
         page.subtype = PageSubtype.PROTOCOL
         page.save()

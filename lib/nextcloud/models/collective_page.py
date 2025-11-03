@@ -1,21 +1,18 @@
 import logging
 from enum import Enum
-from functools import cached_property, lru_cache
+from functools import cached_property
 from typing import Any, List, cast
 
 from chromadb.api.types import Metadata
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
-from lib.chromadb import chroma_client
-from lib.chromadb import embedding_function as ef
+from lib.chromadb import get_unified_collection
 from lib.nextcloud.models.base import (
     CouchDBModel,
     format_timestamp,
 )
 from lib.settings import settings
-
-COLLECTIVEPAGE_COLLECTION_NAME = "collective_page"
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +24,6 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
     separators=["\n\n", "\n", ". ", " ", ""],
 )
-
-
-@lru_cache(maxsize=1)
-def get_collective_page_collection():
-    return chroma_client.get_or_create_collection(
-        COLLECTIVEPAGE_COLLECTION_NAME, embedding_function=ef
-    )  # type: ignore
 
 
 class OCSCollectivePage(BaseModel):
@@ -145,7 +135,7 @@ class CollectivePage(CouchDBModel):
 
         # Update ChromaDB collection with LangChain text splitting
         if self.ocs and self.content and self.content.strip():
-            protocol_collection = get_collective_page_collection()
+            collection = get_unified_collection()
 
             try:
                 group = Group.get_for_page(self)
@@ -163,6 +153,7 @@ class CollectivePage(CouchDBModel):
                 cast(
                     Metadata,
                     {
+                        "source_type": self.type,
                         "page_id": self.ocs.id,
                         "title": self.ocs.title,
                         "timestamp": self.ocs.timestamp or 0,
@@ -176,7 +167,7 @@ class CollectivePage(CouchDBModel):
                 for i in range(len(chunks))
             ]
             if metadatas:
-                protocol_collection.upsert(
+                collection.upsert(
                     ids=chunk_ids,
                     documents=chunks,
                     metadatas=metadatas,

@@ -1,16 +1,17 @@
 from datetime import datetime
-from typing import List, cast
+from typing import Generator, List, cast
 
 import streamlit as st
-from chromadb import Where
+from chromadb.api.types import Where
 from google import genai
+from langchain_chroma import Chroma
 
+from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client, langchain_embeddings
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import (
     CollectivePage,
     PageSubtype,
-    get_collective_page_collection,
 )
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
@@ -18,7 +19,7 @@ from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 
-def prompt_ai(protocols: List[Protocol], question: str) -> str | None:
+def prompt_ai(protocols: List[Protocol], question: str) -> Generator[str, None, None]:
     context = "\n\n".join(
         [
             f"Datum: {p.date}\nGruppe: {p.group_name}\nInhalt: {p.page.content}"
@@ -37,12 +38,13 @@ def prompt_ai(protocols: List[Protocol], question: str) -> str | None:
     Antwort:"""
 
     client = genai.Client(api_key=settings.gemini_api_key)
-    response = client.models.generate_content(
+    # Stream the response
+    for chunk in client.models.generate_content_stream(
         model=settings.gemini_model,
         contents=prompt,
-    )
-
-    return response.text
+    ):
+        if chunk.text:
+            yield chunk.text
 
 
 def display_users(user_ids: list[str]):
@@ -81,8 +83,12 @@ user_list = NCUserList()
 
 st.title(title)
 
-protocol_collection = get_collective_page_collection()
-
+# Create LangChain Chroma vectorstore for semantic search
+vectorstore = Chroma(
+    client=chroma_client,
+    collection_name=UNIFIED_COLLECTION_NAME,
+    embedding_function=langchain_embeddings,
+)
 
 # filter out protocols in the future
 now_str = datetime.now().strftime("%Y-%m-%d")
@@ -104,23 +110,49 @@ ai_enabled = col3.checkbox(
 if selected_group and not query_text:
     protocols = [p for p in get_all_protocols() if p.group_name == selected_group]
 elif query_text:
-    where = {"subtype": PageSubtype.PROTOCOL.value}
+    # Build where clause to filter by source_type="page", subtype=PROTOCOL, and optionally group
+    where_clause: Where = cast(
+        Where,
+        {
+            "source_type": "page",
+            "subtype": PageSubtype.PROTOCOL.value,
+        },
+    )
     if selected_group:
-        where["group_name"] = selected_group
+        where_clause = cast(
+            Where,
+            {
+                "subtype": PageSubtype.PROTOCOL.value,
+                "group_name": selected_group,
+            },
+        )
 
-    results = protocol_collection.query(
-        query_texts=[query_text],
-        n_results=10 if not ai_enabled else 5,
-        where=cast(Where, where),
+    # Use LangChain semantic search
+    retriever = vectorstore.as_retriever(
+        search_type="similarity",
+        search_kwargs={
+            "k": 10 if not ai_enabled else 5,
+            "where": where_clause,
+        },
     )
 
-    result_ids = results["ids"][0]
-    protocols = [p for p in get_all_protocols() if p.id in result_ids]
+    # Retrieve relevant documents
+    results = retriever.invoke(query_text)
+
+    # Extract page IDs from metadata
+    result_page_ids = list(
+        set(
+            doc.metadata.get("page_id")
+            for doc in results
+            if doc.metadata.get("page_id")
+        )
+    )
+
+    protocols = [p for p in get_all_protocols() if p.page_id in result_page_ids]
 
     if ai_enabled:
-        answer = prompt_ai(protocols, query_text)
         st.markdown(f"### {_('Answer')}:")
-        st.markdown(answer)
+        st.write_stream(prompt_ai(protocols, query_text))
         protocols = []
 else:
     # sort by parsed date (fallback to string) descending

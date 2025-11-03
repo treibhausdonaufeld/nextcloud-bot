@@ -8,10 +8,11 @@ from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 
-from lib.chromadb import chroma_client, langchain_embeddings
+from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client, langchain_embeddings
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
+from lib.nextcloud.models.decision import Decision
 from lib.settings import _, settings
 
 logger = logging.getLogger(__name__)
@@ -55,28 +56,29 @@ def prompt_ai_stream(docs: List[Document], question: str) -> Generator[str, None
 @st.cache_resource(ttl="1d")
 def get_hybrid_retriever():
     """Create a hybrid retriever combining semantic search (Chroma) and keyword search (BM25)."""
-    # Semantic search with Chroma
+    # Semantic search with Chroma using the unified collection
     vectorstore = Chroma(
         client=chroma_client,
-        collection_name="collective_page",
+        collection_name=UNIFIED_COLLECTION_NAME,
         embedding_function=langchain_embeddings,
     )
+
+    # Create a single semantic retriever that searches all documents
     semantic_retriever = vectorstore.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 20},  # Retrieve up to 20 chunks
+        search_kwargs={"k": 25},  # Retrieve up to 25 chunks (pages + decisions)
     )
 
     # Load documents directly from ChromaDB for BM25 (more efficient)
     try:
-        collection = chroma_client.get_collection("collective_page")
-
-        # Get all documents from ChromaDB (only fetches IDs, documents, and metadata)
+        # Load all documents from the unified collection
+        collection = chroma_client.get_collection(UNIFIED_COLLECTION_NAME)
         result = collection.get(include=["documents", "metadatas"])
 
         # Create LangChain documents from ChromaDB results
         documents = []
+
         if result["documents"] and result["metadatas"]:
-            print("Amount of documents loaded: ", len(result["documents"]))
             for doc, metadata in zip(result["documents"], result["metadatas"]):
                 if doc:  # Only include non-empty documents
                     documents.append(
@@ -84,16 +86,17 @@ def get_hybrid_retriever():
                     )
 
         logger.info(
-            f"Loaded {len(documents)} documents from ChromaDB for BM25 indexing"
+            f"Loaded {len(documents)} documents from unified ChromaDB collection for BM25 indexing"
         )
 
         # BM25 keyword search
         bm25_retriever = BM25Retriever.from_documents(documents)
-        bm25_retriever.k = 20
+        bm25_retriever.k = 25
 
-        # Combine both retrievers (70% semantic, 30% keyword)
+        # Combine both retrievers (60% semantic, 40% keyword)
         ensemble_retriever = EnsembleRetriever(
-            retrievers=[semantic_retriever, bm25_retriever], weights=[0.7, 0.3]
+            retrievers=[semantic_retriever, bm25_retriever],
+            weights=[0.6, 0.4],
         )
 
         return ensemble_retriever
@@ -101,6 +104,7 @@ def get_hybrid_retriever():
         logger.warning(
             f"Could not create BM25 retriever, falling back to semantic only: {e}"
         )
+        # Fallback to just semantic if something goes wrong
         return semantic_retriever
 
 
@@ -120,7 +124,7 @@ st.subheader("🤖 " + _("Ask a Question") + " 🤖")
 
 retriever = get_hybrid_retriever()
 
-col1, col2, col3 = st.columns([3, 1, 1])
+col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 question = col1.text_input(
     _("Search or ask about collective pages"),
     placeholder=_("e.g., What decisions were made about...?"),
@@ -138,6 +142,11 @@ load_full_pages = col3.checkbox(
     value=False,
     help=_("Load full pages instead of excerpts"),
 )
+enable_ai_summary = col4.checkbox(
+    _("AI Summary"),
+    value=True,
+    help=_("Generate AI summary of results"),
+)
 
 if question:
     # Use LangChain hybrid retriever to get relevant chunks
@@ -146,8 +155,6 @@ if question:
         retrieved_docs = retriever.invoke(question)[:num_results]
 
     if retrieved_docs:
-        st.markdown(f"### {_('Answer')}")
-
         if load_full_pages:
             # Load full pages for each retrieved chunk
             full_pages = {}
@@ -172,17 +179,10 @@ if question:
                         logger.warning(f"Could not load full page {page_id}: {e}")
             retrieved_docs = list(full_pages.values())
 
-        # answer_placeholder = st.empty()
-        # full_answer = ""
-
-        # for chunk in prompt_ai_stream(retrieved_docs, question):
-        #     full_answer += chunk
-        #     answer_placeholder.markdown(full_answer + "▌")
-
-        # # Remove cursor after streaming is complete
-        # answer_placeholder.markdown(full_answer)
-
-        st.write_stream(prompt_ai_stream(retrieved_docs, question))
+        # Generate AI summary only if enabled
+        if enable_ai_summary:
+            st.markdown(f"### {_('Answer')}")
+            st.write_stream(prompt_ai_stream(retrieved_docs, question))
 
         st.markdown(f"### {_('Source Documents')}")
 
@@ -190,24 +190,31 @@ if question:
         source_data = []
         for i, doc in enumerate(retrieved_docs, 1):
             metadata = doc.metadata
+            source_type = metadata.get("source_type", "page")
+
             # Create URL from page_id if available
             page_id = metadata.get("page_id")
             url = ""
+            date = metadata.get("date", "")
             if page_id:
-                try:
-                    # Build URL from page_id
-                    page = CollectivePage.get_from_page_id(page_id)
-                    url = page.url or ""
-                except Exception as e:
-                    logger.warning(f"Could not load page {page_id} for URL: {e}")
+                # Build URL from page_id
+                page = CollectivePage.get_from_page_id(page_id)
+                url = page.url or ""
+
+            chunk_info = ""
+            if source_type == CollectivePage.__name__:
+                chunk_info = f"{metadata.get('chunk_index', 0) + 1}/{metadata.get('total_chunks', 1)}"
+            else:
+                chunk_info = "—"
 
             source_data.append(
                 {
                     "#": i,
+                    _("Type"): _("Decision")
+                    if source_type == Decision.__name__
+                    else _("Page"),
                     _("Title"): metadata.get("title", "N/A"),
-                    _(
-                        "Chunk"
-                    ): f"{metadata.get('chunk_index', 0) + 1}/{metadata.get('total_chunks', 1)}",
+                    _("Chunk"): chunk_info,
                     _("Content"): doc.page_content,
                     _("Page ID"): page_id or "N/A",
                     _("URL"): url,
@@ -218,6 +225,7 @@ if question:
             source_data,
             column_config={
                 "#": st.column_config.NumberColumn("#", width="small"),
+                _("Type"): st.column_config.TextColumn(_("Type"), width="small"),
                 _("Title"): st.column_config.TextColumn(_("Title"), width="medium"),
                 _("Chunk"): st.column_config.TextColumn(_("Chunk"), width="small"),
                 _("Content"): st.column_config.TextColumn(_("Content"), width="large"),
