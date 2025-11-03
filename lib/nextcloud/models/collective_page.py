@@ -1,8 +1,10 @@
 import logging
 from enum import Enum
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from typing import Any, List, cast
 
+from chromadb.api.types import Metadata
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
 from lib.chromadb import chroma_client
@@ -13,13 +15,24 @@ from lib.nextcloud.models.base import (
 )
 from lib.settings import settings
 
+COLLECTIVEPAGE_COLLECTION_NAME = "collective_page"
+
 logger = logging.getLogger(__name__)
+
+
+# Text splitter for chunking long documents
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200,
+    length_function=len,
+    separators=["\n\n", "\n", ". ", " ", ""],
+)
 
 
 @lru_cache(maxsize=1)
 def get_collective_page_collection():
     return chroma_client.get_or_create_collection(
-        "collective_page", embedding_function=ef
+        COLLECTIVEPAGE_COLLECTION_NAME, embedding_function=ef
     )  # type: ignore
 
 
@@ -83,6 +96,11 @@ class CollectivePage(CouchDBModel):
             else False
         )
 
+    @cached_property
+    def full_path(self) -> str:
+        """Return the full path of the page."""
+        return self.ocs.filePath + ("/" + self.ocs.title if not self.is_readme else "")
+
     @property
     def collective_name(self) -> str | None:
         if not self.ocs or not self.ocs.collectivePath:
@@ -125,8 +143,8 @@ class CollectivePage(CouchDBModel):
 
         super().save()
 
-        # Update ChromaDB collection
-        if self.ocs and self.content:
+        # Update ChromaDB collection with LangChain text splitting
+        if self.ocs and self.content and self.content.strip():
             protocol_collection = get_collective_page_collection()
 
             try:
@@ -134,16 +152,36 @@ class CollectivePage(CouchDBModel):
             except ValueError:
                 group = None
 
-            protocol_collection.upsert(
-                ids=[self.build_id()],
-                documents=[self.content],
-                metadatas=[
+            # Split long documents into chunks for better embeddings
+            chunks = text_splitter.split_text(self.content)
+
+            # Create IDs for each chunk
+            chunk_ids = [f"{self.build_id()}_chunk_{i}" for i in range(len(chunks))]
+
+            # Create metadata for each chunk (preserve original page info)
+            metadatas: List[Metadata] = [
+                cast(
+                    Metadata,
                     {
                         "page_id": self.id,
                         "title": self.ocs.title,
-                        "timestamp": self.ocs.timestamp,
-                        "subtype": self.subtype,
-                        "group_id": group.build_id() if group else None,
+                        "timestamp": self.ocs.timestamp or 0,
+                        "subtype": self.subtype or "",
+                        "group_id": group.build_id() if group else "",
+                        "chunk_index": i,
+                        "total_chunks": len(chunks),
+                        "original_doc_id": self.build_id(),
                     },
-                ],
-            )
+                )
+                for i in range(len(chunks))
+            ]
+            if metadatas:
+                protocol_collection.upsert(
+                    ids=chunk_ids,
+                    documents=chunks,
+                    metadatas=metadatas,
+                )
+            else:
+                logger.warning(
+                    f"No metadata created for CollectivePage id={self.id}, skipping ChromaDB upsert."
+                )

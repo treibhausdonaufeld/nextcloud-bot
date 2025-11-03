@@ -97,7 +97,7 @@ class Group(CouchDBModel):
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
 
-        group_names = self.valid_group_names(page.ocs.filePath)
+        group_names = self.valid_group_names(page.full_path)
         if len(group_names) > 1:
             self.parent_group = group_names[1]
         if not group_names:

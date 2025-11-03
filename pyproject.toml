@@ -27,6 +27,12 @@ dependencies = [
     "click>=8.3.0",
     "google-generativeai>=0.8.5",
     "streamlit-agraph>=0.0.45",
+    "langchain>=0.3.0",
+    "langchain-google-genai>=2.0.0",
+    "langchain-huggingface>=0.1.0",
+    "langchain-chroma>=0.1.0",
+    "langchain-community>=0.3.0",
+    "rank-bm25>=0.2.2",
 ]
 
 [dependency-groups]

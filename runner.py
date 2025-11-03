@@ -4,6 +4,7 @@ from datetime import datetime
 
 import click
 
+from lib.chromadb import chroma_client
 from lib.mail.fetcher import MailFetcher
 from lib.nextcloud.avatar_fetcher import AvatarFetcher
 from lib.nextcloud.calendar_notifier import Notifier
@@ -11,8 +12,11 @@ from lib.nextcloud.collectives_loader import fetch_and_store_all_pages
 from lib.nextcloud.collectives_parser import parse_groups, parse_protocols
 from lib.nextcloud.config import BotConfig
 from lib.nextcloud.deck_reminder import DeckReminder
-from lib.nextcloud.models.collective_page import CollectivePage
-from lib.nextcloud.models.decision import Decision
+from lib.nextcloud.models.collective_page import (
+    COLLECTIVEPAGE_COLLECTION_NAME,
+    CollectivePage,
+)
+from lib.nextcloud.models.decision import DECISIONS_COLLECTION_NAME, Decision
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
@@ -21,7 +25,7 @@ from lib.settings import settings
 logger = logging.getLogger(__name__)
 
 # reduce logging for httpx package to WARNING
-logging.getLogger("httpx").setLevel(logging.WARNING)
+# logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def delete_all_parsed_data():
@@ -38,8 +42,25 @@ def delete_all_parsed_data():
 @click.option(
     "--update-all", is_flag=True, default=False, help="Update/re-parse all pages"
 )
-def main(loop: bool, update_all: bool):
+@click.option(
+    "--clear-chromadb", is_flag=True, default=False, help="Clear all chromadb data"
+)
+@click.option(
+    "--clear-parsed-data", is_flag=True, default=False, help="Clear all chromadb data"
+)
+def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: bool):
     logger.debug("Starting runner")
+
+    if clear_chromadb:
+        logger.info("Clearing all ChromaDB data...")
+        chroma_client.delete_collection(COLLECTIVEPAGE_COLLECTION_NAME)
+        chroma_client.delete_collection(DECISIONS_COLLECTION_NAME)
+        return
+
+    if clear_parsed_data:
+        logger.info("Clearing all parsed data...")
+        delete_all_parsed_data()
+        return
 
     fetcher = MailFetcher()
 
@@ -51,6 +72,10 @@ def main(loop: bool, update_all: bool):
         updated_pages = fetch_and_store_all_pages()
         if update_all:
             updated_pages = CollectivePage.get_all(limit=1000)
+
+            # force save of all pages
+            for page in updated_pages:
+                page.save()
 
         for page in updated_pages:
             parse_groups(page)

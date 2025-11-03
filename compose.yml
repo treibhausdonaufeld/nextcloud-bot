@@ -32,6 +32,7 @@ services:
 
   chromadb:
     image: chromadb/chroma:latest
+    restart: always
     # bind to localhost only for safety
     ports:
       - '127.0.0.1:8800:8000'
@@ -46,6 +47,7 @@ services:
 
   imaginary:
     image: h2non/imaginary:latest
+    restart: always
     ports:
       - '127.0.0.1:9001:9000'
 

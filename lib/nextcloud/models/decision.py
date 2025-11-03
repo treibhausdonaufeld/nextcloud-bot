@@ -9,6 +9,8 @@ from lib.nextcloud.models.base import CouchDBModel
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.settings import settings
 
+DECISIONS_COLLECTION_NAME = "decisions"
+
 
 @lru_cache(maxsize=1)
 def get_decision_collection():
@@ -21,7 +23,10 @@ def get_decision_collection():
         )
         ef = embedding_function
 
-    return chroma_client.get_or_create_collection("decisions", embedding_function=ef)  # type: ignore
+    return chroma_client.get_or_create_collection(
+        DECISIONS_COLLECTION_NAME,
+        embedding_function=ef,  # type: ignore
+    )
 
 
 class Decision(CouchDBModel):
