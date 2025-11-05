@@ -3,6 +3,7 @@ import locale
 import logging
 import random
 import time
+from datetime import date as dt_date
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -97,8 +98,55 @@ class Notifier:
         self.calendar = client.calendar(url=cal_config.caldav_url)
 
     def _local_datetime(self, date) -> str:
+        """
+        Normalize various date/time representations to a localized string.
+
+        Accepts:
+        - None -> returns empty string
+        - datetime.datetime (aware or naive)
+        - datetime.date -> treated as midnight on that date
+        - objects with a `.dt` attribute (like some ical components) -> use `.dt`
+
+        Ensures the resulting datetime is timezone-aware in the configured
+        `settings.timezone` before formatting with locale-aware names.
+        """
+        if date is None:
+            return ""
+
+        # Some icalendar components expose dates via a .dt attribute
+        if hasattr(date, "dt"):
+            try:
+                date = date.dt
+            except Exception:
+                # fallback: stringify
+                return str(date)
+
+        # If it's a date (no time), convert to datetime at midnight
+        if isinstance(date, dt_date) and not isinstance(date, datetime):
+            date = datetime.combine(date, datetime.min.time())
+
+        # At this point we expect a datetime
+        if not isinstance(date, datetime):
+            # Last resort: stringify
+            return str(date)
+
         localtz = pytz.timezone(settings.timezone)
-        locale.setlocale(locale.LC_ALL, settings.locale)
+        # If naive, assume it's in UTC then convert (safer than assuming local)
+        if date.tzinfo is None:
+            try:
+                # First try to treat naive datetimes as UTC
+                date = pytz.UTC.localize(date)
+            except Exception:
+                # If that fails, just attach localtz
+                date = localtz.localize(date)
+
+        # Set locale for month/day names
+        try:
+            locale.setlocale(locale.LC_ALL, settings.locale)
+        except Exception:
+            # Ignore locale errors and proceed with defaults
+            pass
+
         return date.astimezone(localtz).strftime("%A, %d. %B %Y, %H:%M h")
 
     def fill_event(self, component) -> dict[str, str]:
@@ -157,9 +205,9 @@ class Notifier:
             f"\n - Start: **{self._local_datetime(event_data['start'])}**"
             f"\n - Ende: **{self._local_datetime(event_data['end'])}**"
         )
-        if "location" in event_data:
+        if event_data.get("location"):
             text += f"\n - Ort: {event_data['location']}"
-        if "description" in event_data:
+        if event_data.get("description"):
             text += f"\n\n {event_data['description']}"
 
         if channel in ("wichtigstes", "general"):
