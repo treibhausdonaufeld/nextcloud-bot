@@ -116,6 +116,9 @@ class NextcloudSettings(BaseModel):
 
     collectives_id: int = 1
     configuration_page_id: int = 15158708
+    configuration_page_name: str = "Bot-Config"
+
+    timeline_page_name: str = "Timeline"
 
 
 class CouchDBSettings(BaseModel):

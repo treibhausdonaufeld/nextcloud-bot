@@ -113,6 +113,14 @@ class CollectivePage(CouchDBModel):
         return format_timestamp(self.timestamp)
 
     @classmethod
+    def get_from_title(cls, title: str) -> "CollectivePage":
+        """Load page from title."""
+        pages = cls.get_all(selector={"ocs.title": title}, limit=1)
+        if not pages:
+            raise ValueError(f"CollectivePage with title '{title}' not found")
+        return pages[0]
+
+    @classmethod
     def get_from_page_id(cls, page_id: int) -> "CollectivePage":
         """Load the latest content from the database into this instance."""
         return cast(
