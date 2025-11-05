@@ -18,11 +18,11 @@ x-common-settings: &common-settings
     ROCKETCHAT__INFO_CHANNEL: '#my-channel'
     ROCKETCHAT__ERROR_CHANNEL: '#my-channel'
 
-    MAILINGLIST__IMAP_HOST: 'ssl01.alldomains.hosting'
+    MAILINGLIST__IMAP_SERVER: 'ssl01.alldomains.hosting'
     MAILINGLIST__IMAP_USERNAME: 'list@example.com'
     MAILINGLIST__IMAP_PASSWORD: 'secretpassword'
 
-    MAILINGLIST__SMTP_HOST: 'smtp.eu.mailgun.org'
+    MAILINGLIST__SMTP_SERVER: 'smtp.eu.mailgun.org'
     MAILINGLIST__SMTP_PORT: 587
     MAILINGLIST__SMTP_USERNAME: 'postmaster@lists.example.com'
     MAILINGLIST__SMTP_PASSWORD: 'secretpassword'
