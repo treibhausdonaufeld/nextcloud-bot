@@ -295,6 +295,9 @@ for tab, header in zip(tabs, sections.keys()):
             fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
 
             # make pan the default interaction mode for scatter plots
+            # remove axis titles for a cleaner scatter-only view
+            fig.update_xaxes(title_text="")
+            fig.update_yaxes(title_text="")
             fig.update_layout(dragmode="pan", height=600)
 
         st.plotly_chart(fig, use_container_width=True)
