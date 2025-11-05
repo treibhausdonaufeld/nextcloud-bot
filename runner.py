@@ -96,6 +96,7 @@ def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: 
         if not loop:
             break
 
+        logger.info("Sleeping for %d minutes...", config.sleep_minutes)
         time.sleep(config.sleep_minutes * 60)
 
 
