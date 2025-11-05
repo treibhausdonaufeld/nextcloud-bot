@@ -138,6 +138,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="__")
 
     sentry_dsn: str = ""
+    sentry_sample_rate: float = 1.0
+    sentry_logs: bool = True
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
@@ -166,7 +168,12 @@ settings = Settings()
 if settings.sentry_dsn:
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
-        enable_tracing=False,
+        send_default_pii=True,
+        # Enable sending logs to Sentry
+        enable_logs=settings.sentry_logs,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for tracing.
+        traces_sample_rate=settings.sentry_sample_rate,
     )
 
 logging.basicConfig(
