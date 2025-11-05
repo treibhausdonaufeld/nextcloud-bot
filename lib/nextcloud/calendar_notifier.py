@@ -56,7 +56,6 @@ class Notifier:
 
     chromadb_events_key = "calendar_notifier_events"
     events: dict[str, Any]  # document from couchdb
-    events_processed: dict[str, float]
 
     calendar: caldav.Calendar
     couchdb: Database
@@ -71,23 +70,21 @@ class Notifier:
 
         try:
             self.events = self.couchdb.get(self.chromadb_events_key)
-            self.events_processed = self.events.get("events", {})
 
             # cleanup events processed
             oldest = (
                 time.time()
                 - timedelta(days=cal_config.search_end_days + 1).total_seconds()
             )
-            self.events_processed = {
+            self.events["events"] = {
                 uid: timestamp
-                for uid, timestamp in self.events_processed.items()
+                for uid, timestamp in self.events["events"].items()
                 if timestamp > oldest
             }
         except NotFound:
-            self.events_processed = {}
             self.events = {
                 "_id": self.chromadb_events_key,
-                "events": self.events_processed,
+                "events": {},
             }
 
         client = caldav.DAVClient(
@@ -154,7 +151,7 @@ class Notifier:
         cur = {}
         # cur["calendar"] = f"{calendar}"
         cur["summary"] = component.get("summary")
-        cur["uid"] = component.get("uid")
+        cur["uid"] = str(component.get("uid") or "")
         cur["description"] = component.get("description")
         ## month/day/year time? Never ever do that!
         ## It's one of the most confusing date formats ever!
@@ -187,7 +184,7 @@ class Notifier:
 
                 event_data = self.fill_event(component)
 
-                if event_data["uid"] not in self.events_processed:
+                if event_data["uid"] not in self.events["events"]:
                     self.check_event(event_data)
 
         self.couchdb.save(self.events)
@@ -257,4 +254,4 @@ class Notifier:
                 json.dumps(message_json),
             )
 
-        self.events_processed[event_data["uid"]] = time.time()
+        self.events["events"][event_data["uid"]] = time.time()
