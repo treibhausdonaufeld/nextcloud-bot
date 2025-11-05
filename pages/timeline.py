@@ -139,11 +139,17 @@ for tab, header in zip(tabs, sections.keys()):
 
             # assign tracks back to dataframe
             for idx, track in tracks_list:
-                df.at[idx, "track"] = track
+                df.at[idx, "track"] = str(int(track + 1))
 
             # create y_axis combining group and track
             df["y_axis"] = (
                 df["group"].astype(str) + " [" + df["track"].astype(str) + "]"
+            )
+
+            # order y_axis categories alphabetically to ensure proper display order
+            y_order = sorted(df["y_axis"].unique(), key=lambda s: str(s).lower())
+            df["y_axis"] = pd.Categorical(
+                df["y_axis"], categories=y_order, ordered=True
             )
 
         if df.empty:
@@ -158,12 +164,16 @@ for tab, header in zip(tabs, sections.keys()):
             color="group",
             text="title",
             title=header,
+            category_orders={"y_axis": y_order},
         )
         fig.update_traces(
-            textposition="inside", marker=dict(line=dict(color="black", width=1))
+            textposition="inside",
+            textfont=dict(size=12),
+            marker=dict(line=dict(color="gray", width=0.4)),
         )
+        fig.update_traces(insidetextanchor="middle")
         fig.update_layout(
-            height=len(df) * 40 + 200,
+            height=len(df) * 25 + 100,
             yaxis_title="",
             legend_title="Group",
             xaxis=dict(rangeslider=dict(visible=True), type="date"),
