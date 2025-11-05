@@ -171,7 +171,8 @@ class Notifier:
         text += f"\n---\n 💪 : {random.choice(vor_ort_dabei)}"
 
         if "https://" in (
-            event_data.get("description", "") + event_data.get("location", "")
+            (event_data.get("description", "") or "")
+            + (event_data.get("location", "") + "")
         ):
             text += f"\n 🖥️ : {random.choice(nur_online)}"
 
