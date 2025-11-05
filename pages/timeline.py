@@ -6,12 +6,13 @@ import streamlit as st
 
 from lib.couchdb import couchdb
 from lib.menu import menu
+from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
 from lib.streamlit_oauth import load_user_data
 
 # Streamlit app starts here
-title = _("Timeline").format(common_name=settings.name)
+title = _("Timeline")
 st.set_page_config(page_title=title, page_icon="⌛", layout="wide")
 
 menu()
@@ -24,8 +25,17 @@ user_list = NCUserList()
 st.title(title)
 
 
-with open("milestones.md", "r", encoding="utf-8") as f:
-    md_text = f.read()
+page = CollectivePage.get_from_title(settings.nextcloud.timeline_page_name)
+md_text = page.content or ""
+
+if not md_text or not md_text.strip():
+    st.warning(
+        _(
+            "No timeline data found. Please create and populate the '%s' page in Nextcloud Collectives."
+        )
+        % settings.nextcloud.timeline_page_name
+    )
+    st.stop()
 
 
 def parse_markdown_tables(md_text):
@@ -111,6 +121,11 @@ for tab, header in zip(tabs, sections.keys()):
                 df.loc[df["end"].isna(), "end"] = pd.Timestamp.now()
             df = df.dropna(subset=["start"])
 
+            # always show dates in ISO format YYYY-MM-DD for ticks and hover
+            df["start_str"] = df["start"].dt.strftime("%Y-%m-%d")
+            if has_end_column:
+                df["end_str"] = df["end"].dt.strftime("%Y-%m-%d")
+
             # order rows by group (alphabetically) and then by start date
             group_order = sorted(
                 df["group"].dropna().unique(), key=lambda s: str(s).lower()
@@ -178,6 +193,7 @@ for tab, header in zip(tabs, sections.keys()):
                 color="group",
                 text="title",
                 hover_name="title",
+                hover_data={"start_str": True, "end_str": True},
                 title=header,
                 category_orders={"y_axis": y_order},
             )
@@ -300,5 +316,5 @@ for tab, header in zip(tabs, sections.keys()):
             fig.update_yaxes(title_text="")
             fig.update_layout(dragmode="pan", height=600)
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 # (No global timeline render at bottom; per-header tabs already render timelines.)
