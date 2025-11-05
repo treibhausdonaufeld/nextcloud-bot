@@ -199,7 +199,7 @@ if protocols:
                 display_text=_("Open"),
             ),
         },
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=600,
     )
