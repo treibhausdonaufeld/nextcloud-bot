@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-03 17:56+0100\n"
+"POT-Creation-Date: 2025-11-05 16:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -127,19 +127,23 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-#: lib/menu.py:28 pages/protocols.py:74
+#: lib/menu.py:28 pages/timeline.py:15
+msgid "Timeline"
+msgstr ""
+
+#: lib/menu.py:29 pages/protocols.py:74
 msgid "Protocols"
 msgstr ""
 
-#: lib/menu.py:29 pages/logbook.py:31
+#: lib/menu.py:30 pages/logbook.py:31
 msgid "Logbook"
 msgstr ""
 
-#: lib/menu.py:30
+#: lib/menu.py:31
 msgid "Pages"
 msgstr ""
 
-#: lib/menu.py:38
+#: lib/menu.py:39
 msgid "Language"
 msgstr ""
 
@@ -361,4 +365,8 @@ msgstr ""
 
 #: pages/protocols.py:199
 msgid "Open"
+msgstr ""
+
+#: pages/timeline.py:33
+msgid "No timeline data found. Please create and populate the '%s' page in Nextcloud Collectives."
 msgstr ""
