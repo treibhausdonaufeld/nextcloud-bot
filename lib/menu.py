@@ -25,9 +25,9 @@ def menu():
 
     st.sidebar.page_link("app.py", label="🏠 " + _("Home"))
     st.sidebar.page_link("pages/groups.py", label="⭕ " + _("Groups"))
+    st.sidebar.page_link("pages/timeline.py", label="⌛ " + _("Timeline"))
     st.sidebar.page_link("pages/protocols.py", label="📝 " + _("Protocols"))
     st.sidebar.page_link("pages/logbook.py", label="✅ " + _("Logbook"))
-    st.sidebar.page_link("pages/timeline.py", label="⌛ " + _("Timeline"))
     st.sidebar.page_link("pages/collective_pages.py", label=_("Pages"))
 
     with st.sidebar:

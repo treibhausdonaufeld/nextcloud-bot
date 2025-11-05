@@ -1,3 +1,5 @@
+from typing import Any, Hashable, Tuple
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -20,9 +22,6 @@ db = couchdb()
 user_list = NCUserList()
 
 st.title(title)
-
-
-st.set_page_config(layout="wide")
 
 
 with open("milestones.md", "r", encoding="utf-8") as f:
@@ -80,6 +79,9 @@ tabs = st.tabs(list(sections.keys())) if sections else []
 for tab, header in zip(tabs, sections.keys()):
     with tab:
         rows = sections.get(header, [])
+        # check if end column exists and has any non-empty values
+        has_end_column = "End" in rows[0].keys()
+
         parsed = []
         for r in rows:
             # normalize keys and lookup case-insensitively
@@ -100,11 +102,13 @@ for tab, header in zip(tabs, sections.keys()):
             parsed.append({"start": start, "end": end, "group": group, "title": title})
 
         df = pd.DataFrame(parsed)
+
         if not df.empty:
             df["start"] = pd.to_datetime(df["start"], errors="coerce")
-            df["end"] = pd.to_datetime(df["end"], errors="coerce")
-            # where end invalid, set to current date
-            df.loc[df["end"].isna(), "end"] = pd.Timestamp.now()
+            if has_end_column:
+                df["end"] = pd.to_datetime(df["end"], errors="coerce")
+                # where end invalid, set to current date
+                df.loc[df["end"].isna(), "end"] = pd.Timestamp.now()
             df = df.dropna(subset=["start"])
 
             # order rows by group (alphabetically) and then by start date
@@ -116,67 +120,182 @@ for tab, header in zip(tabs, sections.keys()):
             )
             df = df.sort_values(["group", "start"])
 
-            # assign track numbers within each group to prevent overlaps
-            tracks_list = []
-            for group_name in group_order:
-                group_df = df[df["group"] == group_name].copy()
-                track_ends: list[tuple[int, pd.Timestamp]] = []
-                for idx, row in group_df.iterrows():
-                    start = row["start"]
-                    end = row["end"]
-                    # find first available track (where track ends before this start)
-                    assigned_track = None
-                    for i, (track_num, track_end) in enumerate(track_ends):
-                        if track_end <= start:
-                            assigned_track = track_num
-                            track_ends[i] = (track_num, end)
-                            break
-                    if assigned_track is None:
-                        # need a new track
-                        assigned_track = len(track_ends)
-                        track_ends.append((assigned_track, end))
-                    tracks_list.append((idx, assigned_track))
+            if has_end_column:
+                # assign track numbers within each group to prevent overlaps
+                tracks_list = []
+                for group_name in group_order:
+                    group_df = df[df["group"] == group_name].copy()
+                    track_ends: list[tuple[int, pd.Timestamp]] = []
+                    for idx, row in group_df.iterrows():
+                        start = row["start"]
+                        end = row["end"]
+                        # find first available track (where track ends before this start)
+                        assigned_track = None
+                        for i, (track_num, track_end) in enumerate(track_ends):
+                            if track_end <= start:
+                                assigned_track = track_num
+                                track_ends[i] = (track_num, end)
+                                break
+                        if assigned_track is None:
+                            # need a new track
+                            assigned_track = len(track_ends)
+                            track_ends.append((assigned_track, end))
+                        tracks_list.append((idx, assigned_track))
 
-            # assign tracks back to dataframe
-            for idx, track in tracks_list:
-                df.at[idx, "track"] = str(int(track + 1))
+                # assign tracks back to dataframe
+                for idx, track in tracks_list:
+                    df.at[idx, "track"] = str(int(track + 1))
 
-            # create y_axis combining group and track
-            df["y_axis"] = (
-                df["group"].astype(str) + " [" + df["track"].astype(str) + "]"
-            )
+                # create y_axis combining group and track
+                df["y_axis"] = (
+                    df["group"].astype(str) + " [" + df["track"].astype(str) + "]"
+                )
 
-            # order y_axis categories alphabetically to ensure proper display order
-            y_order = sorted(df["y_axis"].unique(), key=lambda s: str(s).lower())
-            df["y_axis"] = pd.Categorical(
-                df["y_axis"], categories=y_order, ordered=True
-            )
+                # order y_axis categories alphabetically to ensure proper display order
+                y_order = sorted(df["y_axis"].unique(), key=lambda s: str(s).lower())
+                df["y_axis"] = pd.Categorical(
+                    df["y_axis"], categories=y_order, ordered=True
+                )
+            else:
+                # for events without end dates, use group directly as y_axis
+                df["y_axis"] = df["group"].astype(str)
+                y_order = sorted(df["y_axis"].unique(), key=lambda s: str(s).lower())
+                df["y_axis"] = pd.Categorical(
+                    df["y_axis"], categories=y_order, ordered=True
+                )
 
         if df.empty:
             st.info('No events to display for "%s"' % header)
             continue
 
-        fig = px.timeline(
-            df,
-            x_start="start",
-            x_end="end",
-            y="y_axis",
-            color="group",
-            text="title",
-            title=header,
-            category_orders={"y_axis": y_order},
-        )
-        fig.update_traces(
-            textposition="inside",
-            textfont=dict(size=12),
-            marker=dict(line=dict(color="gray", width=0.4)),
-        )
-        fig.update_traces(insidetextanchor="middle")
-        fig.update_layout(
-            height=len(df) * 25 + 100,
-            yaxis_title="",
-            legend_title="Group",
-            xaxis=dict(rangeslider=dict(visible=True), type="date"),
-        )
+        if has_end_column:
+            # render as timeline with bars
+            fig = px.timeline(
+                df,
+                x_start="start",
+                x_end="end",
+                y="y_axis",
+                color="group",
+                text="title",
+                hover_name="title",
+                title=header,
+                category_orders={"y_axis": y_order},
+            )
+            fig.update_traces(
+                textposition="inside",
+                textfont=dict(size=12),
+                marker=dict(line=dict(color="gray", width=0.4)),
+            )
+            fig.update_traces(insidetextanchor="middle")
+            fig.update_layout(
+                height=len(df) * 25 + 100,
+                yaxis_title="",
+                legend_title="Group",
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type="date",
+                ),
+            )
+
+        else:
+            # render as scatter plot with big dots for point events
+            # To avoid overlapping labels, convert y_axis categories to numeric
+            # base positions and add small offsets for duplicate (group, date)
+            # pairs. We will plot markers at the numeric positions and add
+            # rotated annotations at the same coordinates.
+            # Ignore groups completely for scatter-only events: use a shared
+            # baseline at 0 for all milestones. Compute offsets across the
+            # whole dataframe for events within 7 days.
+            df["y_base"] = 0.0
+
+            # Cluster events globally by date (sorted) where cluster span <= 7 days
+            offset_map = {}
+            gr = df.sort_values("start")
+            cluster: list[Tuple[Hashable, Any]] = []
+            cluster_min = None
+            for idx, row in gr.iterrows():
+                s = row["start"]
+                if not cluster:
+                    cluster = [(idx, s)]
+                    cluster_min = s
+                else:
+                    if (s - cluster_min) <= pd.Timedelta(days=7):
+                        cluster.append((idx, s))
+                    else:
+                        # assign offsets for existing cluster
+                        n = len(cluster)
+                        if n == 1:
+                            offset_map[cluster[0][0]] = 0.0
+                        else:
+                            span = 0.6
+                            step = span / max(n - 1, 1)
+                            start_off = -span / 2
+                            for i, (cidx, _) in enumerate(cluster):
+                                offset_map[cidx] = start_off + i * step
+                        cluster = [(idx, s)]
+                        cluster_min = s
+            # finalize last cluster
+            if cluster:
+                n = len(cluster)
+                if n == 1:
+                    offset_map[cluster[0][0]] = 0.0
+                else:
+                    span = 0.6
+                    step = span / max(n - 1, 1)
+                    start_off = -span / 2
+                    for i, (cidx, _) in enumerate(cluster):
+                        offset_map[cidx] = start_off + i * step
+
+            # apply offsets to build final numeric y positions around 0
+            df["y_pos"] = df.index.map(lambda idx: 0.0 + offset_map.get(idx, 0.0))
+
+            # build scatter with numeric y positions (no color/group)
+            fig = px.scatter(
+                df,
+                x="start",
+                y="y_pos",
+                hover_name="title",
+                title=header,
+            )
+            fig.update_traces(
+                marker=dict(size=15, line=dict(color="gray", width=1)),
+                mode="markers",
+            )
+
+            # fix y-axis to -5..5 and hide y-axis lines/grid so the center
+            # baseline is visually prominent. Tick labels are not needed.
+            fig.update_yaxes(
+                range=[-5, 5],
+                autorange=False,
+                showticklabels=False,
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+            )
+            # (no baseline line drawn for scatter-only charts)
+
+            # Add rotated text annotations at the adjusted positions
+            for idx, row in df.iterrows():
+                fig.add_annotation(
+                    x=row["start"],
+                    y=row["y_pos"],
+                    text=row["title"],
+                    textangle=-45,
+                    showarrow=False,
+                    xanchor="left",
+                    yanchor="bottom",
+                    font=dict(size=12),
+                )
+
+            # set default view range to 1 year window for scatter-only charts
+            min_date = df["start"].max() - pd.DateOffset(years=1)
+            max_date = df["start"].max() + pd.DateOffset(months=2)
+            fig.update_xaxes(range=[min_date, max_date])
+            # show vertical grid lines aligned with x-axis tick labels
+            fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
+
+            # make pan the default interaction mode for scatter plots
+            fig.update_layout(dragmode="pan", height=600)
+
         st.plotly_chart(fig, use_container_width=True)
 # (No global timeline render at bottom; per-header tabs already render timelines.)
