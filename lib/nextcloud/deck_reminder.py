@@ -44,17 +44,17 @@ class DeckReminder:
             None
         """
         try:
-            self.events = self.couchdb.get(self.cards_processed_key)
+            events = self.couchdb.get(self.cards_processed_key)
         except NotFound:
-            self.events = {
+            events = {
                 "_id": self.cards_processed_key,
                 "cards": {},
             }
 
         now_time = time.time()
 
-        self.events["last_run"] = now_time
-        self.events["cards"] = cards_processed = self.events.get("cards", {})
+        events["last_run"] = now_time
+        cards_processed = self.events.get("cards", {})
 
         for card, board_dict in self.get_due_cards():
             due_date = card["duedate"]
@@ -80,7 +80,8 @@ class DeckReminder:
                 del cards_processed[card_id]
 
         # save events_processed to db
-        self.couchdb.save(self.events)
+        events["cards"] = cards_processed
+        self.couchdb.save(events)
 
     def send_card_reminder(
         self, card, days_overdue: int, board_dict: DeckChannelMappingItem
