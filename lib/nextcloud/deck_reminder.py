@@ -18,7 +18,6 @@ API_VERSION = "v1.0"
 
 class DeckReminder:
     cards_processed_key: str = "deck_reminder_cards"
-    events: dict[str, Any]  # document from couchdb
 
     config: DeckReminderConfig
     nextcloud_config: NextcloudSettings
@@ -44,9 +43,9 @@ class DeckReminder:
             None
         """
         try:
-            events = self.couchdb.get(self.cards_processed_key)
+            events: dict[str, Any] = self.couchdb.get(self.cards_processed_key)
         except NotFound:
-            events = {
+            events: dict[str, Any] = {
                 "_id": self.cards_processed_key,
                 "cards": {},
             }
@@ -54,7 +53,7 @@ class DeckReminder:
         now_time = time.time()
 
         events["last_run"] = now_time
-        cards_processed = self.events.get("cards", {})
+        cards_processed = events.get("cards", {})
 
         for card, board_dict in self.get_due_cards():
             due_date = card["duedate"]
