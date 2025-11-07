@@ -23,6 +23,12 @@ class OrganisationConfig(BaseModel):
         default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
     )
 
+    # where protocol summaries will be posted
+    protocol_channel_name: str = "#protokolle"
+
+    # template keyword inside protocols
+    protocol_template_keyword: str = "# Vorlagen"
+
     decision_title_keywords: List[str] = Field(
         default_factory=lambda: ["entscheidung", "decision", "beschluss", "resolution"]
     )

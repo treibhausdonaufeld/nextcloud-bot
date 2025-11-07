@@ -83,10 +83,17 @@ class NCUserList:
 
     USER_LIST_URL = "/ocs/v2.php/cloud/users/details"
 
+    # Class-level cache shared across all instances
+    _cached_users: Dict[str, NCUser] | None = None
+
     users: Dict[str, NCUser]
 
     def __init__(self):
-        self.load_users()
+        # Use cached users if available, otherwise load from database
+        if NCUserList._cached_users is not None:
+            self.users = NCUserList._cached_users
+        else:
+            self.load_users()
 
     def __getitem__(self, username: str) -> NCUser:
         return self.users[username]
@@ -102,6 +109,8 @@ class NCUserList:
         response.raise_for_status()
 
         self.users = {d["username"]: NCUser(**d) for d in results.get("docs", [])}
+        # Update the class-level cache
+        NCUserList._cached_users = self.users
 
     def get_user_by_uid(self, uid: str) -> NCUser | None:
         """Get a user by their uid."""
@@ -127,6 +136,9 @@ class NCUserList:
             user.build_id()
             user.save()
             logger.debug("Saved user %s to CouchDB", username)
+
+        # Refresh cache after updating from Nextcloud
+        self.load_users()
 
     def mails_for_groups(self, group_names: List[str]) -> Set[str]:
         """

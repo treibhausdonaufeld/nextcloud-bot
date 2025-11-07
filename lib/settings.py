@@ -92,6 +92,7 @@ class RocketchatSettings(BaseModel):
     info_channel: str = ""
     error_channel: str = ""
 
+    # user to overwrite all notifications to this user/channel
     channel_overwrite: str = ""
 
 

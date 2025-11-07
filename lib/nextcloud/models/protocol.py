@@ -5,10 +5,14 @@ from datetime import datetime
 from functools import cached_property
 from typing import List
 
+from google import genai
+
 from lib.nextcloud.config import bot_config
 from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
-from lib.settings import user_regex
+from lib.nextcloud.models.user import NCUserList
+from lib.outbound.rocketchat import send_message
+from lib.settings import _, settings, user_regex
 
 from .base import CouchDBModel
 from .collective_page import CollectivePage
@@ -26,9 +30,13 @@ class Protocol(CouchDBModel):
     participants: List[str] = []
 
     summary_posted: bool = False
+    ai_summary: str = ""
 
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
+
+    def __str__(self) -> str:
+        return f"{self.date} {self.group_name or 'No Group'}"
 
     @cached_property
     def page(self) -> CollectivePage | None:
@@ -86,38 +94,44 @@ class Protocol(CouchDBModel):
             )
         )
 
-    def extract_decisions(self) -> None:
+    def extract_decisions(self) -> List[Decision]:
         """Get all decisions marked with ::: success"""
         if not self.page or not self.page.content:
-            return
+            return []
 
         if self.date_obj and self.date_obj > datetime.now().date():
             logger.info(
                 "Skipping decision extraction for future protocol %s", self.build_id()
             )
-            return
+            return []
 
         # delete existing decision for this page
-        for decision in Decision.get_all(selector={"page_id": self.page_id}):
-            decision.delete()
+        for d in Decision.get_all(selector={"page_id": self.page_id}):
+            d.delete()
 
         # Simple regex to find ::: success blocks
         decision_blocks = re.findall(
             r"::: success(.*?):::", self.page.content, re.DOTALL
         )
 
+        decisions: List[Decision] = []
         for block in decision_blocks:
-            self.save_decision(block)
+            decision: Decision | None = self.save_decision(block)
+            if decision is not None:
+                decisions.append(decision)
+        return decisions
 
-    def save_decision(self, block: str) -> None:
+    def save_decision(self, block: str) -> Decision | None:
         """Parse and save on decision from a markdown block."""
 
         def clean_line(line: str) -> str:
-            return line.replace("**", "").replace("__", "").strip()
+            return (
+                line.replace("**", "").replace("__", "").strip("*").strip("_").strip()
+            )
 
         lines = block.strip().splitlines()
         if not lines:
-            return
+            return None
 
         title = clean_line(lines[0])
         for title_kw in bot_config.organisation.decision_title_keywords:
@@ -163,10 +177,110 @@ class Protocol(CouchDBModel):
             decision.text = ""
 
         decision.save()
+        return decision
 
-    def notify_updated(self) -> None:
+    def notify_updated(self, decisions: List[Decision]) -> None:
         """Notify the protocol person on the user who last updated the page"""
-        pass
+        username = (
+            self.protocol_by[0]
+            if self.protocol_by
+            else (self.page.ocs.lastUserId if self.page and self.page.ocs else None)
+        )
+        if not username:
+            logger.warning("Cannot notify updated: no username found for protocol")
+
+        corrections = []
+        if not self.moderated_by:
+            corrections.append(_("No person listed for moderations"))
+        if not self.protocol_by:
+            corrections.append(_("No person listed for protocol"))
+        if not self.participants:
+            corrections.append(_("No participants listed"))
+
+        if (
+            self.page
+            and self.page.content
+            and bot_config.organisation.protocol_template_keyword
+            in set(self.page.content.splitlines())
+        ):
+            corrections.append(
+                _("Protocol contains a '{template}' section. Please remove it!").format(
+                    template=bot_config.organisation.protocol_template_keyword
+                )
+            )
+
+        user = NCUserList().get_user_by_uid(username or "")
+        displayname = user.ocs.displayname if user else username
+
+        if corrections:
+            message = (
+                f"Hallo {displayname},\n\n"
+                f"das Protokoll [{self}]({self.page.url if self.page else ''}) ist schon gut, aber es gibt noch einige "
+                f"Unstimmigkeiten:\n\n- " + "\n- ".join(corrections) + "\n\n"
+                "Bitte passe das Protokoll entsprechend an. Vielen Dank!"
+            )
+            logger.info(
+                "Notifying user %s about protocol %s updates", username, self.build_id()
+            )
+            send_message(text=message, channel=f"@{username}")
+        else:
+            # generate a message to the user to praise how well the document is written
+            message = (
+                f"Hallo {displayname},\n\n"
+                f"das Protokoll [{self}]({self.page.url if self.page else ''}) sieht spitze aus! "
+                "Vielen Dank für die sorgfältige Arbeit.\n\n---\n\n"
+                "Hier nun meine Zusammenfassung:\n\n"
+                f"{self.ai_summary}\n\n"
+            )
+            if decisions:
+                message += "Gefasste Beschlüsse:\n"
+                for decision in decisions:
+                    message += f"- ✅ {decision.title}\n"
+            send_message(text=message, channel=f"@{username}")
+
+            message = (
+                _(
+                    "When you're ok with these changes, then nothing else is needed from your side."
+                )
+                + "\n"
+                + _("I will post this information to the channel {protocols}").format(
+                    protocols=bot_config.organisation.protocol_channel_name
+                )
+            )
+
+    def generate_ai_summary(self) -> None:
+        # Generate AI summary of the protocol content
+        if self.page and self.page.content and settings.gemini_api_key:
+            try:
+                logger.info("Generating AI summary for protocol %s", self.build_id())
+
+                prompt = f"""Fasse das folgende Protokoll in 2-8 prägnanten Sätzen zusammen.
+                Konzentriere dich auf die wichtigsten Themen, Entscheidungen und Ergebnisse.
+
+                Protokoll vom {self.date}:
+                {self.page.content}
+
+                Zusammenfassung:"""
+
+                client = genai.Client(api_key=settings.gemini_api_key)
+                response = client.models.generate_content(
+                    model=settings.gemini_model,
+                    contents=prompt,
+                )
+
+                if response and response.text:
+                    self.ai_summary = response.text.strip()
+                    logger.info("AI summary generated successfully")
+                else:
+                    logger.warning("AI summary generation returned empty response")
+            except Exception as e:
+                logger.error("Failed to generate AI summary: %s", e)
+                self.ai_summary = ""
+        else:
+            if not settings.gemini_api_key:
+                logger.info("Skipping AI summary: no Gemini API key configured")
+            elif not self.page or not self.page.content:
+                logger.info("Skipping AI summary: no page content available")
 
     def update_from_page(self) -> None:
         page = self.page
@@ -218,8 +332,10 @@ class Protocol(CouchDBModel):
             set(self.participants) - set(self.moderated_by) - set(self.protocol_by)
         )
 
-        self.extract_decisions()
-        self.notify_updated()
+        decisions = self.extract_decisions()
+        self.generate_ai_summary()
+
+        self.notify_updated(decisions)
 
         self.save()
 
