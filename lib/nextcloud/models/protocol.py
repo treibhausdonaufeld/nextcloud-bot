@@ -25,6 +25,8 @@ class Protocol(CouchDBModel):
     protocol_by: List[str] = []
     participants: List[str] = []
 
+    summary_posted: bool = False
+
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
 
@@ -105,33 +107,66 @@ class Protocol(CouchDBModel):
         )
 
         for block in decision_blocks:
-            lines = block.strip().splitlines()
-            if not lines:
-                continue
+            self.save_decision(block)
+
+    def save_decision(self, block: str) -> None:
+        """Parse and save on decision from a markdown block."""
+
+        def clean_line(line: str) -> str:
+            return line.replace("**", "").replace("__", "").strip()
+
+        lines = block.strip().splitlines()
+        if not lines:
+            return
+
+        title = clean_line(lines[0])
+        for title_kw in bot_config.organisation.decision_title_keywords:
             title = (
-                lines[0]
-                .replace("**", "")
-                .replace("__", "")
-                .strip("Beschluss")
+                re.sub(rf"^{title_kw}[:\s\-]*", "", title, flags=re.IGNORECASE)
                 .strip(":")
                 .strip()
             )
-            text = "\n".join(lines[1:]).strip()
+        lines[0] = ""  # remove title line
 
-            # always fill title
-            if not title:
-                title = text
-                text = ""
+        decision = Decision(
+            title=title,
+            date=self.date,
+            page_id=self.page_id,
+            group_id=self.group_id or "",
+            group_name=self.group.name if self.group else "",
+        )
 
-            decision = Decision(
-                title=title,
-                text=text,
-                date=self.date,
-                page_id=self.page_id,
-                group_id=self.group_id or "",
-                group_name=self.group.name if self.group else "",
-            )
-            decision.save()
+        # iterate over all lines and check each line for keywords
+        for i, line in enumerate(lines[1:], start=1):
+            line = clean_line(line)
+
+            for valid_until_kw in bot_config.organisation.decision_valid_until_keywords:
+                if re.match(rf"^{valid_until_kw}[:\s\-]*", line, flags=re.IGNORECASE):
+                    decision.valid_until = re.sub(
+                        rf"^{valid_until_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
+                    ).strip()
+                    lines[i] = line = ""  # remove line
+
+            for objection_kw in bot_config.organisation.decision_objection_keywords:
+                if re.match(rf"^{objection_kw}[:\s\-]*", line, flags=re.IGNORECASE):
+                    decision.objections = re.sub(
+                        rf"^{objection_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
+                    ).strip()
+                    lines[i] = line = ""  # remove line
+
+            if line:
+                decision.text += line + "\n"
+
+        # always fill title
+        if not title:
+            decision.title = decision.text
+            decision.text = ""
+
+        decision.save()
+
+    def notify_updated(self) -> None:
+        """Notify the protocol person on the user who last updated the page"""
+        pass
 
     def update_from_page(self) -> None:
         page = self.page
@@ -184,6 +219,7 @@ class Protocol(CouchDBModel):
         )
 
         self.extract_decisions()
+        self.notify_updated()
 
         self.save()
 

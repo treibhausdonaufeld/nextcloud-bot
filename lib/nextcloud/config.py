@@ -17,9 +17,20 @@ logger = logging.getLogger(__name__)
 
 class OrganisationConfig(BaseModel):
     group_prefixes: List[str] = Field(default_factory=lambda: ["AG", "UG", "PG"])
+    top_group_name: str = "Koordinationskreis"
     extra_groups: List[str] = Field(default_factory=list)
     protocol_subtype_keywords: List[str] = Field(
         default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
+    )
+
+    decision_title_keywords: List[str] = Field(
+        default_factory=lambda: ["entscheidung", "decision", "beschluss", "resolution"]
+    )
+    decision_valid_until_keywords: List[str] = Field(
+        default_factory=lambda: ["gültig bis", "valid until", "befristet auf"]
+    )
+    decision_objection_keywords: List[str] = Field(
+        default_factory=lambda: ["einwände", "objections", "einwand"]
     )
 
     protocol_person_keywords: List[str] = Field(
