@@ -8,6 +8,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
 from lib.chromadb import get_unified_collection
+from lib.couchdb import couchdb
 from lib.nextcloud.models.base import (
     CouchDBModel,
     format_timestamp,
@@ -184,3 +185,56 @@ class CollectivePage(CouchDBModel):
                 logger.warning(
                     f"No metadata created for CollectivePage id={self.id}, skipping ChromaDB upsert."
                 )
+
+    def delete(self) -> None:
+        """Delete the page and all related objects (Decisions, Protocol, Group) and ChromaDB entries."""
+
+        page_id = self.ocs.id if self.ocs else None
+
+        # Delete all documents with matching page_id (Decisions, Protocol, etc.)
+        if page_id:
+            db = couchdb()
+
+            # Query for all documents with this page_id
+            lookup = {
+                "selector": {"page_id": page_id},
+                "limit": 10000,
+            }
+            response, results = db.resource.post("_find", json=lookup)
+            response.raise_for_status()
+
+            # Delete each related document
+            for doc in results.get("docs", []):
+                doc_id = doc.get("_id")
+                doc_type = doc.get("type", "Unknown")
+                if doc_id:
+                    try:
+                        db.delete(doc_id)
+                        logger.info("  Deleted related %s: %s", doc_type, doc_id)
+                    except Exception as e:
+                        logger.warning(
+                            "  Failed to delete %s %s: %s", doc_type, doc_id, e
+                        )
+
+            # Delete page chunks from ChromaDB
+            collection = get_unified_collection()
+            try:
+                # Query for all chunks with this page's original_doc_id
+                results = collection.get(
+                    where={"page_id": page_id}, include=["metadatas"]
+                )
+                if results and results.get("ids"):
+                    chunk_ids = results["ids"]
+                    collection.delete(ids=chunk_ids)
+                    logger.info(
+                        "  Deleted %d ChromaDB chunks for page: %s",
+                        len(chunk_ids),
+                        self.id,
+                    )
+            except Exception as e:
+                logger.warning(
+                    "  Failed to delete ChromaDB chunks for %s: %s", self.id, e
+                )
+
+        # Finally, delete the page itself from CouchDB
+        super().delete()

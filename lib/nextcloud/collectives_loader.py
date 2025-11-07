@@ -16,7 +16,7 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import List, Set
 
 import requests
 from pycouchdb.exceptions import NotFound
@@ -179,10 +179,36 @@ def store_pages_to_couchdb(pages: List[OCSCollectivePage]) -> List[CollectivePag
     return stored
 
 
+def delete_orphaned_pages(fetched_page_ids: Set[int]) -> None:
+    """Delete pages from CouchDB that are no longer in Nextcloud.
+
+    Each page's delete method handles cleanup of related objects and ChromaDB entries.
+
+    Args:
+        fetched_page_ids: Set of page IDs currently in Nextcloud
+    """
+    # Get all pages currently stored in CouchDB
+    stored_pages = CollectivePage.get_all(limit=10000)
+
+    for page in stored_pages:
+        if not page.ocs or page.ocs.id not in fetched_page_ids:
+            page_id = page.ocs.id if page.ocs else None
+            logger.info("Deleting orphaned page: %s (page_id=%s)", page.title, page_id)
+            page.delete()
+
+
 def fetch_and_store_all_pages() -> List[CollectivePage]:
     """Convenience function: fetch pages and store them into CouchDB.
 
-    Returns the number of pages stored.
+    Also removes orphaned pages and their related objects.
+
+    Returns the list of pages stored.
     """
     pages = fetch_all_pages()
-    return store_pages_to_couchdb(pages)
+    stored = store_pages_to_couchdb(pages)
+
+    # Clean up pages that were deleted from Nextcloud
+    fetched_page_ids = {p.id for p in pages}
+    delete_orphaned_pages(fetched_page_ids)
+
+    return stored

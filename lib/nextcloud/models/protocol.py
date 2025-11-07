@@ -186,3 +186,15 @@ class Protocol(CouchDBModel):
         self.extract_decisions()
 
         self.save()
+
+    def delete(self) -> None:
+        """Delete the protocol and all related Decisions."""
+        # Delete all decisions related to this protocol's page
+        if self.page_id:
+            decisions = Decision.get_all(selector={"page_id": self.page_id}, limit=1000)
+            for decision in decisions:
+                logger.info("  Deleting decision from protocol: %s", decision.title)
+                decision.delete()  # Decision.delete() also removes from ChromaDB
+
+        # Delete the protocol itself
+        super().delete()
