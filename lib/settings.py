@@ -92,6 +92,8 @@ class RocketchatSettings(BaseModel):
     info_channel: str = ""
     error_channel: str = ""
 
+    channel_overwrite: str = ""
+
 
 class MailSettings(BaseModel):
     smtp_server: str = ""

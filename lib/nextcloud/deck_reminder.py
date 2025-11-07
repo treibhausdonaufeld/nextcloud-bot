@@ -9,6 +9,7 @@ from pycouchdb.exceptions import NotFound
 
 from lib.couchdb import couchdb
 from lib.nextcloud.config import DeckChannelMappingItem, DeckReminderConfig
+from lib.outbound.rocketchat import send_message
 from lib.settings import NextcloudSettings, settings
 
 logger = logging.getLogger(__name__)
@@ -22,13 +23,10 @@ class DeckReminder:
     config: DeckReminderConfig
     nextcloud_config: NextcloudSettings
 
-    chat_url: str = ""
-
     couchdb: Database
 
     def __init__(self, config: DeckReminderConfig) -> None:
         self.config = config
-        self.chat_url = str(settings.rocketchat.hook_url)
         self.nextcloud_config = settings.nextcloud
         self.couchdb = couchdb()
 
@@ -127,36 +125,10 @@ class DeckReminder:
         if days_overdue < 0:
             # send to each assigned user
             for assignee_name in assignee_names:
-                self.send_message("@" + assignee_name, message)
+                send_message("@" + assignee_name, message)
         else:
             # send to channel
-            self.send_message(channel, message)
-
-    def send_message(self, channel, text):
-        """
-        Send a reminder message to a specific channel.
-
-        Args:
-            channel (str): The channel to send the reminder to.
-            message (str): The message to send.
-
-        Returns:
-            None
-        """
-        if not self.chat_url:
-            logger.error("Chat URL is not configured.")
-            return
-
-        response = requests.post(
-            self.chat_url,
-            json={
-                "text": text,
-                "channel": channel,
-                "emoji": ":robot:",
-            },
-        )
-        response.raise_for_status()
-        logger.info(f"Message sent to {channel}: {text}")
+            send_message(channel, message)
 
     def get_due_cards(self):
         deck_mapping = self.config.deck_channel_mapping

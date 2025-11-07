@@ -1,21 +1,19 @@
-import json
 import locale
 import logging
 import random
 import time
 from datetime import date as dt_date
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import caldav
 import pytz
-import requests
 from pycouchdb.client import Database
 from pycouchdb.exceptions import NotFound
-from pydantic import HttpUrl
 
 from lib.couchdb import couchdb
 from lib.nextcloud.config import CalendarNotifierConfig
+from lib.outbound.rocketchat import send_message
 from lib.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -52,7 +50,6 @@ kann_nicht = [
 
 class Notifier:
     config: CalendarNotifierConfig
-    chat_url: Optional[HttpUrl]
 
     chromadb_events_key = "calendar_notifier_events"
     events: dict[str, Any]  # document from couchdb
@@ -62,7 +59,6 @@ class Notifier:
 
     def __init__(self, config: CalendarNotifierConfig) -> None:
         self.config = cal_config = config
-        self.chat_url = settings.rocketchat.hook_url
         self.couchdb = couchdb()
 
         if cal_config is None or not cal_config.caldav_url or not cal_config.enabled:
@@ -223,35 +219,6 @@ class Notifier:
 
         text += f"\n 😖 : {random.choice(kann_nicht)}"
 
-        message_json = {
-            "text": text,
-            "channel": channel,
-            "emoji": ":robot:",
-        }
-
-        if self.chat_url:
-            response = requests.post(
-                str(self.chat_url),
-                json=message_json,
-            )
-            # log error if request failed
-            if response.status_code != 200:
-                logger.error(
-                    "Failed to send notification for event %s to channel %s: %s",
-                    event_data["summary"],
-                    channel,
-                    response.text,
-                )
-            else:
-                logger.debug(
-                    "Sent notification for event %s to channel %s",
-                    event_data["summary"],
-                    channel,
-                )
-        else:
-            logger.warning(
-                "Chat URL not configured, this is the message: %s",
-                json.dumps(message_json),
-            )
+        send_message(text, channel)
 
         self.events["events"][event_data["uid"]] = time.time()
