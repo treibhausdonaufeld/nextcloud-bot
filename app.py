@@ -213,7 +213,7 @@ if question:
             date = ""
             if source_type == Decision.__name__:
                 date = metadata.get("date", "")[0:10]
-            elif Protocol.valid_title(metadata.get("title", "")):
+            elif Protocol.valid_date(metadata.get("title", "")):
                 date = metadata.get("title", "").split(" ")[0]
 
             source_data.append(

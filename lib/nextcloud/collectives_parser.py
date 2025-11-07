@@ -16,7 +16,6 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
-from typing import List, cast
 
 from pycouchdb.exceptions import NotFound
 
@@ -68,7 +67,7 @@ def parse_protocols(page: CollectivePage) -> None:
             not page.is_readme
             and page.ocs.filePath.split("/")[-1].lower() in protocol_kws
         )
-        and Protocol.valid_title(page.title)
+        # and Protocol.valid_title(page.title)
     ):
         if page.subtype != PageSubtype.PROTOCOL:
             page.subtype = PageSubtype.PROTOCOL
@@ -81,14 +80,3 @@ def parse_protocols(page: CollectivePage) -> None:
             pass
         protocol.update_from_page()
         protocol.save()
-
-
-def parse_pages() -> None:
-    """Fetch all pages from CouchDB and parse their content."""
-    all_pages = cast(List[CollectivePage], CollectivePage.get_all(limit=500))
-
-    for page in all_pages:
-        parse_groups(page)
-
-    for page in all_pages:
-        parse_protocols(page)

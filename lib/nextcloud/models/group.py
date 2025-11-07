@@ -1,8 +1,7 @@
 import re
 from functools import cached_property
-from typing import List, cast
+from typing import ClassVar, List, cast
 
-from lib.couchdb import couchdb
 from lib.nextcloud.config import bot_config
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.settings import user_regex
@@ -20,6 +19,9 @@ class Group(CouchDBModel):
     delegate: List[str] = []
     members: List[str] = []
     short_names: List[str] = []
+
+    # Class-level cache shared across all instances
+    _cached_groups: ClassVar[List["Group"] | None] = None
 
     def build_id(self) -> str:
         return f"{self.__class__.__name__}:{self.page_id}"
@@ -54,17 +56,27 @@ class Group(CouchDBModel):
 
     @classmethod
     def get_by_name(cls, name: str) -> "Group":
-        """Get a Group by its name."""
-        db = couchdb()
+        """
+        Get a Group by its name case insensitive.
+        If no exact match is found, try to lookup by short names.
+        """
 
-        lookup = {"selector": {"type": cls.__name__, "name": name}}
-        response, results = db.resource.post("_find", json=lookup)
-        response.raise_for_status()
+        if Group._cached_groups is None:
+            Group._cached_groups = cast(List[Group], Group.get_all(limit=1000))
 
-        docs = results.get("docs", [])
+        docs = [g for g in Group._cached_groups if g.name.lower() == name.lower()]
+
+        if not docs:
+            # try short names
+            docs = [
+                g
+                for g in Group._cached_groups
+                if name.lower() in {sn.lower() for sn in g.short_names}
+            ]
+
         if not docs:
             raise ValueError(f"Group with name '{name}' not found")
-        return cls(**docs[0])
+        return docs[0]
 
     @classmethod
     def valid_name(cls, name: str) -> bool:
@@ -131,7 +143,9 @@ class Group(CouchDBModel):
             elif first_word in bot_config.organisation.group_shortname_keywords:
                 # shortnames are split by commas
                 shortnames = line.split(":")[-1].strip("*").strip().split(",")
-                shortnames = [sn.strip() for sn in shortnames if sn.strip() != ""]
+                shortnames = [
+                    sn.strip().lower() for sn in shortnames if sn.strip() != ""
+                ]
                 self.short_names.extend(sorted(shortnames))
                 continue
 

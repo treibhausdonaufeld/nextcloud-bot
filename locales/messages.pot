@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-07 16:14+0100\n"
+"POT-Creation-Date: 2025-11-07 23:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,111 +15,111 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: app.py:113
+#: app.py:120
 msgid "{common_name} Dashboard"
 msgstr ""
 
-#: app.py:124
+#: app.py:125
 msgid "Ask a Question"
 msgstr ""
 
-#: app.py:129
+#: app.py:130
 msgid "Search or ask about collective pages"
 msgstr ""
 
-#: app.py:130
+#: app.py:131
 msgid "e.g., What decisions were made about...?"
 msgstr ""
 
-#: app.py:133
+#: app.py:134
 msgid "Advanced Options"
 msgstr ""
 
-#: app.py:136
+#: app.py:137
 msgid "Chunks size"
 msgstr ""
 
-#: app.py:140
+#: app.py:141
 msgid "Number of chunks to include in context"
 msgstr ""
 
-#: app.py:143
+#: app.py:144
 msgid "Full pages"
 msgstr ""
 
-#: app.py:145
+#: app.py:146
 msgid "Load full pages instead of excerpts"
 msgstr ""
 
-#: app.py:148
+#: app.py:149
 msgid "AI Summary"
 msgstr ""
 
-#: app.py:150
+#: app.py:151
 msgid "Generate AI summary of results"
 msgstr ""
 
-#: app.py:155
+#: app.py:156
 msgid "Searching documents..."
 msgstr ""
 
-#: app.py:186 pages/protocols.py:154
+#: app.py:187 pages/protocols.py:154
 msgid "Answer"
 msgstr ""
 
-#: app.py:189
+#: app.py:190
 msgid "Source Documents"
 msgstr ""
 
-#: app.py:221
+#: app.py:222
 msgid "Decision"
 msgstr ""
 
-#: app.py:221 app.py:237
+#: app.py:222 app.py:238
 msgid "Type"
 msgstr ""
 
-#: app.py:223
+#: app.py:224
 msgid "Page"
 msgstr ""
 
-#: app.py:224 app.py:238 pages/collective_pages.py:42 pages/logbook.py:123
+#: app.py:225 app.py:239 pages/collective_pages.py:42 pages/logbook.py:123
 #: pages/protocols.py:186
 msgid "Title"
 msgstr ""
 
-#: app.py:225 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
+#: app.py:226 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
 #: pages/protocols.py:184
 msgid "Date"
 msgstr ""
 
-#: app.py:226 app.py:239
+#: app.py:227 app.py:240
 msgid "Chunk"
 msgstr ""
 
-#: app.py:227 app.py:240
+#: app.py:228 app.py:241
 msgid "Content"
 msgstr ""
 
-#: app.py:228 app.py:241
+#: app.py:229 app.py:242
 msgid "Page ID"
 msgstr ""
 
-#: app.py:229 app.py:242 pages/collective_pages.py:46
+#: app.py:230 app.py:243 pages/collective_pages.py:46
 #: pages/collective_pages.py:53 pages/collective_pages.py:54
 msgid "URL"
 msgstr ""
 
-#: app.py:243 pages/collective_pages.py:54
+#: app.py:244 pages/collective_pages.py:54
 msgid "Open page"
 msgstr ""
 
-#: app.py:243 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
+#: app.py:244 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
 #: pages/protocols.py:190 pages/protocols.py:197 pages/protocols.py:198
 msgid "Link"
 msgstr ""
 
-#: app.py:250
+#: app.py:251
 msgid "No matching pages found."
 msgstr ""
 

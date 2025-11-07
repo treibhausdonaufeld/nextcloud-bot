@@ -20,11 +20,11 @@ def display_users(title: str, user_ids: list[str]):
         st.write(f"- **{title}** ({len(users)}): {', '.join(users)}")
 
 
-def display_group(
-    group: Group, user_list: NCUserList, all_groups: list[Group], level: int = 0
-):
+def display_group(group: Group, all_groups: list[Group]) -> None:
     """Display a group and its children."""
-    # with st.expander(f"{'➡️' * level} {group.name}"):
+    parent = f"{group.parent_group} :arrow_right: " if group.parent_group else ""
+    st.write(f"### {parent}{group.name}")
+
     if group.parent_group:
         st.write(f"**{_('Parent Group')}:** {group.parent_group}")
 
@@ -35,10 +35,11 @@ def display_group(
     display_users(_("Delegates"), group.delegate)
     display_users(_("Members"), group.members)
 
-    # children = [g for g in all_groups if g.parent_group == group.name]
-    # for child in children:
-    #     with st.expander(f"{'➡️' * (level + 1)} {child.name}"):
-    #         display_group(child, user_list, all_groups, level + 1)
+    subgroups = sorted([cg for cg in all_groups if cg.parent_group == group.name])
+    if subgroups:
+        st.write("#### " + _("Subgroups"))
+        for subgroup in subgroups:
+            st.write(f"- {subgroup.name} ({len(subgroup.all_members)})")
 
 
 def add_members(
@@ -218,16 +219,8 @@ if selected_node or limit_user or limit_group:
         )
         if not group:
             raise ValueError("Not a group")
-        parent = f"{group.parent_group} :arrow_right: " if group.parent_group else ""
-        st.write(f"### {parent}{group.name}")
 
-        display_group(group, user_list, all_groups)
-
-        subgroups = sorted([cg for cg in all_groups if cg.parent_group == group.name])
-        if subgroups:
-            st.write("#### " + _("Subgroups"))
-            for subgroup in subgroups:
-                st.write(f"- {subgroup.name} ({len(subgroup.all_members)})")
+        display_group(group, all_groups)
     except ValueError:
         # person selected show some details
         member_name = selected_node.split(":")[-1] if selected_node else limit_user

@@ -385,7 +385,7 @@ class TestProtocolValidTitle:
         ]
 
         for title in valid_titles:
-            assert Protocol.valid_title(title), f"'{title}' should be valid"
+            assert Protocol.valid_date(title), f"'{title}' should be valid"
 
     def test_invalid_protocol_titles(self):
         """Test that invalid protocol titles are rejected."""
@@ -397,7 +397,7 @@ class TestProtocolValidTitle:
         ]
 
         for title in invalid_titles:
-            assert not Protocol.valid_title(title), f"'{title}' should be invalid"
+            assert not Protocol.valid_date(title), f"'{title}' should be invalid"
 
 
 class TestProtocolDelete:

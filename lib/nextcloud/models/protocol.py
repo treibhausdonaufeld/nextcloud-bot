@@ -73,10 +73,27 @@ class Protocol(CouchDBModel):
         return self.page.ocs.filePath
 
     @classmethod
-    def valid_title(cls, title: str) -> bool:
+    def valid_date(cls, title: str) -> bool:
         """Check if the given title is a valid protocol title."""
         # Simple check: title starts with a date in YYYY-MM-DD format
-        return bool(re.match(r"^\d{4}-\d{2}-\d{2} .*", title))
+        date_str, _group_name = title.split(" ", 1)
+        # parse date_str and check if valid date
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return False
+        return True
+
+    @classmethod
+    def is_valid_protocol_title(cls, title: str) -> bool:
+        """Check if the given title corresponds to a valid protocol title."""
+        try:
+            _date_str, group_name = title.split(" ", 1)
+            Group.get_by_name(group_name)  # check if group exists
+        except ValueError:
+            return False
+
+        return True and cls.valid_date(title)
 
     @classmethod
     def is_protocol_page(cls, page: "CollectivePage") -> bool:
@@ -197,6 +214,12 @@ class Protocol(CouchDBModel):
         if not self.participants:
             corrections.append(_("No participants listed"))
 
+        # check that title starts with date
+        if not self.valid_date(self.page.title if self.page else ""):
+            corrections.append(_("Title must have a valid date in 'YYYY-MM-DD' format"))
+        if not self.is_valid_protocol_title(self.page.title if self.page else ""):
+            corrections.append(_("Title must be 'YYYY-MM-DD Group Name'"))
+
         if (
             self.page
             and self.page.content
@@ -213,11 +236,15 @@ class Protocol(CouchDBModel):
         displayname = user.ocs.displayname if user else username
 
         if corrections:
-            message = (
-                f"Hallo {displayname},\n\n"
-                f"das Protokoll [{self}]({self.page.url if self.page else ''}) ist schon gut, aber es gibt noch einige "
-                f"Unstimmigkeiten:\n\n- " + "\n- ".join(corrections) + "\n\n"
-                "Bitte passe das Protokoll entsprechend an. Vielen Dank!"
+            message = _(
+                "Hello {displayname},\n\n"
+                "The protocol [{protocol}]({url}) looks generally fine, but there are some issues:\n\n- {issues}\n\n"
+                "Please adjust the protocol accordingly. Thank you!"
+            ).format(
+                displayname=displayname,
+                protocol=str(self),
+                url=(self.page.url if self.page else ""),
+                issues="\n- ".join(corrections),
             )
             logger.info(
                 "Notifying user %s about protocol %s updates", username, self.build_id()
@@ -225,15 +252,18 @@ class Protocol(CouchDBModel):
             send_message(text=message, channel=f"@{username}")
         else:
             # generate a message to the user to praise how well the document is written
-            message = (
-                f"Hallo {displayname},\n\n"
-                f"das Protokoll [{self}]({self.page.url if self.page else ''}) sieht spitze aus! "
-                "Vielen Dank für die sorgfältige Arbeit.\n\n---\n\n"
-                "Hier nun meine Zusammenfassung:\n\n"
-                f"{self.ai_summary}\n\n"
+            message = _(
+                "Hello {displayname},\n\n"
+                "The protocol [{protocol}]({url}) looks great! Thank you for the careful work.\n\n---\n\n"
+                "Here is my summary:\n\n{summary}\n\n"
+            ).format(
+                displayname=displayname,
+                protocol=str(self),
+                url=(self.page.url if self.page else ""),
+                summary=self.ai_summary,
             )
             if decisions:
-                message += "Gefasste Beschlüsse:\n"
+                message += _("Decisions made:\n")
                 for decision in decisions:
                     message += f"- ✅ {decision.title}\n"
             send_message(text=message, channel=f"@{username}")
@@ -254,13 +284,14 @@ class Protocol(CouchDBModel):
             try:
                 logger.info("Generating AI summary for protocol %s", self.build_id())
 
-                prompt = f"""Fasse das folgende Protokoll in 2-8 prägnanten Sätzen zusammen.
-                Konzentriere dich auf die wichtigsten Themen, Entscheidungen und Ergebnisse.
-
-                Protokoll vom {self.date}:
-                {self.page.content}
-
-                Zusammenfassung:"""
+                prompt_template = _(
+                    "Summarize the following protocol in 2-8 concise sentences."
+                    " Focus on the most important topics, decisions and outcomes.\n\n"
+                    "Protocol from {date}:\n{content}\n\nSummary:"
+                )
+                prompt = prompt_template.format(
+                    date=self.date, content=self.page.content
+                )
 
                 client = genai.Client(api_key=settings.gemini_api_key)
                 response = client.models.generate_content(
@@ -292,7 +323,13 @@ class Protocol(CouchDBModel):
         try:
             self.group_id = Group.get_for_page(page).id
         except ValueError:
-            pass
+            # could not determine group id from path of page, try to get from title
+            group_name = " ".join(page.title.split(" ")[1:])
+            try:
+                group = Group.get_by_name(group_name)
+                self.group_id = group.id
+            except ValueError:
+                pass
 
         lines = page.content.splitlines()
         first_word_regex = re.compile(r"\b(\w[\w-]*)\b")
