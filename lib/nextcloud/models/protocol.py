@@ -116,7 +116,11 @@ class Protocol(CouchDBModel):
         if not self.page or not self.page.content:
             return []
 
-        if self.date_obj and self.date_obj > datetime.now().date():
+        if (
+            self.valid_date(self.page.title)
+            and self.date_obj
+            and self.date_obj > datetime.now().date()
+        ):
             logger.info(
                 "Skipping decision extraction for future protocol %s", self.build_id()
             )
@@ -318,7 +322,8 @@ class Protocol(CouchDBModel):
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
 
-        self.date = page.title.split(" ")[0]  # first word as date
+        if self.valid_date(page.title):
+            self.date = page.title.split(" ")[0]  # first word as date
 
         try:
             self.group_id = Group.get_for_page(page).id
@@ -368,13 +373,15 @@ class Protocol(CouchDBModel):
         self.participants = sorted(
             set(self.participants) - set(self.moderated_by) - set(self.protocol_by)
         )
+        try:
+            decisions = self.extract_decisions()
+            self.generate_ai_summary()
 
-        decisions = self.extract_decisions()
-        self.generate_ai_summary()
+            self.notify_updated(decisions)
 
-        self.notify_updated(decisions)
-
-        self.save()
+            self.save()
+        except ValueError as e:
+            logger.error("Error updating protocol from page: %s", e)
 
     def delete(self) -> None:
         """Delete the protocol and all related Decisions."""

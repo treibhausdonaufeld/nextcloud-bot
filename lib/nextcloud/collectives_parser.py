@@ -47,7 +47,6 @@ def parse_groups(page: CollectivePage) -> None:
             except NotFound:
                 pass
             group.update_from_page()
-            group.save()
 
 
 def parse_protocols(page: CollectivePage) -> None:
@@ -79,4 +78,3 @@ def parse_protocols(page: CollectivePage) -> None:
         except NotFound:
             pass
         protocol.update_from_page()
-        protocol.save()
