@@ -277,10 +277,11 @@ class Protocol(CouchDBModel):
                     "When you're ok with these changes, then nothing else is needed from your side."
                 )
                 + "\n"
-                + _("I will post this information to the channel {protocols}").format(
+                + _("I will post this information to the channel #{protocols}").format(
                     protocols=bot_config.organisation.protocol_channel_name
                 )
             )
+            send_message(text=message, channel=f"@{username}")
 
             message = (
                 f"## [{self}]({self.page.url if self.page else ''})\n\n"
@@ -291,7 +292,7 @@ class Protocol(CouchDBModel):
                 for decision in decisions:
                     message += f"- ✅ {decision.title}\n"
             send_message(
-                text=message, channel=bot_config.rocketchat.protocol_channel_name
+                text=message, channel=bot_config.organisation.protocol_channel_name
             )
             self.summary_posted = True
 
