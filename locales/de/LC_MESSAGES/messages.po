@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-05 16:52+0100\n"
+"POT-Creation-Date: 2025-11-07 16:14+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -24,99 +24,103 @@ msgstr "{common_name} Dashboard"
 msgid "Ask a Question"
 msgstr "Frage stellen"
 
-#: app.py:130
+#: app.py:129
 msgid "Search or ask about collective pages"
 msgstr "Suche oder frage zu Kollektiv-Seiten"
 
-#: app.py:131
+#: app.py:130
 msgid "e.g., What decisions were made about...?"
 msgstr "z. B. Welche Entscheidungen wurden zu ... getroffen?"
 
-#: app.py:135
+#: app.py:133
+msgid "Advanced Options"
+msgstr "Erweiterte Optionen"
+
+#: app.py:136
 msgid "Chunks size"
 msgstr "Chunk-Größe"
 
-#: app.py:139
+#: app.py:140
 msgid "Number of chunks to include in context"
 msgstr "Anzahl der Chunks, die in den Kontext aufgenommen werden sollen"
 
-#: app.py:142
+#: app.py:143
 msgid "Full pages"
 msgstr "Vollständige Seiten"
 
-#: app.py:144
+#: app.py:145
 msgid "Load full pages instead of excerpts"
 msgstr "Vollständige Seiten statt Auszügen laden"
 
-#: app.py:147
+#: app.py:148
 msgid "AI Summary"
 msgstr "KI-Zusammenfassung"
 
-#: app.py:149
+#: app.py:150
 msgid "Generate AI summary of results"
 msgstr "KI-Zusammenfassung der Ergebnisse erstellen"
 
-#: app.py:154
+#: app.py:155
 msgid "Searching documents..."
 msgstr "Dokumente werden durchsucht..."
 
-#: app.py:185 pages/protocols.py:154
+#: app.py:186 pages/protocols.py:154
 msgid "Answer"
 msgstr "Antwort"
 
-#: app.py:188
+#: app.py:189
 msgid "Source Documents"
 msgstr "Quell-Dokumente"
 
-#: app.py:220
+#: app.py:221
 msgid "Decision"
 msgstr "Entscheidung"
 
-#: app.py:220 app.py:236
+#: app.py:221 app.py:237
 msgid "Type"
 msgstr "Typ"
 
-#: app.py:222
+#: app.py:223
 msgid "Page"
 msgstr "Seite"
 
-#: app.py:223 app.py:237 pages/collective_pages.py:42 pages/logbook.py:123
+#: app.py:224 app.py:238 pages/collective_pages.py:42 pages/logbook.py:123
 #: pages/protocols.py:186
 msgid "Title"
 msgstr "Titel"
 
-#: app.py:224 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
+#: app.py:225 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
 #: pages/protocols.py:184
 msgid "Date"
 msgstr "Datum"
 
-#: app.py:225 app.py:238
+#: app.py:226 app.py:239
 msgid "Chunk"
 msgstr "Chunk"
 
-#: app.py:226 app.py:239
+#: app.py:227 app.py:240
 msgid "Content"
 msgstr "Inhalt"
 
-#: app.py:227 app.py:240
+#: app.py:228 app.py:241
 msgid "Page ID"
 msgstr "Seiten-ID"
 
-#: app.py:228 app.py:241 pages/collective_pages.py:46
+#: app.py:229 app.py:242 pages/collective_pages.py:46
 #: pages/collective_pages.py:53 pages/collective_pages.py:54
 msgid "URL"
 msgstr "URL"
 
-#: app.py:242 pages/collective_pages.py:54
+#: app.py:243 pages/collective_pages.py:54
 msgid "Open page"
 msgstr "Seite öffnen"
 
-#: app.py:242 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
+#: app.py:243 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
 #: pages/protocols.py:190 pages/protocols.py:197 pages/protocols.py:198
 msgid "Link"
 msgstr "Link"
 
-#: app.py:249
+#: app.py:250
 msgid "No matching pages found."
 msgstr "Keine passenden Seiten gefunden."
 
@@ -299,20 +303,20 @@ msgid "Semantic"
 msgstr "Semantisch"
 
 #: pages/logbook.py:56
-msgid "All words"
-msgstr "Alle Wörter"
+msgid "Semantic Search"
+msgstr "Semantische Suche"
 
 #: pages/logbook.py:56
 msgid "Any word"
 msgstr "Beliebiges Wort"
 
 #: pages/logbook.py:56
-msgid "Exact Match"
-msgstr "Exakte Übereinstimmung"
+msgid "All words"
+msgstr "Alle Wörter"
 
 #: pages/logbook.py:56
-msgid "Semantic Search"
-msgstr "Semantische Suche"
+msgid "Exact Match"
+msgstr "Exakte Übereinstimmung"
 
 #: pages/logbook.py:122 pages/protocols.py:185
 msgid "Group"
@@ -374,14 +378,16 @@ msgstr "Öffnen"
 msgid ""
 "No timeline data found. Please create and populate the '%s' page in "
 "Nextcloud Collectives."
-msgstr "Keine Zeitachsen-Daten gefunden. Bitte erstelle und befülle die Seite '%s' in Nextcloud Collectives."
+msgstr ""
+"Keine Zeitachsen-Daten gefunden. Bitte erstelle und befülle die Seite '%s' "
+"in Nextcloud Collectives."
 
 #~ msgid "Thinking..."
 #~ msgstr "Denke..."
 
-#, fuzzy
-#~ msgid "File Path"
-#~ msgstr "Dateipfad"
+#: pages/collective_pages.py:31
+msgid "File Path"
+msgstr "Dateipfad"
 
 #~ msgid "Page size"
 #~ msgstr "Seitengröße"

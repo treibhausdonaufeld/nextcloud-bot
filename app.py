@@ -110,44 +110,46 @@ def get_hybrid_retriever():
 
 
 # Streamlit app starts here
-title = _("{common_name} Dashboard").format(common_name=settings.name)
-st.set_page_config(page_title=title, page_icon="🏡", layout="wide")
+st.set_page_config(page_title="Dashboard", page_icon="🏡", layout="wide")
 
 menu()
 
 db = couchdb()
 
+# Title must be set after menu() because menu() calls set_language()
+title = _("{common_name} Dashboard").format(common_name=settings.name)
 
 st.title(title)
 
 # AI Question Section
-st.subheader("🤖 " + _("Ask a Question") + " 🤖")
+st.subheader(_("Ask a Question"))
 
 retriever = get_hybrid_retriever()
 
-col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-question = col1.text_input(
+question = st.text_input(
     _("Search or ask about collective pages"),
     placeholder=_("e.g., What decisions were made about...?"),
-    label_visibility="collapsed",
 )
-num_results = col2.slider(
-    _("Chunks size"),
-    min_value=1,
-    max_value=50,
-    value=25,
-    help=_("Number of chunks to include in context"),
-)
-load_full_pages = col3.checkbox(
-    _("Full pages"),
-    value=False,
-    help=_("Load full pages instead of excerpts"),
-)
-enable_ai_summary = col4.checkbox(
-    _("AI Summary"),
-    value=True,
-    help=_("Generate AI summary of results"),
-)
+
+with st.expander(_("Advanced Options")):
+    col1, col2, col3 = st.columns(3)
+    num_results = col1.slider(
+        _("Chunks size"),
+        min_value=1,
+        max_value=50,
+        value=25,
+        help=_("Number of chunks to include in context"),
+    )
+    load_full_pages = col2.checkbox(
+        _("Full pages"),
+        value=False,
+        help=_("Load full pages instead of excerpts"),
+    )
+    enable_ai_summary = col3.checkbox(
+        _("AI Summary"),
+        value=True,
+        help=_("Generate AI summary of results"),
+    )
 
 if question:
     # Use LangChain hybrid retriever to get relevant chunks
