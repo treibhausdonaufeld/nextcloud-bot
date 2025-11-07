@@ -3,7 +3,7 @@ LOCALES_DIR=locales
 DOMAIN=messages
 
 # Specify the files or patterns to search for translatable strings
-FILES=$(wildcard *.py pages/*.py lib/*.py)
+FILES=$(shell find . -name "*.py" -not -path "./.venv/*" -not -path "./.*")
 
 # Default target
 all: update_po

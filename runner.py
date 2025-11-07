@@ -17,12 +17,14 @@ from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
-from lib.settings import settings
+from lib.settings import set_language, settings
 
 logger = logging.getLogger(__name__)
 
 # reduce logging for httpx package to WARNING
 # logging.getLogger("httpx").setLevel(logging.WARNING)
+
+set_language(settings.default_language)
 
 
 def delete_all_parsed_data():
