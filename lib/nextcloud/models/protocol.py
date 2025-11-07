@@ -282,6 +282,19 @@ class Protocol(CouchDBModel):
                 )
             )
 
+            message = (
+                f"## [{self}]({self.page.url if self.page else ''})\n\n"
+                + self.ai_summary
+            )
+            if decisions:
+                message += "\n\n" + _("Decisions made:\n")
+                for decision in decisions:
+                    message += f"- ✅ {decision.title}\n"
+            send_message(
+                text=message, channel=bot_config.rocketchat.protocol_channel_name
+            )
+            self.summary_posted = True
+
     def generate_ai_summary(self) -> None:
         # Generate AI summary of the protocol content
         if self.page and self.page.content and settings.gemini_api_key:
@@ -289,8 +302,10 @@ class Protocol(CouchDBModel):
                 logger.info("Generating AI summary for protocol %s", self.build_id())
 
                 prompt_template = _(
-                    "Summarize the following protocol in 2-8 concise sentences."
-                    " Focus on the most important topics, decisions and outcomes.\n\n"
+                    "Summarize the following protocol in 2-6 concise sentences."
+                    " Focus on the most important topics, decisions and outcomes. "
+                    f"Make sure to use the language {settings.default_language}. "
+                    "Don't halucinate and make things up which are not in the original text\n\n"
                     "Protocol from {date}:\n{content}\n\nSummary:"
                 )
                 prompt = prompt_template.format(
@@ -375,9 +390,10 @@ class Protocol(CouchDBModel):
         )
         try:
             decisions = self.extract_decisions()
-            self.generate_ai_summary()
 
-            self.notify_updated(decisions)
+            if not self.summary_posted:
+                self.generate_ai_summary()
+                self.notify_updated(decisions)
 
             self.save()
         except ValueError as e:

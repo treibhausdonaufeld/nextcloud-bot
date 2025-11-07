@@ -27,7 +27,7 @@ class OrganisationConfig(BaseModel):
     )
 
     # where protocol summaries will be posted
-    protocol_channel_name: str = "#protokolle"
+    protocol_channel_name: str = "protokolle"
 
     # template keyword inside protocols
     protocol_template_keyword: str = "# Vorlagen"
