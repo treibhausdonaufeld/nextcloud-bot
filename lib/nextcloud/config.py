@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 class OrganisationConfig(BaseModel):
     group_prefixes: List[str] = Field(default_factory=lambda: ["AG", "UG", "PG"])
+    group_shortname_keywords: List[str] = Field(
+        default_factory=lambda: ["schlagwörter", "kurznamen", "shortnames"]
+    )
     top_group_name: str = "Koordinationskreis"
     extra_groups: List[str] = Field(default_factory=list)
     protocol_subtype_keywords: List[str] = Field(

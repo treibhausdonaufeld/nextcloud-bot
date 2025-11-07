@@ -19,7 +19,6 @@ TODOs:
   - bot check that title starts with date
   - check that users are mentioned
   - review of logbook summary and decision extractions!
-- cleanup of deleted pages -> cleanup decisions, protocols, groups, everything related to this page!!
 - test renaming of pages?!
 - notification about parse-errors of bot-config to channel!
 

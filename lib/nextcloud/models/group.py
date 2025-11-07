@@ -128,6 +128,12 @@ class Group(CouchDBModel):
                 attr = "delegate"
             elif first_word in bot_config.organisation.member_person_keywords:
                 attr = "members"
+            elif first_word in bot_config.organisation.group_shortname_keywords:
+                # shortnames are split by commas
+                shortnames = line.split(":")[-1].strip("*").strip().split(",")
+                shortnames = [sn.strip() for sn in shortnames if sn.strip() != ""]
+                self.short_names.extend(sorted(shortnames))
+                continue
 
             users = re.findall(user_regex, line)
             if users and attr:
