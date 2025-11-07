@@ -284,7 +284,8 @@ class Protocol(CouchDBModel):
             send_message(text=message, channel=f"@{username}")
 
             message = (
-                f"## [{self}]({self.page.url if self.page else ''})\n\n"
+                f"## {self}\n"
+                + f"{self.page.url if self.page else ''}\n\n"
                 + self.ai_summary
             )
             if decisions:
