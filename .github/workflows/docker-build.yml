@@ -41,9 +41,26 @@ jobs:
         run: |
           pre-commit run --all-files
 
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: '.python-version'
+
+      - name: Run Pytest
+        run: |
+          pip install uv
+          uv run pytest
+
   build:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write

@@ -10,21 +10,27 @@ Features:
 - Mailinglist
 - Membership overview, who contributes where
 - Deck reminder
+- Protocol schedules
 - Protocol summaries
 - Logbook overview
 
 TODOs:
 
-- bot checks for protocols:
-  - bot check that title starts with date
-  - check that users are mentioned
-  - review of logbook summary and decision extractions!
+- (maybe) bot checks - confirmation of protocol summary!
+- protocol statistics (moderation, protocol) schedules/assignments
+- member contribution statistics
 - test renaming of pages?!
 - notification about parse-errors of bot-config to channel!
 
+## Run tests
+
+- `uv run pytest`
+- with coverage: `uv run pytest --cov=lib --cov-report=html --cov-report=term`
+
 ## Update translations
 
-`make update_po`
+- `make update_po`
+- `make compile`
 
 ## Upgrade packages
 

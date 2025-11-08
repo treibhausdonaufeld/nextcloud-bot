@@ -62,9 +62,9 @@ mention://user/alice
                 with patch.object(Group, "save"):
                     mock_group.update_from_page()
 
-                    # First item after split is skipped, so only Test and AG-Test are included
-                    assert "Test" in mock_group.short_names
-                    assert "AG-Test" in mock_group.short_names
+                    # Shortnames are lowercased
+                    assert "test" in mock_group.short_names
+                    assert "ag-test" in mock_group.short_names
                     assert len(mock_group.short_names) == 2
 
     def test_parse_shortnames_with_different_keywords(
@@ -72,9 +72,9 @@ mention://user/alice
     ):
         """Test that various shortname keywords are recognized."""
         test_cases = [
-            ("Schlagwörter:", ["Tag1", "Tag2"]),
-            ("Kurznamen:", ["Short1", "Short2"]),
-            ("Shortnames:", ["Name1", "Name2"]),
+            ("Schlagwörter:", ["tag1", "tag2"]),  # Lowercased
+            ("Kurznamen:", ["short1", "short2"]),  # Lowercased
+            ("Shortnames:", ["name1", "name2"]),  # Lowercased
         ]
 
         with patch("lib.nextcloud.models.group.bot_config", mock_bot_config):

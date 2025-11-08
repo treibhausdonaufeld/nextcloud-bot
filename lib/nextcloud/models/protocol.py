@@ -76,6 +76,8 @@ class Protocol(CouchDBModel):
     def valid_date(cls, title: str) -> bool:
         """Check if the given title is a valid protocol title."""
         # Simple check: title starts with a date in YYYY-MM-DD format
+        if " " not in title:
+            return False
         date_str, _group_name = title.split(" ", 1)
         # parse date_str and check if valid date
         try:
