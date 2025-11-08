@@ -133,7 +133,8 @@ class ChromaDBSettings(BaseModel):
     host: str = "localhost"
     port: int = 8800
 
-    hf_embedding_server_url: str = "http://localhost:8001/embed"
+    # huggingface embedding server url, use http://localhost:8001/embed for local server
+    hf_embedding_server_url: str = ""
     gemini_api_key: str = ""
 
 
