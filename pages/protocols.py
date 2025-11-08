@@ -72,7 +72,7 @@ def groups_with_count() -> List[str]:
 
 # Streamlit app starts here
 title = _("Protocols").format(common_name=settings.name)
-st.set_page_config(page_title=title, page_icon="📝")
+st.set_page_config(page_title=title, page_icon="📝", layout="wide")
 
 menu()
 load_user_data()
