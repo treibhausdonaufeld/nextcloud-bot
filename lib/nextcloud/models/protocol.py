@@ -179,16 +179,20 @@ class Protocol(CouchDBModel):
 
             for valid_until_kw in bot_config.organisation.decision_valid_until_keywords:
                 if re.match(rf"^{valid_until_kw}[:\s\-]*", line, flags=re.IGNORECASE):
-                    decision.valid_until = re.sub(
-                        rf"^{valid_until_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
-                    ).strip()
+                    decision.valid_until = clean_line(
+                        re.sub(
+                            rf"^{valid_until_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
+                        )
+                    )
                     lines[i] = line = ""  # remove line
 
             for objection_kw in bot_config.organisation.decision_objection_keywords:
                 if re.match(rf"^{objection_kw}[:\s\-]*", line, flags=re.IGNORECASE):
-                    decision.objections = re.sub(
-                        rf"^{objection_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
-                    ).strip()
+                    decision.objections = clean_line(
+                        re.sub(
+                            rf"^{objection_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
+                        )
+                    )
                     lines[i] = line = ""  # remove line
 
             if line:
@@ -394,10 +398,25 @@ class Protocol(CouchDBModel):
         )
         try:
             decisions = self.extract_decisions()
+            self.generate_ai_summary()
 
-            if not self.summary_posted:
-                self.generate_ai_summary()
-                self.notify_updated(decisions)
+            # Only notify if protocol is recent
+            if not self.summary_posted and self.date_obj:
+                days_old = (datetime.now().date() - self.date_obj).days
+                if (
+                    bot_config.organisation.protocol_min_age_days
+                    <= days_old
+                    <= bot_config.organisation.protocol_max_age_days
+                ):
+                    self.notify_updated(decisions)
+                else:
+                    logger.info(
+                        "Skipping notification for protocol %s: date is %d days old (must be %i-%i days)",
+                        self.build_id(),
+                        days_old,
+                        bot_config.organisation.protocol_min_age_days,
+                        bot_config.organisation.protocol_max_age_days,
+                    )
 
             self.save()
         except ValueError as e:

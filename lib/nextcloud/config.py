@@ -32,6 +32,10 @@ class OrganisationConfig(BaseModel):
     # template keyword inside protocols
     protocol_template_keyword: str = "# Vorlagen"
 
+    # notification settings for protocols
+    protocol_min_age_days: int = 1
+    protocol_max_age_days: int = 14
+
     decision_title_keywords: List[str] = Field(
         default_factory=lambda: ["entscheidung", "decision", "beschluss", "resolution"]
     )

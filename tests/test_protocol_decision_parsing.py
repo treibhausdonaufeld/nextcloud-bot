@@ -1,6 +1,6 @@
 """Unit tests for Protocol decision parsing from markdown content."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -55,6 +55,16 @@ def mock_group():
     group.name = "Test Group"
     group.id = "group_123"
     return group
+
+
+@pytest.fixture
+def mock_decision_instance():
+    """Create a mock Decision instance with default attributes."""
+    mock_decision = Mock()
+    mock_decision.text = ""
+    mock_decision.valid_until = None
+    mock_decision.objections = None
+    return mock_decision
 
 
 class TestProtocolDecisionExtraction:
@@ -175,56 +185,64 @@ Text for second decision.
 class TestProtocolSaveDecision:
     """Test suite for Protocol.save_decision() method."""
 
-    def test_save_basic_decision(self, mock_protocol, mock_bot_config):
+    @pytest.fixture
+    def mock_decision_class(self, mock_decision_instance):
+        """Fixture to patch Decision class with a mock instance."""
+        with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
+            MockDecision.return_value = mock_decision_instance
+            yield MockDecision
+
+    def test_save_basic_decision(
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+    ):
         """Test saving a basic decision with title and text."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = """
 **Entscheidung:** Approve the budget
 We will approve the budget for next year.
 """
+            mock_protocol.save_decision(block)
 
-            # Mock Decision to verify it gets created and saved with correct values
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                # Mock attributes that get modified
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Verify Decision was created and saved
+            mock_decision_class.assert_called_once()
+            mock_decision_instance.save.assert_called_once()
 
-                mock_protocol.save_decision(block)
-
-                # Verify Decision was created
-                MockDecision.assert_called_once()
-                # Verify save was called
-                mock_decision_instance.save.assert_called_once()
-
-    def test_clean_title_from_keywords(self, mock_protocol, mock_bot_config):
+    @pytest.mark.parametrize(
+        "input_block,expected_title",
+        [
+            ("**Entscheidung:** Buy new equipment", "Buy new equipment"),
+            ("**Decision: Buy new equipment**", "Buy new equipment"),
+            ("**Beschluss - Buy new equipment**", "Buy new equipment"),
+            ("**ENTSCHEIDUNG: Buy new equipment**", "Buy new equipment"),
+        ],
+    )
+    def test_clean_title_from_keywords(
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        input_block,
+        expected_title,
+    ):
         """Test that decision title keywords are removed from title."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
-            test_cases = [
-                ("**Entscheidung:** Buy new equipment", "Buy new equipment"),
-                ("**Decision: Buy new equipment**", "Buy new equipment"),
-                ("**Beschluss - Buy new equipment**", "Buy new equipment"),
-                ("**ENTSCHEIDUNG: Buy new equipment**", "Buy new equipment"),
-            ]
+            mock_protocol.save_decision(input_block)
 
-            for input_block, expected_title in test_cases:
-                # Mock the Decision class to capture constructor args
-                with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                    mock_decision_instance = Mock()
-                    mock_decision_instance.text = ""
-                    mock_decision_instance.valid_until = None
-                    mock_decision_instance.objections = None
-                    MockDecision.return_value = mock_decision_instance
+            # Check the title passed to Decision constructor
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["title"] == expected_title
 
-                    mock_protocol.save_decision(input_block)
-
-                    # Check the title passed to Decision constructor
-                    call_kwargs = MockDecision.call_args[1]
-                    assert call_kwargs["title"] == expected_title
-
-    def test_extract_valid_until(self, mock_protocol, mock_bot_config):
+    def test_extract_valid_until(
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+    ):
         """Test extracting 'valid until' information from decision."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = """
@@ -232,20 +250,18 @@ We will approve the budget for next year.
 This is a temporary decision.
 Gültig bis: 2025-12-31
 """
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Verify valid_until was set
+            assert mock_decision_instance.valid_until == "2025-12-31"
 
-                mock_protocol.save_decision(block)
-
-                # Verify valid_until was set
-                assert mock_decision_instance.valid_until == "2025-12-31"
-
-    def test_extract_objections(self, mock_protocol, mock_bot_config):
+    def test_extract_objections(
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+    ):
         """Test extracting objections from decision."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = """
@@ -253,23 +269,20 @@ Gültig bis: 2025-12-31
 This has objections.
 Einwände: John disagrees with this decision
 """
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Verify objections were set
+            assert (
+                mock_decision_instance.objections == "John disagrees with this decision"
+            )
 
-                mock_protocol.save_decision(block)
-
-                # Verify objections were set
-                assert (
-                    mock_decision_instance.objections
-                    == "John disagrees with this decision"
-                )
-
-    def test_remove_metadata_lines_from_text(self, mock_protocol, mock_bot_config):
+    def test_remove_metadata_lines_from_text(
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+    ):
         """Test that metadata lines are removed from decision text."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = """
@@ -279,97 +292,70 @@ Gültig bis: 2025-12-31
 More decision text here.
 Einwände: Some objections
 """
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Verify text has metadata removed but decision text intact
+            decision_text = mock_decision_instance.text
+            assert "Gültig bis:" not in decision_text
+            assert "Einwände:" not in decision_text
+            assert "This is the decision text." in decision_text
+            assert "More decision text here." in decision_text
 
-                mock_protocol.save_decision(block)
-
-                # Verify text has metadata removed but decision text intact
-                decision_text = mock_decision_instance.text
-                assert "Gültig bis:" not in decision_text
-                assert "Einwände:" not in decision_text
-                assert "This is the decision text." in decision_text
-                assert "More decision text here." in decision_text
-
-    def test_use_text_as_title_if_no_title(self, mock_protocol, mock_bot_config):
+    def test_use_text_as_title_if_no_title(
+        self, mock_protocol, mock_bot_config, mock_decision_class
+    ):
         """Test that first line of text is used as title if no title line found."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = """
 This is decision text without a title line.
 More text here.
 """
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Verify first line was used as title
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["title"] == "This is decision text without a title line."
 
-                mock_protocol.save_decision(block)
-
-                # Verify first line was used as title
-                call_kwargs = MockDecision.call_args[1]
-                assert (
-                    call_kwargs["title"]
-                    == "This is decision text without a title line."
-                )
-
-    def test_decision_with_formatting(self, mock_protocol, mock_bot_config):
+    def test_decision_with_formatting(
+        self, mock_protocol, mock_bot_config, mock_decision_class
+    ):
         """Test decision with markdown formatting in title."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = "**Decision:** _Approve_ the **budget**"
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            # Title should have ** removed but preserve _
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["title"] == "_Approve_ the budget"
 
-                mock_protocol.save_decision(block)
-
-                # Title should have ** removed but preserve _
-                call_kwargs = MockDecision.call_args[1]
-                assert call_kwargs["title"] == "_Approve_ the budget"
-
-    def test_empty_block_returns_early(self, mock_protocol, mock_bot_config):
+    def test_empty_block_returns_early(
+        self, mock_protocol, mock_bot_config, mock_decision_class
+    ):
         """Test that empty or whitespace-only blocks return without creating decision."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                # Empty string
-                mock_protocol.save_decision("")
-                MockDecision.assert_not_called()
+            # Empty string
+            mock_protocol.save_decision("")
+            mock_decision_class.assert_not_called()
 
-                # Whitespace only
-                mock_protocol.save_decision("   \n  \n  ")
-                MockDecision.assert_not_called()
+            # Whitespace only
+            mock_protocol.save_decision("   \n  \n  ")
+            mock_decision_class.assert_not_called()
 
-    def test_decision_includes_group_info(self, mock_protocol, mock_bot_config):
+    def test_decision_includes_group_info(
+        self, mock_protocol, mock_bot_config, mock_decision_class
+    ):
         """Test that saved decision includes group_id and group_name."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = "**Decision:** Test decision"
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
-
-                mock_protocol.save_decision(block)
-
-                # Verify group information was passed
-                call_kwargs = MockDecision.call_args[1]
-                assert call_kwargs["group_id"] == mock_protocol.group_id
-                assert (
-                    call_kwargs["group_name"] == "Test Group"
-                )  # From the mocked Group.get
+            # Verify group information was passed
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["group_id"] == mock_protocol.group_id
+            # Verify group information was passed
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["group_id"] == mock_protocol.group_id
+            assert call_kwargs["group_name"] == "Test Group"
 
 
 class TestProtocolValidTitle:
@@ -434,6 +420,13 @@ class TestProtocolDelete:
 class TestProtocolDecisionKeywordVariations:
     """Test suite for various keyword variations in different languages."""
 
+    @pytest.fixture
+    def mock_decision_class(self, mock_decision_instance):
+        """Fixture to patch Decision class with a mock instance."""
+        with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
+            MockDecision.return_value = mock_decision_instance
+            yield MockDecision
+
     @pytest.mark.parametrize(
         "keyword,expected_title",
         [
@@ -445,23 +438,20 @@ class TestProtocolDecisionKeywordVariations:
         ],
     )
     def test_decision_title_keywords(
-        self, mock_protocol, mock_bot_config, keyword, expected_title
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        keyword,
+        expected_title,
     ):
         """Test that various decision keywords are recognized and removed."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             block = f"**{keyword}** Buy new equipment"
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
-
-                mock_protocol.save_decision(block)
-
-                call_kwargs = MockDecision.call_args[1]
-                assert call_kwargs["title"] == expected_title
+            call_kwargs = mock_decision_class.call_args[1]
+            assert call_kwargs["title"] == expected_title
 
     @pytest.mark.parametrize(
         "keyword,expected_date",
@@ -472,7 +462,13 @@ class TestProtocolDecisionKeywordVariations:
         ],
     )
     def test_valid_until_keywords(
-        self, mock_protocol, mock_bot_config, keyword, expected_date
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+        keyword,
+        expected_date,
     ):
         """Test that various 'valid until' keywords are recognized."""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
@@ -480,17 +476,8 @@ class TestProtocolDecisionKeywordVariations:
 **Decision:** Test decision
 {keyword} {expected_date}
 """
-
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
-
-                mock_protocol.save_decision(block)
-
-                assert mock_decision_instance.valid_until == expected_date
+            mock_protocol.save_decision(block)
+            assert mock_decision_instance.valid_until == expected_date
 
     @pytest.mark.parametrize(
         "keyword,expected_objection",
@@ -501,27 +488,113 @@ class TestProtocolDecisionKeywordVariations:
         ],
     )
     def test_objection_keywords(
-        self, mock_protocol, mock_bot_config, keyword, expected_objection
+        self,
+        mock_protocol,
+        mock_bot_config,
+        mock_decision_class,
+        mock_decision_instance,
+        keyword,
+        expected_objection,
     ):
         """Test that various objection keywords are recognized."""
+        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+            objection_text = expected_objection if expected_objection else ""
         with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
             objection_text = expected_objection if expected_objection else ""
             block = f"""
 **Decision:** Test decision
 {keyword} {objection_text}
 """
+            mock_protocol.save_decision(block)
 
-            with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
-                mock_decision_instance = Mock()
-                mock_decision_instance.text = ""
-                mock_decision_instance.valid_until = None
-                mock_decision_instance.objections = None
-                MockDecision.return_value = mock_decision_instance
+            if expected_objection:
+                assert mock_decision_instance.objections == expected_objection
+            else:
+                # Empty objection should result in None or empty string
+                assert mock_decision_instance.objections in [None, ""]
 
-                mock_protocol.save_decision(block)
 
-                if expected_objection:
-                    assert mock_decision_instance.objections == expected_objection
-                else:
-                    # Empty objection should result in None or empty string
-                    assert mock_decision_instance.objections in [None, ""]
+class TestProtocolNotificationDateConstraints:
+    """Test suite for Protocol notification date constraints."""
+
+    @pytest.fixture
+    def protocol_page_content(self):
+        """Standard protocol page content for testing."""
+        return """
+# Test Protocol
+
+## Moderation: mention://user/alice
+## Protocol: mention://user/bob
+## Participants: mention://user/charlie
+"""
+
+    def _test_notification_with_date_offset(
+        self,
+        days_offset: int,
+        should_notify: bool,
+        mock_protocol,
+        mock_page,
+        mock_bot_config,
+        mock_group,
+        protocol_page_content,
+    ):
+        """Helper method to test notification behavior for different date offsets.
+
+        Args:
+            days_offset: Number of days before today (positive = past, negative = future)
+            should_notify: Whether notify_updated should be called
+        """
+        test_date = datetime.now().date() - timedelta(days=days_offset)
+        date_str = test_date.strftime("%Y-%m-%d")
+
+        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+            mock_page.title = f"{date_str} Test Group"
+            mock_page.content = protocol_page_content
+
+            with patch.object(Protocol, "page", property(lambda self: mock_page)):
+                with patch.object(Decision, "get_all", return_value=[]):
+                    with patch("lib.nextcloud.models.protocol.Group") as MockGroup:
+                        MockGroup.get_for_page.return_value = mock_group
+                        MockGroup.get.return_value = mock_group
+
+                        with patch.object(Protocol, "notify_updated") as mock_notify:
+                            with patch.object(CouchDBModel, "save"):
+                                mock_protocol.summary_posted = False
+                                mock_protocol.update_from_page()
+
+                                if should_notify:
+                                    mock_notify.assert_called_once()
+                                else:
+                                    mock_notify.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "days_offset,should_notify,description",
+        [
+            (0, False, "today's protocol"),
+            (15, False, "15-day-old protocol (too old)"),
+            (1, True, "yesterday's protocol"),
+            (7, True, "7-day-old protocol"),
+            (14, True, "14-day-old protocol (edge case)"),
+        ],
+    )
+    def test_notification_date_constraints(
+        self,
+        days_offset,
+        should_notify,
+        description,
+        mock_protocol,
+        mock_page,
+        mock_bot_config,
+        mock_group,
+        protocol_page_content,
+    ):
+        """Test that notification respects date constraints for various protocol ages."""
+        self._test_notification_with_date_offset(
+            days_offset,
+            should_notify,
+            mock_protocol,
+            mock_page,
+            mock_bot_config,
+            mock_group,
+            protocol_page_content,
+        )
