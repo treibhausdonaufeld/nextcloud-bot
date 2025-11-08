@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-08 00:16+0100\n"
+"POT-Creation-Date: 2025-11-08 08:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,7 +51,8 @@ msgstr ""
 msgid "Load full pages instead of excerpts"
 msgstr ""
 
-#: ./app.py:149
+#: ./app.py:149 ./pages/protocols.py:191 ./pages/protocols.py:206
+#: ./pages/protocols.py:207
 msgid "AI Summary"
 msgstr ""
 
@@ -84,12 +85,13 @@ msgid "Page"
 msgstr ""
 
 #: ./app.py:225 ./app.py:239 ./pages/collective_pages.py:42
-#: ./pages/logbook.py:123 ./pages/protocols.py:186
+#: ./pages/logbook.py:123 ./pages/protocols.py:189 ./pages/protocols.py:201
+#: ./pages/protocols.py:202
 msgid "Title"
 msgstr ""
 
 #: ./app.py:226 ./pages/logbook.py:121 ./pages/logbook.py:135
-#: ./pages/logbook.py:136 ./pages/protocols.py:184
+#: ./pages/logbook.py:136 ./pages/protocols.py:188
 msgid "Date"
 msgstr ""
 
@@ -115,8 +117,7 @@ msgid "Open page"
 msgstr ""
 
 #: ./app.py:244 ./pages/logbook.py:127 ./pages/logbook.py:140
-#: ./pages/logbook.py:141 ./pages/protocols.py:190 ./pages/protocols.py:197
-#: ./pages/protocols.py:198
+#: ./pages/logbook.py:141
 msgid "Link"
 msgstr ""
 
@@ -152,31 +153,31 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:211
+#: ./lib/nextcloud/models/protocol.py:221
 msgid "No person listed for moderations"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:213
+#: ./lib/nextcloud/models/protocol.py:223
 msgid "No person listed for protocol"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:215
+#: ./lib/nextcloud/models/protocol.py:225
 msgid "No participants listed"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:219
+#: ./lib/nextcloud/models/protocol.py:229
 msgid "Title must have a valid date in 'YYYY-MM-DD' format"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:221
+#: ./lib/nextcloud/models/protocol.py:231
 msgid "Title must be 'YYYY-MM-DD Group Name'"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:230
+#: ./lib/nextcloud/models/protocol.py:240
 msgid "Protocol contains a '{template}' section. Please remove it!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:239
+#: ./lib/nextcloud/models/protocol.py:249
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -187,7 +188,7 @@ msgid ""
 "Please adjust the protocol accordingly. Thank you!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:255
+#: ./lib/nextcloud/models/protocol.py:265
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -201,27 +202,18 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:266
+#: ./lib/nextcloud/models/protocol.py:276
+#: ./lib/nextcloud/models/protocol.py:298
 msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:272
+#: ./lib/nextcloud/models/protocol.py:282
 msgid "When you're ok with these changes, then nothing else is needed from your side."
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:276
-msgid "I will post this information to the channel {protocols}"
-msgstr ""
-
-#: ./lib/nextcloud/models/protocol.py:287
-msgid ""
-"Summarize the following protocol in 2-8 concise sentences. Focus on the most important topics, decisions and outcomes.\n"
-"\n"
-"Protocol from {date}:\n"
-"{content}\n"
-"\n"
-"Summary:"
+#: ./lib/nextcloud/models/protocol.py:286
+msgid "I will post this information to the channel #{protocols}"
 msgstr ""
 
 #: ./lib/streamlit_oauth.py:28
@@ -388,7 +380,7 @@ msgstr ""
 msgid "Exact Match"
 msgstr ""
 
-#: ./pages/logbook.py:122 ./pages/protocols.py:185
+#: ./pages/logbook.py:122 ./pages/protocols.py:190
 msgid "Group"
 msgstr ""
 
@@ -428,20 +420,20 @@ msgstr ""
 msgid "Use AI to answer"
 msgstr ""
 
-#: ./pages/protocols.py:187
+#: ./pages/protocols.py:192
 msgid "Moderated by"
 msgstr ""
 
-#: ./pages/protocols.py:188
+#: ./pages/protocols.py:193
 msgid "Protocol by"
 msgstr ""
 
-#: ./pages/protocols.py:189
+#: ./pages/protocols.py:194
 msgid "Participants"
 msgstr ""
 
-#: ./pages/protocols.py:199
-msgid "Open"
+#: ./pages/protocols.py:208
+msgid "Click to expand"
 msgstr ""
 
 #: ./pages/timeline.py:33

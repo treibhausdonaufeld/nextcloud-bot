@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-07 23:47+0100\n"
+"POT-Creation-Date: 2025-11-08 08:25+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -48,7 +48,8 @@ msgstr "Vollständige Seiten"
 msgid "Load full pages instead of excerpts"
 msgstr "Vollständige Seiten statt Auszügen laden"
 
-#: app.py:149
+#: app.py:149 pages/protocols.py:191 pages/protocols.py:206
+#: pages/protocols.py:207
 msgid "AI Summary"
 msgstr "KI-Zusammenfassung"
 
@@ -81,12 +82,12 @@ msgid "Page"
 msgstr "Seite"
 
 #: app.py:225 app.py:239 pages/collective_pages.py:42 pages/logbook.py:123
-#: pages/protocols.py:186
+#: pages/protocols.py:189 pages/protocols.py:201 pages/protocols.py:202
 msgid "Title"
 msgstr "Titel"
 
 #: app.py:226 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
-#: pages/protocols.py:184
+#: pages/protocols.py:188
 msgid "Date"
 msgstr "Datum"
 
@@ -112,7 +113,6 @@ msgid "Open page"
 msgstr "Seite öffnen"
 
 #: app.py:244 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
-#: pages/protocols.py:190 pages/protocols.py:197 pages/protocols.py:198
 msgid "Link"
 msgstr "Link"
 
@@ -148,31 +148,31 @@ msgstr "Seiten"
 msgid "Language"
 msgstr "Sprache"
 
-#: lib/nextcloud/models/protocol.py:211
+#: lib/nextcloud/models/protocol.py:221
 msgid "No person listed for moderations"
 msgstr "Keine Person für Moderationen aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:213
+#: lib/nextcloud/models/protocol.py:223
 msgid "No person listed for protocol"
 msgstr "Keine Person für das Protokoll aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:215
+#: lib/nextcloud/models/protocol.py:225
 msgid "No participants listed"
 msgstr "Keine Teilnehmenden aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:219
+#: lib/nextcloud/models/protocol.py:229
 msgid "Title must have a valid date in 'YYYY-MM-DD' format"
 msgstr "Der Titel muss ein gültiges Datum im Format 'JJJJ-MM-TT' enthalten"
 
-#: lib/nextcloud/models/protocol.py:221
+#: lib/nextcloud/models/protocol.py:231
 msgid "Title must be 'YYYY-MM-DD Group Name'"
 msgstr "Der Titel muss 'JJJJ-MM-TT Gruppenname' sein"
 
-#: lib/nextcloud/models/protocol.py:230
+#: lib/nextcloud/models/protocol.py:240
 msgid "Protocol contains a '{template}' section. Please remove it!"
 msgstr "Das Protokoll enthält einen Abschnitt '{template}'. Bitte entfernen!"
 
-#: lib/nextcloud/models/protocol.py:239
+#: lib/nextcloud/models/protocol.py:249
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -185,13 +185,14 @@ msgid ""
 msgstr ""
 "Hallo {displayname},\n"
 "\n"
-"Das Protokoll [{protocol}]({url}) sieht grundsätzlich gut aus, enthält jedoch einige Probleme:\n"
+"Das Protokoll [{protocol}]({url}) sieht grundsätzlich gut aus, enthält "
+"jedoch einige Probleme:\n"
 "\n"
 "- {issues}\n"
 "\n"
 "Bitte passe das Protokoll entsprechend an. Danke!"
 
-#: lib/nextcloud/models/protocol.py:255
+#: lib/nextcloud/models/protocol.py:265
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -207,7 +208,8 @@ msgid ""
 msgstr ""
 "Hallo {displayname},\n"
 "\n"
-"Das Protokoll [{protocol}]({url}) ist großartig! Vielen Dank für die sorgfältige Arbeit.\n"
+"Das Protokoll [{protocol}]({url}) ist großartig! Vielen Dank für die "
+"sorgfältige Arbeit.\n"
 "\n"
 "---\n"
 "\n"
@@ -216,30 +218,21 @@ msgstr ""
 "{summary}\n"
 "\n"
 
-#: lib/nextcloud/models/protocol.py:266
+#: lib/nextcloud/models/protocol.py:276 lib/nextcloud/models/protocol.py:298
 msgid "Decisions made:\n"
 msgstr "Getroffene Entscheidungen:\n"
 
-#: lib/nextcloud/models/protocol.py:272
+#: lib/nextcloud/models/protocol.py:282
 msgid ""
 "When you're ok with these changes, then nothing else is needed from your "
 "side."
-msgstr "Wenn du mit diesen Änderungen einverstanden bist, sind keine weiteren Schritte von deiner Seite nötig."
+msgstr ""
+"Wenn du mit diesen Änderungen einverstanden bist, sind keine weiteren "
+"Schritte von deiner Seite nötig."
 
-#: lib/nextcloud/models/protocol.py:276
-msgid "I will post this information to the channel {protocols}"
-msgstr "Ich werde diese Informationen in den Kanal {protocols} posten"
-
-#: lib/nextcloud/models/protocol.py:287
-msgid ""
-"Summarize the following protocol in 2-8 concise sentences. Focus on the most "
-"important topics, decisions and outcomes.\n"
-"\n"
-"Protocol from {date}:\n"
-"{content}\n"
-"\n"
-"Summary:"
-msgstr "Fasse das folgende Protokoll in 2-8 prägnanten Sätzen zusammen. Konzentriere dich auf die wichtigsten Themen, Entscheidungen und Ergebnisse.\n\nProtokoll vom {date}:\n{content}\n\nZusammenfassung:"
+#: lib/nextcloud/models/protocol.py:286
+msgid "I will post this information to the channel #{protocols}"
+msgstr "Ich werde diese Informationen in den Kanal #{protocols} posten"
 
 #: lib/streamlit_oauth.py:28
 msgid "Click here to Login"
@@ -256,7 +249,9 @@ msgstr "Angemeldet als {username}"
 #: lib/streamlit_oauth.py:69
 msgid ""
 "You are not authorized to view this page. Please contact the administrator."
-msgstr "Du bist nicht berechtigt, diese Seite anzusehen. Bitte kontaktiere den Administrator."
+msgstr ""
+"Du bist nicht berechtigt, diese Seite anzusehen. Bitte kontaktiere den "
+"Administrator."
 
 #: pages/collective_pages.py:14
 msgid "Collective Pages"
@@ -406,7 +401,7 @@ msgstr "Alle Wörter"
 msgid "Exact Match"
 msgstr "Exakte Übereinstimmung"
 
-#: pages/logbook.py:122 pages/protocols.py:185
+#: pages/logbook.py:122 pages/protocols.py:190
 msgid "Group"
 msgstr "Gruppe"
 
@@ -446,24 +441,47 @@ msgstr "Protokolle durchsuchen"
 msgid "Use AI to answer"
 msgstr "KI zur Beantwortung verwenden"
 
-#: pages/protocols.py:187
+#: pages/protocols.py:192
 msgid "Moderated by"
 msgstr "Moderiert von"
 
-#: pages/protocols.py:188
+#: pages/protocols.py:193
 msgid "Protocol by"
 msgstr "Protokoll von"
 
-#: pages/protocols.py:189
+#: pages/protocols.py:194
 msgid "Participants"
 msgstr "Teilnehmende"
 
-#: pages/protocols.py:199
-msgid "Open"
-msgstr "Öffnen"
+#: pages/protocols.py:208
+msgid "Click to expand"
+msgstr "Zum Erweitern klicken"
 
 #: pages/timeline.py:33
 msgid ""
 "No timeline data found. Please create and populate the '%s' page in "
 "Nextcloud Collectives."
-msgstr "Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in Nextcloud Collectives."
+msgstr ""
+"Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in "
+"Nextcloud Collectives."
+
+#~ msgid ""
+#~ "Summarize the following protocol in 2-8 concise sentences. Focus on the "
+#~ "most important topics, decisions and outcomes.\n"
+#~ "\n"
+#~ "Protocol from {date}:\n"
+#~ "{content}\n"
+#~ "\n"
+#~ "Summary:"
+#~ msgstr ""
+#~ "Fasse das folgende Protokoll in 2-8 prägnanten Sätzen zusammen. "
+#~ "Konzentriere dich auf die wichtigsten Themen, Entscheidungen und "
+#~ "Ergebnisse.\n"
+#~ "\n"
+#~ "Protokoll vom {date}:\n"
+#~ "{content}\n"
+#~ "\n"
+#~ "Zusammenfassung:"
+
+#~ msgid "Open"
+#~ msgstr "Öffnen"

@@ -309,7 +309,7 @@ class Protocol(CouchDBModel):
             try:
                 logger.info("Generating AI summary for protocol %s", self.build_id())
 
-                prompt_template = _(
+                prompt_template = (
                     "Summarize the following protocol in 2-6 concise sentences."
                     " Focus on the most important topics, decisions and outcomes. "
                     f"Make sure to use the language {settings.default_language}. "

@@ -16,7 +16,7 @@ all: update_po
 update_po: .pot
 	@for lang in `ls $(LOCALES_DIR)`; do \
 		if [ -d $(LOCALES_DIR)/$$lang/LC_MESSAGES ]; then \
-			msgmerge --update $(LOCALES_DIR)/$$lang/LC_MESSAGES/$(DOMAIN).po $(LOCALES_DIR)/$(DOMAIN).pot; \
+			msgmerge --no-fuzzy-matching --update $(LOCALES_DIR)/$$lang/LC_MESSAGES/$(DOMAIN).po $(LOCALES_DIR)/$(DOMAIN).pot; \
 		fi \
 	done
 
