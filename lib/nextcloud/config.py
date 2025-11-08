@@ -135,7 +135,13 @@ class MailerConfig(BaseModel):
 
 
 class BotConfig(BaseModel):
+    # time to sleep between runs in minutes
     sleep_minutes: int = 30
+
+    # no notification during quiet hours (22:00 - 07:00)
+    quiet_hours_start: int = 22
+    quiet_hours_end: int = 7
+
     organisation: OrganisationConfig = OrganisationConfig()
     avatare: AvatarConfig = AvatarConfig()
     deck_reminder: DeckReminderConfig = DeckReminderConfig()

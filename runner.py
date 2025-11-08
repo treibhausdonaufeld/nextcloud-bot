@@ -39,7 +39,12 @@ def delete_all_parsed_data():
 @click.command()
 @click.option("--loop", is_flag=True, default=False, help="Run main() in a loop")
 @click.option(
-    "--update-all", is_flag=True, default=False, help="Update/re-parse all pages"
+    "--update-all", is_flag=True, default=False, help="Update and re-parse all pages"
+)
+@click.option(
+    "--update-pages",
+    default="",
+    help="Comma-separated list of collectives page ids to fetch and force-update from Nextcloud",
 )
 @click.option(
     "--clear-chromadb", is_flag=True, default=False, help="Clear all chromadb data"
@@ -47,7 +52,13 @@ def delete_all_parsed_data():
 @click.option(
     "--clear-parsed-data", is_flag=True, default=False, help="Clear all chromadb data"
 )
-def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: bool):
+def main(
+    loop: bool,
+    update_all: bool,
+    clear_chromadb: bool,
+    clear_parsed_data: bool,
+    update_pages: str,
+):
     logger.debug("Starting runner")
 
     if clear_chromadb:
@@ -67,10 +78,18 @@ def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: 
         userlist = NCUserList()
         userlist.update_from_nextcloud()
 
+        # Default: fetch pages changed in Nextcloud and store them
         updated_pages = fetch_and_store_all_pages()
+
         if update_all:
             updated_pages = CollectivePage.get_all(limit=1000)
+        elif update_pages:
+            ids = [p.strip() for p in update_pages.split(",") if p.strip()]
+            updated_pages = [
+                CollectivePage.get_from_page_id(page_id=int(pid)) for pid in ids
+            ]
 
+        if update_pages or update_all:
             # force save of all pages
             for page in updated_pages:
                 page.save()
@@ -89,17 +108,29 @@ def main(loop: bool, update_all: bool, clear_chromadb: bool, clear_parsed_data: 
         if settings.mailinglist.imap_server:
             fetcher.fetch_maildata(userlist, config.mailer)
 
-        if (8 < datetime.now().hour < 20) and config.calendar_notifier.enabled:
-            Notifier(config=config.calendar_notifier).notify_upcoming_events()
-
-        if (8 < datetime.now().hour < 20) and config.deck_reminder.enabled:
-            DeckReminder(config=config.deck_reminder).remind_card_due_dates()
+        Notifier(config=config.calendar_notifier).notify_upcoming_events()
+        DeckReminder(config=config.deck_reminder).remind_card_due_dates()
 
         if not loop:
             break
 
-        logger.info("Sleeping for %d minutes...", config.sleep_minutes)
-        time.sleep(config.sleep_minutes * 60)
+        if (
+            datetime.now().hour >= config.quiet_hours_start
+            or datetime.now().hour < config.quiet_hours_end
+        ):
+            # calculate sleep time until quiet hours end
+            if datetime.now().hour >= config.quiet_hours_start:
+                hours_until_quiet_end = (
+                    24 - datetime.now().hour
+                ) + config.quiet_hours_end
+            else:
+                hours_until_quiet_end = config.quiet_hours_end - datetime.now().hour
+            sleep_minutes = hours_until_quiet_end * 60
+            logger.info("Quiet hours active, sleeping for %d minutes...", sleep_minutes)
+            time.sleep(sleep_minutes * 60)
+        else:
+            logger.info("Sleeping for %d minutes...", config.sleep_minutes)
+            time.sleep(config.sleep_minutes * 60)
 
 
 if __name__ == "__main__":
