@@ -173,30 +173,39 @@ if protocols:
         except Exception:
             page = None
 
-        # Create link to protocol
+        # Create link to protocol and title for display
         if page and getattr(page, "url", None):
-            link = page.url
+            # Append title as URL fragment so we can extract it with regex
+            # Use #title: prefix to make it extractable
+            link = f"{page.url}#title:{page.title}"
+            title = page.title
         else:
             link = ""
+            title = ""
 
         protocol_data.append(
             {
                 _("Date"): protocol.date,
+                _("Title"): link if link else title,
                 _("Group"): protocol.group_name,
-                _("Title"): page.title if page else "",
+                _("AI Summary"): protocol.ai_summary or "",
                 _("Moderated by"): display_users(protocol.moderated_by),
                 _("Protocol by"): display_users(protocol.protocol_by),
                 _("Participants"): display_users(protocol.participants),
-                _("Link"): link,
             }
         )
 
     st.dataframe(
         protocol_data,
         column_config={
-            _("Link"): st.column_config.LinkColumn(
-                _("Link"),
-                display_text=_("Open"),
+            _("Title"): st.column_config.LinkColumn(
+                _("Title"),
+                display_text=r".*#title:(.*)",
+                width="medium",
+            ),
+            _("AI Summary"): st.column_config.TextColumn(
+                _("AI Summary"),
+                help=_("Click to expand"),
             ),
         },
         width="stretch",
