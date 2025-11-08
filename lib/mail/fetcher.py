@@ -12,6 +12,8 @@ from lib.settings import settings
 
 from .sender import MailSender
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(init=True)
 class MailMessage:
@@ -85,10 +87,6 @@ class MailFetcher:
 
         # self._delete_original_headers(message)
 
-        from_addr = settings.mailinglist.from_address.replace(
-            "ORIGINAL_SENDER", sender_name
-        )
-
         all_lists = config.lists
 
         for list_mail_addr in target_mailinglists:
@@ -109,10 +107,16 @@ class MailFetcher:
             if not config.send_to_sender:
                 new_recipients -= {original_sender_email}
 
-            if from_addr:
-                message.replace_header(
-                    "From", from_addr.replace("LIST_NAME", f"<{list_mail_addr}>")
-                )
+            message.replace_header("From", settings.mailinglist.from_address)
+
+            logger.info(
+                "Forwarding mail '%s' as sender '%s' from %s to list %s (%s recipients)",
+                message["Subject"],
+                message["From"],
+                sender_name,
+                list_mail_addr,
+                len(new_recipients),
+            )
             self.forward_message(message, new_recipients)
 
     def _delete_original_headers(self, message):
@@ -134,8 +138,9 @@ class MailFetcher:
         """Forward given message as sent from list"""
         logging.debug("Forwarding mail to %s", recipients)
 
+        mailer = MailSender()
         for recipient in recipients:
-            MailSender.send(message, recipient)
+            mailer.send(message, recipient)
 
     def move_to_archive(self, uid: str):
         """Move processed message to archive"""
