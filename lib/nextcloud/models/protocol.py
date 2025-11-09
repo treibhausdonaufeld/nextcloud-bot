@@ -275,7 +275,7 @@ class Protocol(CouchDBModel):
             if decisions:
                 message += _("Decisions made:\n")
                 for decision in decisions:
-                    message += f"- ✅ {decision.title}\n"
+                    message += f"- ✅ **{decision.title}**, {decision.text}, {decision.objections}, {decision.valid_until}\n"
             send_message(text=message, channel=f"@{username}")
 
             message = (

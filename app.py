@@ -147,8 +147,9 @@ with st.expander(_("Advanced Options")):
     )
     enable_ai_summary = col3.checkbox(
         _("AI Summary"),
-        value=True,
+        value=True if settings.gemini_api_key else False,
         help=_("Generate AI summary of results"),
+        disabled=not settings.gemini_api_key,
     )
 
 if question:

@@ -195,19 +195,29 @@ if protocols:
             }
         )
 
+        if not settings.gemini_api_key:
+            protocol_data[-1].pop(_("AI Summary"))
+
+    column_config = {
+        _("Title"): st.column_config.LinkColumn(
+            _("Title"),
+            display_text=r".*#title:(.*)",
+            width="medium",
+        )
+    }
+    if settings.gemini_api_key:
+        column_config.update(
+            {
+                _("AI Summary"): st.column_config.TextColumn(
+                    _("AI Summary"),
+                    help=_("Click to expand"),
+                ),
+            }
+        )
+
     st.dataframe(
         protocol_data,
-        column_config={
-            _("Title"): st.column_config.LinkColumn(
-                _("Title"),
-                display_text=r".*#title:(.*)",
-                width="medium",
-            ),
-            _("AI Summary"): st.column_config.TextColumn(
-                _("AI Summary"),
-                help=_("Click to expand"),
-            ),
-        },
+        column_config=column_config,
         width="stretch",
         hide_index=True,
         height=600,
