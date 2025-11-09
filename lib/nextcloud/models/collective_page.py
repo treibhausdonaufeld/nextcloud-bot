@@ -3,7 +3,6 @@ from enum import Enum
 from functools import cached_property
 from typing import Any, List, cast
 
-from chromadb.api.types import Metadata
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
@@ -20,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 # Text splitter for chunking long documents
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
+    chunk_size=800,
+    chunk_overlap=100,
     length_function=len,
     separators=["\n\n", "\n", ". ", " ", ""],
 )
@@ -142,7 +141,7 @@ class CollectivePage(CouchDBModel):
 
         super().save()
 
-        # Update ChromaDB collection with LangChain text splitting
+        # Update ChromaDB collection with text splitting
         if self.ocs and self.content and self.content.strip():
             collection = get_unified_collection()
 
@@ -154,36 +153,23 @@ class CollectivePage(CouchDBModel):
             # Split long documents into chunks for better embeddings
             chunks = text_splitter.split_text(self.content)
 
-            # Create IDs for each chunk
-            chunk_ids = [f"{self.build_id()}_chunk_{i}" for i in range(len(chunks))]
-
-            # Create metadata for each chunk (preserve original page info)
-            metadatas: List[Metadata] = [
-                cast(
-                    Metadata,
-                    {
-                        "source_type": self.type,
-                        "page_id": self.ocs.id,
-                        "title": self.ocs.title,
-                        "timestamp": self.ocs.timestamp or 0,
-                        "subtype": self.subtype or "",
-                        "group_id": group.build_id() if group else "",
-                        "chunk_index": i,
-                        "total_chunks": len(chunks),
-                        "original_doc_id": self.build_id(),
-                    },
-                )
-                for i in range(len(chunks))
-            ]
-            if metadatas:
+            for i in range(len(chunks)):
                 collection.upsert(
-                    ids=chunk_ids,
-                    documents=chunks,
-                    metadatas=metadatas,
-                )
-            else:
-                logger.warning(
-                    f"No metadata created for CollectivePage id={self.id}, skipping ChromaDB upsert."
+                    ids=[f"{self.build_id()}_chunk_{i}"],
+                    documents=[chunks[i]],
+                    metadatas=[
+                        {
+                            "source_type": self.type,
+                            "page_id": self.ocs.id,
+                            "title": self.ocs.title,
+                            "timestamp": self.ocs.timestamp or 0,
+                            "subtype": self.subtype or "",
+                            "group_id": group.build_id() if group else "",
+                            "chunk_index": i,
+                            "total_chunks": len(chunks),
+                            "original_doc_id": self.build_id(),
+                        },
+                    ],
                 )
 
     def delete(self) -> None:

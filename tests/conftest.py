@@ -35,16 +35,13 @@ sys.modules["chromadb"] = _mock_chromadb_module
 sys.modules["chromadb.config"] = MagicMock(Settings=MagicMock())
 sys.modules["chromadb.api"] = MagicMock()
 sys.modules["chromadb.api.types"] = MagicMock()
+sys.modules["chromadb.utils"] = MagicMock()
+sys.modules["chromadb.utils.embedding_functions"] = MagicMock()
 
 # Mock Google Generative AI
 sys.modules["google.generativeai"] = MagicMock()
+sys.modules["google.generativeai.client"] = MagicMock()
 sys.modules["google.genai"] = MagicMock()
-
-# Mock LangChain embeddings
-_mock_langchain_google = MagicMock()
-_mock_langchain_hf = MagicMock()
-sys.modules["langchain_google_genai"] = _mock_langchain_google
-sys.modules["langchain_huggingface"] = _mock_langchain_hf
 
 
 def pytest_configure(config):

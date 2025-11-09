@@ -1,14 +1,10 @@
 import logging
-from typing import Generator, List
+from typing import Any, Dict, Generator, List
 
 import streamlit as st
 from google import genai
-from langchain.retrievers import EnsembleRetriever
-from langchain_chroma import Chroma
-from langchain_community.retrievers import BM25Retriever
-from langchain_core.documents import Document
 
-from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client, langchain_embeddings
+from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
@@ -17,6 +13,15 @@ from lib.nextcloud.models.protocol import Protocol
 from lib.settings import _, settings
 
 logger = logging.getLogger(__name__)
+
+
+# Simple Document class to replace LangChain's Document
+class Document:
+    """Simple document container with content and metadata."""
+
+    def __init__(self, page_content: str, metadata: Dict[str, Any] | None = None):
+        self.page_content = page_content
+        self.metadata = metadata or {}
 
 
 def prompt_ai_stream(docs: List[Document], question: str) -> Generator[str, None, None]:
@@ -55,58 +60,46 @@ def prompt_ai_stream(docs: List[Document], question: str) -> Generator[str, None
 
 
 @st.cache_resource(ttl="1d")
-def get_hybrid_retriever():
-    """Create a hybrid retriever combining semantic search (Chroma) and keyword search (BM25)."""
-    # Semantic search with Chroma using the unified collection
-    vectorstore = Chroma(
-        client=chroma_client,
-        collection_name=UNIFIED_COLLECTION_NAME,
-        embedding_function=langchain_embeddings,
-    )
-
-    # Create a single semantic retriever that searches all documents
-    semantic_retriever = vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 25},  # Retrieve up to 25 chunks (pages + decisions)
-    )
-
-    # Load documents directly from ChromaDB for BM25 (more efficient)
+def get_chroma_collection():
+    """Get the ChromaDB collection for querying."""
     try:
-        # Load all documents from the unified collection
-        collection = chroma_client.get_collection(UNIFIED_COLLECTION_NAME)
-        result = collection.get(include=["documents", "metadatas"])
+        return chroma_client.get_collection(UNIFIED_COLLECTION_NAME)
+    except Exception as e:
+        logger.error(f"Could not get ChromaDB collection: {e}")
+        return None
 
-        # Create LangChain documents from ChromaDB results
+
+def search_documents(query: str, n_results: int = 25) -> List[Document]:
+    """Search documents using ChromaDB's native query functionality."""
+    collection = get_chroma_collection()
+    if not collection:
+        return []
+
+    try:
+        # Query ChromaDB directly - it will use the embedding function
+        # configured when the collection was created
+        results = collection.query(
+            query_texts=[query],
+            n_results=n_results,
+            include=["documents", "metadatas", "distances"],
+        )
+
         documents = []
-
-        if result["documents"] and result["metadatas"]:
-            for doc, metadata in zip(result["documents"], result["metadatas"]):
+        if results["documents"] and results["documents"][0]:
+            for doc, metadata in zip(results["documents"][0], results["metadatas"][0]):
                 if doc:  # Only include non-empty documents
                     documents.append(
-                        Document(page_content=doc, metadata=metadata or {})
+                        Document(
+                            page_content=doc,
+                            metadata=dict(metadata) if metadata else {},
+                        )
                     )
 
-        logger.info(
-            f"Loaded {len(documents)} documents from unified ChromaDB collection for BM25 indexing"
-        )
-
-        # BM25 keyword search
-        bm25_retriever = BM25Retriever.from_documents(documents)
-        bm25_retriever.k = 25
-
-        # Combine both retrievers (60% semantic, 40% keyword)
-        ensemble_retriever = EnsembleRetriever(
-            retrievers=[semantic_retriever, bm25_retriever],
-            weights=[0.6, 0.4],
-        )
-
-        return ensemble_retriever
+        logger.info(f"Found {len(documents)} documents for query: {query}")
+        return documents
     except Exception as e:
-        logger.warning(
-            f"Could not create BM25 retriever, falling back to semantic only: {e}"
-        )
-        # Fallback to just semantic if something goes wrong
-        return semantic_retriever
+        logger.error(f"Error searching documents: {e}")
+        return []
 
 
 # Streamlit app starts here
@@ -123,8 +116,6 @@ st.title(title)
 
 # AI Question Section
 st.subheader(_("Ask a Question"))
-
-retriever = get_hybrid_retriever()
 
 question = st.text_input(
     _("Search or ask about collective pages"),
@@ -153,10 +144,9 @@ with st.expander(_("Advanced Options")):
     )
 
 if question:
-    # Use LangChain hybrid retriever to get relevant chunks
+    # Use ChromaDB to get relevant chunks
     with st.spinner(_("Searching documents...")):
-        # Limit results (EnsembleRetriever doesn't have search_kwargs, so we slice)
-        retrieved_docs = retriever.invoke(question)[:num_results]
+        retrieved_docs = search_documents(question, n_results=num_results)
 
     if retrieved_docs:
         if load_full_pages:
