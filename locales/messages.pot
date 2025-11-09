@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-08 08:25+0100\n"
+"POT-Creation-Date: 2025-11-09 15:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,113 +15,113 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: ./app.py:120
+#: ./app.py:113
 msgid "{common_name} Dashboard"
 msgstr ""
 
-#: ./app.py:125
+#: ./app.py:118
 msgid "Ask a Question"
 msgstr ""
 
-#: ./app.py:130
+#: ./app.py:121
 msgid "Search or ask about collective pages"
 msgstr ""
 
-#: ./app.py:131
+#: ./app.py:122
 msgid "e.g., What decisions were made about...?"
 msgstr ""
 
-#: ./app.py:134
+#: ./app.py:125
 msgid "Advanced Options"
 msgstr ""
 
-#: ./app.py:137
+#: ./app.py:128
 msgid "Chunks size"
 msgstr ""
 
-#: ./app.py:141
+#: ./app.py:132
 msgid "Number of chunks to include in context"
 msgstr ""
 
-#: ./app.py:144
+#: ./app.py:135
 msgid "Full pages"
 msgstr ""
 
-#: ./app.py:146
+#: ./app.py:137
 msgid "Load full pages instead of excerpts"
 msgstr ""
 
-#: ./app.py:149 ./pages/protocols.py:191 ./pages/protocols.py:206
-#: ./pages/protocols.py:207
+#: ./app.py:140 ./pages/protocols.py:191 ./pages/protocols.py:199
+#: ./pages/protocols.py:211 ./pages/protocols.py:212
 msgid "AI Summary"
 msgstr ""
 
-#: ./app.py:151
+#: ./app.py:142
 msgid "Generate AI summary of results"
 msgstr ""
 
-#: ./app.py:156
+#: ./app.py:148
 msgid "Searching documents..."
 msgstr ""
 
-#: ./app.py:187 ./pages/protocols.py:154
+#: ./app.py:178 ./pages/protocols.py:154
 msgid "Answer"
 msgstr ""
 
-#: ./app.py:190
+#: ./app.py:181
 msgid "Source Documents"
 msgstr ""
 
-#: ./app.py:222
+#: ./app.py:213
 msgid "Decision"
 msgstr ""
 
-#: ./app.py:222 ./app.py:238
+#: ./app.py:213 ./app.py:229
 msgid "Type"
 msgstr ""
 
-#: ./app.py:224
+#: ./app.py:215
 msgid "Page"
 msgstr ""
 
-#: ./app.py:225 ./app.py:239 ./pages/collective_pages.py:42
-#: ./pages/logbook.py:123 ./pages/protocols.py:189 ./pages/protocols.py:201
-#: ./pages/protocols.py:202
+#: ./app.py:216 ./app.py:230 ./pages/collective_pages.py:42
+#: ./pages/logbook.py:123 ./pages/protocols.py:189 ./pages/protocols.py:202
+#: ./pages/protocols.py:203
 msgid "Title"
 msgstr ""
 
-#: ./app.py:226 ./pages/logbook.py:121 ./pages/logbook.py:135
+#: ./app.py:217 ./pages/logbook.py:121 ./pages/logbook.py:135
 #: ./pages/logbook.py:136 ./pages/protocols.py:188
 msgid "Date"
 msgstr ""
 
-#: ./app.py:227 ./app.py:240
+#: ./app.py:218 ./app.py:231
 msgid "Chunk"
 msgstr ""
 
-#: ./app.py:228 ./app.py:241
+#: ./app.py:219 ./app.py:232
 msgid "Content"
 msgstr ""
 
-#: ./app.py:229 ./app.py:242
+#: ./app.py:220 ./app.py:233
 msgid "Page ID"
 msgstr ""
 
-#: ./app.py:230 ./app.py:243 ./pages/collective_pages.py:46
+#: ./app.py:221 ./app.py:234 ./pages/collective_pages.py:46
 #: ./pages/collective_pages.py:53 ./pages/collective_pages.py:54
 msgid "URL"
 msgstr ""
 
-#: ./app.py:244 ./pages/collective_pages.py:54
+#: ./app.py:235 ./pages/collective_pages.py:54
 msgid "Open page"
 msgstr ""
 
-#: ./app.py:244 ./pages/logbook.py:127 ./pages/logbook.py:140
+#: ./app.py:235 ./pages/logbook.py:127 ./pages/logbook.py:140
 #: ./pages/logbook.py:141
 msgid "Link"
 msgstr ""
 
-#: ./app.py:251
+#: ./app.py:242
 msgid "No matching pages found."
 msgstr ""
 
@@ -153,31 +153,31 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:221
+#: ./lib/nextcloud/models/protocol.py:226
 msgid "No person listed for moderations"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:223
+#: ./lib/nextcloud/models/protocol.py:228
 msgid "No person listed for protocol"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:225
+#: ./lib/nextcloud/models/protocol.py:230
 msgid "No participants listed"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:229
+#: ./lib/nextcloud/models/protocol.py:234
 msgid "Title must have a valid date in 'YYYY-MM-DD' format"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:231
+#: ./lib/nextcloud/models/protocol.py:236
 msgid "Title must be 'YYYY-MM-DD Group Name'"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:240
+#: ./lib/nextcloud/models/protocol.py:245
 msgid "Protocol contains a '{template}' section. Please remove it!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:249
+#: ./lib/nextcloud/models/protocol.py:254
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -188,32 +188,33 @@ msgid ""
 "Please adjust the protocol accordingly. Thank you!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:265
+#: ./lib/nextcloud/models/protocol.py:270
 msgid ""
 "Hello {displayname},\n"
 "\n"
 "The protocol [{protocol}]({url}) looks great! Thank you for the careful work.\n"
 "\n"
-"---\n"
-"\n"
-"Here is my summary:\n"
-"\n"
-"{summary}\n"
-"\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:276
-#: ./lib/nextcloud/models/protocol.py:298
+#: ./lib/nextcloud/models/protocol.py:279
+msgid "AI Summary:"
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:281
 msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:282
-msgid "When you're ok with these changes, then nothing else is needed from your side."
+#: ./lib/nextcloud/models/protocol.py:288 ./pages/logbook.py:126
+msgid "Objections"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:286
-msgid "I will post this information to the channel #{protocols}"
+#: ./lib/nextcloud/models/protocol.py:292
+msgid "Valid until"
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:298
+msgid "Please use the template to manually create a post in the protocols channel"
 msgstr ""
 
 #: ./lib/streamlit_oauth.py:28
@@ -392,10 +393,6 @@ msgstr ""
 msgid "Valid Until"
 msgstr ""
 
-#: ./pages/logbook.py:126
-msgid "Objections"
-msgstr ""
-
 #: ./pages/logbook.py:130
 msgid "Distance"
 msgstr ""
@@ -432,7 +429,7 @@ msgstr ""
 msgid "Participants"
 msgstr ""
 
-#: ./pages/protocols.py:208
+#: ./pages/protocols.py:213
 msgid "Click to expand"
 msgstr ""
 

@@ -149,7 +149,13 @@ class Protocol(CouchDBModel):
 
         def clean_line(line: str) -> str:
             return (
-                line.replace("**", "").replace("__", "").strip("*").strip("_").strip()
+                line.replace("**", "")
+                .replace("__", "")
+                .strip("*")
+                .strip("_")
+                .strip("\n")
+                .strip("\r")
+                .strip()
             )
 
         lines = block.strip().splitlines()
@@ -196,7 +202,7 @@ class Protocol(CouchDBModel):
                     lines[i] = line = ""  # remove line
 
             if line:
-                decision.text += line + "\n"
+                decision.text += line + " "
 
         # always fill title
         if not title:
@@ -264,7 +270,7 @@ class Protocol(CouchDBModel):
             # generate a message to the user to praise how well the document is written
             message = _(
                 "Hello {displayname},\n\n"
-                "The protocol [{protocol}]({url}) looks great! Thank you for the careful work.\n\n---\n\n"
+                "The protocol [{protocol}]({url}) looks great! Thank you for the careful work.\n\n"
             ).format(
                 displayname=displayname,
                 protocol=str(self),
@@ -275,8 +281,28 @@ class Protocol(CouchDBModel):
             if decisions:
                 message += _("Decisions made:\n")
                 for decision in decisions:
-                    message += f"- ✅ **{decision.title}**, {decision.text}, {decision.objections}, {decision.valid_until}\n"
+                    message += f"- ✅ **{decision.title}**"
+                    if decision.text:
+                        message += "\r  " + decision.text
+                    if decision.objections:
+                        message += (
+                            "\r  **" + _("Objections") + "**: " + decision.objections
+                        )
+                    if decision.valid_until:
+                        message += (
+                            "\r  **" + _("Valid until") + "**: " + decision.valid_until
+                        )
+                    message += "\n"
             send_message(text=message, channel=f"@{username}")
+
+            send_message(
+                text=_(
+                    "Please use the template to manually create a post in the protocols channel"
+                ),
+                channel=f"@{username}",
+            )
+
+            self.summary_posted = True
 
             # message = (
             #     _(

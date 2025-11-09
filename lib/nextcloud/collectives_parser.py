@@ -16,6 +16,7 @@ Notes / assumptions:
 from __future__ import annotations
 
 import logging
+from typing import cast
 
 from pycouchdb.exceptions import NotFound
 
@@ -74,7 +75,7 @@ def parse_protocols(page: CollectivePage) -> None:
 
         protocol = Protocol(page_id=page.ocs.id, date="")
         try:
-            protocol.get(protocol.build_id())
+            protocol = cast(Protocol, Protocol.get(protocol.build_id()))
         except NotFound:
             pass
         protocol.update_from_page()
