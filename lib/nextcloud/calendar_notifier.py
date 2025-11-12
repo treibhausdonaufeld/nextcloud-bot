@@ -205,9 +205,19 @@ class Notifier:
 
         if channel in ("wichtigstes", "general"):
             text += "\n---\n\n_Agendapunkte bitte bis 5 Tage vorher eintragen! "
-            text += (
-                f"{self._local_datetime(event_data['dtstart'] - timedelta(days=5))}_\n"
-            )
+            # Prefer 'start' (set in fill_event). Some calendars may not provide
+            # 'dtstart' explicitly, so handle missing values safely.
+            start_dt = event_data.get("start")
+            try:
+                if start_dt:
+                    reminder_dt = start_dt - timedelta(days=5)
+                    text += f"{self._local_datetime(reminder_dt)}_\n"
+                else:
+                    # Fallback: no start date available
+                    text += f"{self._local_datetime(None)}_\n"
+            except Exception:
+                # If subtraction or formatting fails, fall back to an empty string
+                text += f"{self._local_datetime(None)}_\n"
 
         text += f"\n---\n 💪 : {random.choice(vor_ort_dabei)}"
 
