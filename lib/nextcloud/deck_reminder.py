@@ -1,7 +1,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, Generator
 
 import requests
 from pycouchdb.client import Database
@@ -30,7 +30,7 @@ class DeckReminder:
         self.nextcloud_config = settings.nextcloud
         self.couchdb = couchdb()
 
-    def remind_card_due_dates(self):
+    def remind_card_due_dates(self) -> None:
         """
         Fetch all boards from Nextcloud Deck via the API and print the due dates of cards.
 
@@ -40,10 +40,11 @@ class DeckReminder:
         Returns:
             None
         """
+        events: dict[str, Any]
         try:
-            events: dict[str, Any] = self.couchdb.get(self.cards_processed_key)
+            events = self.couchdb.get(self.cards_processed_key)
         except NotFound:
-            events: dict[str, Any] = {
+            events = {
                 "_id": self.cards_processed_key,
                 "cards": {},
             }
@@ -130,7 +131,9 @@ class DeckReminder:
             # send to channel
             send_message(channel, message)
 
-    def get_due_cards(self):
+    def get_due_cards(
+        self,
+    ) -> Generator[tuple[dict[str, Any], DeckChannelMappingItem], None, None]:
         deck_mapping = self.config.deck_channel_mapping
         # iterate over deck_mapping and fetch all cards for this board
         for board_dict in deck_mapping:

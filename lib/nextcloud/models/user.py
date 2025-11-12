@@ -148,12 +148,16 @@ class NCUserList:
         user_emails: Set[str] = set()
 
         for name in group_names:
-            group = Group.get_by_name(name)
-            user_emails |= {
-                self.users[username].ocs.email
-                for username in group.all_members
-                if username in self.users and self.users[username].ocs
-            }
+            try:
+                group = Group.get_by_name(name)
+                user_emails |= {
+                    self.users[username].ocs.email
+                    for username in group.all_members
+                    if username in self.users and self.users[username].ocs
+                }
+            except ValueError:
+                pass
+
             user_emails |= {
                 u.ocs.email for u in self.users.values() if name in u.ocs.groups
             }

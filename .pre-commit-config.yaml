@@ -56,9 +56,14 @@ repos:
       - id: mypy
         name: mypy (type check)
         additional_dependencies:
-          [types-authlib, types-pytz, types-pyyaml, types-requests]
-        # args: [--config-file, mypy.ini, --cache-dir, .mypy_cache]
-        # files: '^lib/|^app.py$|^runner.py$|^scripts/'
+          [
+            types-authlib,
+            types-pytz,
+            types-pyyaml,
+            types-requests,
+            pandas-stubs,
+          ]
+        args: [--config-file, mypy.ini, --disable-error-code=import-not-found]
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:

@@ -166,7 +166,7 @@ class Notifier:
         if not self.calendar:
             return
 
-        events = self.calendar.search(
+        events: list[Any] = self.calendar.search(
             start=datetime.now() + timedelta(days=self.config.search_start_days or 0),
             end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
             expand=True,

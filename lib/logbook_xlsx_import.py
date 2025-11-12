@@ -67,7 +67,7 @@ def import_decisions_from_excel(df: DataFrame) -> Generator[str]:
             )[-1]
 
             # Create and save the decision
-            decision = Decision(**decision_data)
+            decision = Decision(**decision_data)  # type: ignore[arg-type]
             decision.save()
 
             # Yield empty string on success

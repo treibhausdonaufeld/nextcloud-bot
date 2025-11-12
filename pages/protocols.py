@@ -4,9 +4,8 @@ from typing import Generator, List, cast
 import streamlit as st
 from chromadb.api.types import Where
 from google import genai
-from langchain_chroma import Chroma
 
-from lib.chromadb import UNIFIED_COLLECTION_NAME, chroma_client, langchain_embeddings
+from lib.chromadb import get_unified_collection
 from lib.couchdb import couchdb
 from lib.menu import menu
 from lib.nextcloud.models.collective_page import (
@@ -83,12 +82,8 @@ user_list = NCUserList()
 
 st.title(title)
 
-# Create LangChain Chroma vectorstore for semantic search
-vectorstore = Chroma(
-    client=chroma_client,
-    collection_name=UNIFIED_COLLECTION_NAME,
-    embedding_function=langchain_embeddings,
-)
+# Get ChromaDB collection for semantic search
+collection = get_unified_collection()
 
 # filter out protocols in the future
 now_str = datetime.now().strftime("%Y-%m-%d")
@@ -127,24 +122,20 @@ elif query_text:
             },
         )
 
-    # Use LangChain semantic search
-    retriever = vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={
-            "k": 10 if not ai_enabled else 5,
-            "where": where_clause,
-        },
+    # Use ChromaDB semantic search directly
+    results = collection.query(
+        query_texts=[query_text],
+        n_results=10 if not ai_enabled else 5,
+        where=where_clause,
     )
 
-    # Retrieve relevant documents
-    results = retriever.invoke(query_text)
-
     # Extract page IDs from metadata
+    metadatas = results.get("metadatas", [[]])
     result_page_ids = list(
         set(
-            doc.metadata.get("page_id")
-            for doc in results
-            if doc.metadata.get("page_id")
+            metadata.get("page_id")
+            for metadata in (metadatas[0] if metadatas else [])
+            if metadata and metadata.get("page_id")
         )
     )
 

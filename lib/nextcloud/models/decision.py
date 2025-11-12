@@ -40,7 +40,9 @@ class Decision(CouchDBModel):
         return None
 
     @classmethod
-    def get_all(cls, *args, **kwargs) -> List["Decision"]:
+    def get_all(  # type: ignore[override]
+        cls, *args, **kwargs
+    ) -> List["Decision"]:
         return cast(List[Decision], super().get_all(*args, **kwargs))
 
     @classmethod

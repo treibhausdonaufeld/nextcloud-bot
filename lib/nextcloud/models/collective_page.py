@@ -45,6 +45,7 @@ class OCSCollectivePage(BaseModel):
     collectivePath: str = ""
     parentId: int | None = None
     shareToken: str | None = None
+    content: str | None = None
 
 
 class PageSubtype(str, Enum):
@@ -133,7 +134,9 @@ class CollectivePage(CouchDBModel):
         return cast(CollectivePage, super().get(doc_id))
 
     @classmethod
-    def get_all(cls, *args, **kwargs) -> List["CollectivePage"]:
+    def get_all(  # type: ignore[override]
+        cls, *args, **kwargs
+    ) -> List["CollectivePage"]:
         return cast(List[CollectivePage], super().get_all(*args, **kwargs))
 
     def save(self) -> None:

@@ -24,7 +24,11 @@ chroma_client = chromadb.HttpClient(
         anonymized_telemetry=False, chroma_query_request_timeout_seconds=600
     ),
 )
-embedding_function = None
+embedding_function: (
+    embedding_functions.GoogleGenerativeAiEmbeddingFunction
+    | CustomHuggingFaceEmbeddingServer
+    | None
+) = None
 
 # Use ChromaDB native embedding functions
 if settings.chromadb.gemini_api_key:

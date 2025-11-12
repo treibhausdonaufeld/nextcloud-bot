@@ -66,13 +66,13 @@ if search_text:
     decision_collection = get_unified_collection()
 
     # Build where clause to filter by source_type = "decision" and optionally by group
-    where_clause = {"source_type": Decision.__name__}
+    where_clause: dict[str, str] = {"source_type": Decision.__name__}
     if selected_group:
         where_clause["group_name"] = selected_group
-    where_clause = cast(Where, where_clause)
+    where_clause_typed = cast(Where, where_clause)
 
     query_kwargs = {
-        "where": where_clause,
+        "where": where_clause_typed,
     }
     if search_type in (_("Any"), _("All"), _("Exact")):
         where_document = None
@@ -88,7 +88,7 @@ if search_text:
             }
 
         results = decision_collection.get(
-            where=where_clause,
+            where=where_clause_typed,
             where_document=cast(WhereDocument, where_document)
             if where_document
             else None,
@@ -99,7 +99,7 @@ if search_text:
         results = decision_collection.query(
             query_texts=[search_text],
             n_results=100,  # Get top 100 results for semantic search
-            where=where_clause,
+            where=where_clause_typed,
         )
 
         result_ids = results["ids"][0]
@@ -117,7 +117,7 @@ if not search_text:
     decisions = sorted(decisions, key=lambda p: p.date, reverse=True)
 
 
-df = {
+df_display = {
     _("Date"): [d.date for d in decisions],
     _("Group"): [d.group_name for d in decisions],
     _("Title"): [d.title for d in decisions],
@@ -127,10 +127,10 @@ df = {
     _("Link"): [d.page.url if d.page else d.external_link or "" for d in decisions],
 }
 if distances:
-    df[_("Distance")] = distances
+    df_display[_("Distance")] = distances
 
 st.dataframe(
-    df,
+    df_display,
     column_config={
         _("Date"): st.column_config.DateColumn(
             _("Date"),
