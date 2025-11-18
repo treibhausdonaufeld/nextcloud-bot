@@ -76,7 +76,10 @@ def main(
     while True:
         # Update all users from Nextcloud
         userlist = NCUserList()
-        userlist.update_from_nextcloud()
+        try:
+            userlist.update_from_nextcloud()
+        except Exception as e:
+            logger.error("Failed to update users from Nextcloud: %s", e, exc_info=True)
 
         # Default: fetch pages changed in Nextcloud and store them
         updated_pages = fetch_and_store_all_pages()
