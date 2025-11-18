@@ -127,8 +127,15 @@ class NCUserList:
             logger.error(
                 "User data could not be fetched, response was %s", response.text
             )
+            return
 
-        for username, user_data in response.json()["ocs"]["data"]["users"].items():
+        try:
+            user_data_dict = response.json()["ocs"]["data"]["users"]
+        except (ValueError, KeyError) as e:
+            logger.error("Failed to parse user data from Nextcloud: %s", e)
+            return
+
+        for username, user_data in user_data_dict.items():
             if "id" in user_data:
                 user_data["nextcloud_id"] = user_data.pop("id")
             ocs_user = OCSUser(**user_data)
