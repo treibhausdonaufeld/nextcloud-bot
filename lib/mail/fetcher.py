@@ -34,7 +34,7 @@ class MailFetcher:
     mail_regex = re.compile(r"[a-zA-Z0-9&_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 
     def __init__(self) -> None:
-        if not settings.mailinglist.from_address:
+        if settings.mailinglist.smtp_server and not settings.mailinglist.from_address:
             raise ValueError("Mailinglist from_address is not configured")
 
     def fetch_maildata(self, nc_users: NCUserList, config: MailerConfig):
