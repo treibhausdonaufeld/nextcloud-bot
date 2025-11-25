@@ -21,7 +21,7 @@ class OrganisationConfig(BaseModel):
         default_factory=lambda: ["schlagwörter", "kurznamen", "shortnames"]
     )
     top_group_name: str = "Koordinationskreis"
-    extra_groups: Dict[str, List[str]] = Field(default_factory=list)
+    extra_groups: Dict[str, List[str]] = Field(default_factory=dict)
     protocol_subtype_keywords: List[str] = Field(
         default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
     )
