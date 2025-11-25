@@ -87,7 +87,7 @@ class Group(CouchDBModel):
                 upper_name.startswith(prefix)
                 for prefix in bot_config.organisation.group_prefixes
             )
-            or upper_name in bot_config.organisation.extra_groups
+            or upper_name in bot_config.organisation.extra_groups.keys()
         )
 
     @staticmethod

@@ -21,7 +21,7 @@ class OrganisationConfig(BaseModel):
         default_factory=lambda: ["schlagwörter", "kurznamen", "shortnames"]
     )
     top_group_name: str = "Koordinationskreis"
-    extra_groups: List[str] = Field(default_factory=list)
+    extra_groups: Dict[str, List[str]] = Field(default_factory=list)
     protocol_subtype_keywords: List[str] = Field(
         default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
     )
@@ -89,9 +89,14 @@ class OrganisationConfig(BaseModel):
         default_factory=lambda: ["mitglied", "mitglieder"]
     )
 
-    @field_validator("group_prefixes", "extra_groups", mode="before")
-    def to_upper(cls, v):
+    @field_validator("group_prefixes", mode="before")
+    def to_upper(cls, v: List[str]) -> List[str]:
         return [prefix.upper() for prefix in v]
+
+    @field_validator("extra_groups", mode="before")
+    def to_upper_extra_groups(cls, v: Dict[str, List[str]]) -> Dict[str, List[str]]:
+        # convert keys and values to uppercase
+        return {k.upper(): [name.upper() for name in vlist] for k, vlist in v.items()}
 
 
 class AvatarConfig(BaseModel):

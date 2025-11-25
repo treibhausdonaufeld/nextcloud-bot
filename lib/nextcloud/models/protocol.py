@@ -89,11 +89,16 @@ class Protocol(CouchDBModel):
     @classmethod
     def is_valid_protocol_title(cls, title: str) -> bool:
         """Check if the given title corresponds to a valid protocol title."""
+        _date_str, group_name = title.split(" ", 1)
         try:
-            _date_str, group_name = title.split(" ", 1)
             Group.get_by_name(group_name)  # check if group exists
         except ValueError:
-            return False
+            # Group doesn't exist, check if title would still be valid from extra_groups
+            extra_groups = bot_config.organisation.extra_groups
+            if group_name.upper() not in extra_groups.keys() and all(
+                group_name.upper() not in names for names in extra_groups.values()
+            ):
+                return False
 
         return True and cls.valid_date(title)
 
@@ -182,6 +187,9 @@ class Protocol(CouchDBModel):
         # iterate over all lines and check each line for keywords
         for i, line in enumerate(lines[1:], start=1):
             line = clean_line(line)
+            if not line or decision.objections:
+                # skip all lines if objections already found
+                continue
 
             for valid_until_kw in bot_config.organisation.decision_valid_until_keywords:
                 if re.match(rf"^{valid_until_kw}[:\s\-]*", line, flags=re.IGNORECASE):
@@ -199,6 +207,11 @@ class Protocol(CouchDBModel):
                             rf"^{objection_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
                         )
                     )
+                    if len(lines) > i + 1:
+                        # add all following lines as objections too
+                        decision.objections += " ".join(
+                            [clean_line(last_lines) for last_lines in lines[i + 1 :]]
+                        )
                     lines[i] = line = ""  # remove line
 
             if line:
