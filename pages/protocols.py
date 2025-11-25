@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Generator, List, cast
 
+import pandas as pd
 import streamlit as st
 from chromadb.api.types import Where
 from google import genai
@@ -12,6 +13,7 @@ from lib.nextcloud.models.collective_page import (
     CollectivePage,
     PageSubtype,
 )
+from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
@@ -207,9 +209,95 @@ if protocols:
         )
 
     st.dataframe(
-        protocol_data,
-        column_config=column_config,
-        width="stretch",
-        hide_index=True,
-        height=600,
+        protocol_data, column_config=column_config, width="stretch", hide_index=True
     )
+
+    # Show member statistics if a group is selected
+    if selected_group:
+        st.markdown(f"### {_('Member Statistics for')} {selected_group}")
+
+        try:
+            group = Group.get_by_name(selected_group)
+            all_group_members = group.all_members
+        except ValueError:
+            all_group_members = []
+
+        # Get all protocols for the selected group
+        group_protocols = [
+            p for p in get_all_protocols() if p.group_name == selected_group
+        ]
+
+        # Initialize statistics for all group members
+        user_stats = {
+            user_id: {"moderated": 0, "protocol": 0, "attended": 0}
+            for user_id in all_group_members
+        }
+
+        # Collect statistics per user from protocols
+        for protocol in group_protocols:
+            # Count moderators
+            for user_id in protocol.moderated_by:
+                if user_id in user_stats:
+                    user_stats[user_id]["moderated"] += 1
+
+            # Count protocol writers
+            for user_id in protocol.protocol_by:
+                if user_id in user_stats:
+                    user_stats[user_id]["protocol"] += 1
+
+            # Count participants
+            for user_id in protocol.participants:
+                if user_id in user_stats:
+                    user_stats[user_id]["attended"] += 1
+
+        # Create dataframe for member statistics
+        member_data: List[dict[str, str | int]] = []
+        for user_id, stats in user_stats.items():
+            try:
+                user_name = str(user_list[user_id])
+            except KeyError:
+                user_name = user_id
+
+            # Calculate score: moderation=2, protocol=2, attendance=1
+            score = (
+                (stats["moderated"] * 2)
+                + (stats["protocol"] * 2)
+                + (stats["attended"] * 1)
+            )
+
+            member_data.append(
+                {
+                    _("Member"): user_name,
+                    _("Moderated"): stats["moderated"],
+                    _("Wrote Protocol"): stats["protocol"],
+                    _("Attended"): stats["attended"],
+                    _("Score"): score,
+                }
+            )
+
+        # Sort by score descending by default
+        member_data.sort(key=lambda x: cast(int, x[_("Score")]), reverse=True)
+
+        st.dataframe(member_data, width="stretch", hide_index=True)
+
+        # Show bar chart with scores
+        st.markdown(f"#### {_('Member Scores')}")
+
+        sort_by_score = st.checkbox(_("Sort by score (with position)"), value=True)
+
+        df = pd.DataFrame(member_data)
+
+        if sort_by_score:
+            # Sort by score descending and prepend position to name
+            df_sorted = df.sort_values(by=_("Score"), ascending=False).copy()
+            total_count = len(df_sorted)
+            width = len(str(total_count))
+            df_sorted[_("Member")] = [
+                f"{str(i + 1).zfill(width)}. {name}"
+                for i, name in enumerate(df_sorted[_("Member")])
+            ]
+        else:
+            # Sort by name alphabetically
+            df_sorted = df.sort_values(by=_("Member"), ascending=True)
+
+        st.bar_chart(df_sorted.set_index(_("Member"))[_("Score")], horizontal=True)
