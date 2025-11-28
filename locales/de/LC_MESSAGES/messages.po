@@ -138,7 +138,7 @@ msgstr "Protokolle"
 
 #: lib/menu.py:30 pages/logbook.py:31
 msgid "Logbook"
-msgstr "Protokollbuch"
+msgstr "Logbuch"
 
 #: lib/menu.py:31
 msgid "Pages"
