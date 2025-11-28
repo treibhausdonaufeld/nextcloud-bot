@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Generator, List, cast
 
-import pandas as pd
 import streamlit as st
 from chromadb.api.types import Where
 from google import genai
@@ -258,46 +257,13 @@ if protocols:
             except KeyError:
                 user_name = user_id
 
-            # Calculate score: moderation=2, protocol=2, attendance=1
-            score = (
-                (stats["moderated"] * 2)
-                + (stats["protocol"] * 2)
-                + (stats["attended"] * 1)
-            )
-
             member_data.append(
                 {
                     _("Member"): user_name,
                     _("Moderated"): stats["moderated"],
                     _("Wrote Protocol"): stats["protocol"],
                     _("Attended"): stats["attended"],
-                    _("Score"): score,
                 }
             )
 
-        # Sort by score descending by default
-        member_data.sort(key=lambda x: cast(int, x[_("Score")]), reverse=True)
-
         st.dataframe(member_data, width="stretch", hide_index=True)
-
-        # Show bar chart with scores
-        st.markdown(f"#### {_('Member Scores')}")
-
-        sort_by_score = st.checkbox(_("Sort by score (with position)"), value=True)
-
-        df = pd.DataFrame(member_data)
-
-        if sort_by_score:
-            # Sort by score descending and prepend position to name
-            df_sorted = df.sort_values(by=_("Score"), ascending=False).copy()
-            total_count = len(df_sorted)
-            width = len(str(total_count))
-            df_sorted[_("Member")] = [
-                f"{str(i + 1).zfill(width)}. {name}"
-                for i, name in enumerate(df_sorted[_("Member")])
-            ]
-        else:
-            # Sort by name alphabetically
-            df_sorted = df.sort_values(by=_("Member"), ascending=True)
-
-        st.bar_chart(df_sorted.set_index(_("Member"))[_("Score")], horizontal=True)
