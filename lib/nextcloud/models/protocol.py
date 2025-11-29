@@ -407,7 +407,7 @@ class Protocol(CouchDBModel):
         attr = ""
 
         for line in lines:
-            if line.strip() == "---":
+            if line.strip() == "---" or line.strip().startswith("#"):
                 break  # stop at horizontal rule
 
             # get the first word on the line, ignoring any leading non-word chars
