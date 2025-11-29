@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-25 22:22+0100\n"
+"POT-Creation-Date: 2025-11-29 20:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,8 +51,8 @@ msgstr ""
 msgid "Load full pages instead of excerpts"
 msgstr ""
 
-#: ./app.py:140 ./pages/protocols.py:184 ./pages/protocols.py:192
-#: ./pages/protocols.py:204 ./pages/protocols.py:205
+#: ./app.py:140 ./pages/protocols.py:183 ./pages/protocols.py:191
+#: ./pages/protocols.py:203 ./pages/protocols.py:204
 msgid "AI Summary"
 msgstr ""
 
@@ -64,7 +64,7 @@ msgstr ""
 msgid "Searching documents..."
 msgstr ""
 
-#: ./app.py:178 ./pages/protocols.py:147
+#: ./app.py:178 ./pages/protocols.py:146
 msgid "Answer"
 msgstr ""
 
@@ -85,13 +85,13 @@ msgid "Page"
 msgstr ""
 
 #: ./app.py:216 ./app.py:230 ./pages/collective_pages.py:42
-#: ./pages/logbook.py:123 ./pages/protocols.py:182 ./pages/protocols.py:195
-#: ./pages/protocols.py:196
+#: ./pages/logbook.py:123 ./pages/protocols.py:181 ./pages/protocols.py:194
+#: ./pages/protocols.py:195
 msgid "Title"
 msgstr ""
 
 #: ./app.py:217 ./pages/logbook.py:121 ./pages/logbook.py:135
-#: ./pages/logbook.py:136 ./pages/protocols.py:181
+#: ./pages/logbook.py:136 ./pages/protocols.py:180
 msgid "Date"
 msgstr ""
 
@@ -137,7 +137,7 @@ msgstr ""
 msgid "Timeline"
 msgstr ""
 
-#: ./lib/menu.py:29 ./pages/protocols.py:75
+#: ./lib/menu.py:29 ./pages/protocols.py:74
 msgid "Protocols"
 msgstr ""
 
@@ -196,25 +196,37 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:293
-msgid "AI Summary:"
+#: ./lib/nextcloud/models/protocol.py:294
+msgid "Date: "
 msgstr ""
 
 #: ./lib/nextcloud/models/protocol.py:295
+msgid "Moderated by: "
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:296
+msgid "Protocol by: "
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:297
+msgid "Participants: "
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:299
 msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:302 ./pages/logbook.py:126
+#: ./lib/nextcloud/models/protocol.py:305 ./pages/logbook.py:126
 msgid "Objections"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:306
+#: ./lib/nextcloud/models/protocol.py:308
 msgid "Valid until"
 msgstr ""
 
 #: ./lib/nextcloud/models/protocol.py:312
-msgid "Please use the template to manually create a post in the protocols channel"
+msgid "AI Summary:"
 msgstr ""
 
 #: ./lib/streamlit_oauth.py:28
@@ -333,11 +345,11 @@ msgstr ""
 msgid "Total Mentions: {count}"
 msgstr ""
 
-#: ./pages/logbook.py:44 ./pages/protocols.py:96
+#: ./pages/logbook.py:44 ./pages/protocols.py:95
 msgid "Filter by group"
 msgstr ""
 
-#: ./pages/logbook.py:46 ./pages/protocols.py:98
+#: ./pages/logbook.py:46 ./pages/protocols.py:97
 msgid "Select a group"
 msgstr ""
 
@@ -381,7 +393,7 @@ msgstr ""
 msgid "Exact Match"
 msgstr ""
 
-#: ./pages/logbook.py:122 ./pages/protocols.py:183
+#: ./pages/logbook.py:122 ./pages/protocols.py:182
 msgid "Group"
 msgstr ""
 
@@ -409,62 +421,48 @@ msgstr ""
 msgid "Importing file..."
 msgstr ""
 
-#: ./pages/protocols.py:100
+#: ./pages/protocols.py:99
 msgid "Search protocols"
 msgstr ""
 
-#: ./pages/protocols.py:102
+#: ./pages/protocols.py:101
 msgid "Use AI to answer"
 msgstr ""
 
-#: ./pages/protocols.py:185
+#: ./pages/protocols.py:184
 msgid "Moderated by"
 msgstr ""
 
-#: ./pages/protocols.py:186
+#: ./pages/protocols.py:185
 msgid "Protocol by"
 msgstr ""
 
-#: ./pages/protocols.py:187
+#: ./pages/protocols.py:186
 msgid "Participants"
 msgstr ""
 
-#: ./pages/protocols.py:206
+#: ./pages/protocols.py:205
 msgid "Click to expand"
 msgstr ""
 
-#: ./pages/protocols.py:217
+#: ./pages/protocols.py:216
 msgid "Member Statistics for"
 msgstr ""
 
-#: ./pages/protocols.py:270 ./pages/protocols.py:295 ./pages/protocols.py:297
-#: ./pages/protocols.py:301 ./pages/protocols.py:303
+#: ./pages/protocols.py:262
 msgid "Member"
 msgstr ""
 
-#: ./pages/protocols.py:271
+#: ./pages/protocols.py:263
 msgid "Moderated"
 msgstr ""
 
-#: ./pages/protocols.py:272
+#: ./pages/protocols.py:264
 msgid "Wrote Protocol"
 msgstr ""
 
-#: ./pages/protocols.py:273
+#: ./pages/protocols.py:265
 msgid "Attended"
-msgstr ""
-
-#: ./pages/protocols.py:274 ./pages/protocols.py:279 ./pages/protocols.py:292
-#: ./pages/protocols.py:303
-msgid "Score"
-msgstr ""
-
-#: ./pages/protocols.py:284
-msgid "Member Scores"
-msgstr ""
-
-#: ./pages/protocols.py:286
-msgid "Sort by score (with position)"
 msgstr ""
 
 #: ./pages/timeline.py:33

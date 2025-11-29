@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import List, cast
 
-from lib.chromadb import get_unified_collection
+from lib.chromadb import embedding_function, get_unified_collection
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
 from lib.nextcloud.models.collective_page import CollectivePage
@@ -68,6 +68,9 @@ class Decision(CouchDBModel):
 
     def save(self) -> None:
         super().save()
+
+        if embedding_function is None:
+            return
 
         # Update ChromaDB unified collection
         if self.title or self.text:

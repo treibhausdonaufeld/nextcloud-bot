@@ -289,58 +289,56 @@ class Protocol(CouchDBModel):
                 protocol=str(self),
                 url=(self.page.url if self.page else ""),
             )
-            if self.ai_summary:
-                message += _("AI Summary:") + "\n" + self.ai_summary + "\n\n"
-            if decisions:
-                message += _("Decisions made:\n")
-                for decision in decisions:
-                    message += f"- ✅ **{decision.title}**"
-                    if decision.text:
-                        message += "\r  " + decision.text
-                    if decision.objections:
-                        message += (
-                            "\r  **" + _("Objections") + "**: " + decision.objections
-                        )
-                    if decision.valid_until:
-                        message += (
-                            "\r  **" + _("Valid until") + "**: " + decision.valid_until
-                        )
-                    message += "\n"
-            send_message(text=message, channel=f"@{username}")
 
-            send_message(
-                text=_(
-                    "Please use the template to manually create a post in the protocols channel"
-                ),
-                channel=f"@{username}",
-            )
+        message += "\n---\n\n"
+        message += _("Date: ") + self.date + "\n"
+        message += _("Moderated by: ") + ", ".join(self.moderated_by) + "\n"
+        message += _("Protocol by: ") + ", ".join(self.protocol_by) + "\n"
+        message += _("Participants: ") + ", ".join(self.participants) + "\n"
+        if decisions:
+            message += _("Decisions made:\n")
+            for decision in decisions:
+                message += f"- ✅ **{decision.title}**"
+                if decision.text:
+                    message += "\r  " + decision.text
+                if decision.objections:
+                    message += "\r  **" + _("Objections") + "**: " + decision.objections
+                if decision.valid_until:
+                    message += (
+                        "\r  **" + _("Valid until") + "**: " + decision.valid_until
+                    )
+                message += "\n"
+        if self.ai_summary:
+            message += _("AI Summary:") + "\n" + self.ai_summary + "\n\n"
 
-            # self.summary_posted = True
+        send_message(text=message, channel=f"@{username}")
 
-            # message = (
-            #     _(
-            #         "When you're ok with these changes, then nothing else is needed from your side."
-            #     )
-            #     + "\n"
-            #     + _("I will post this information to the channel #{protocols}").format(
-            #         protocols=bot_config.organisation.protocol_channel_name
-            #     )
-            # )
-            # send_message(text=message, channel=f"@{username}")
+        # self.summary_posted = True
 
-            # message = (
-            #     f"## {self}\n"
-            #     + f"{self.page.url if self.page else ''}\n\n"
-            #     + self.ai_summary
-            # )
-            # if decisions:
-            #     message += "\n\n" + _("Decisions made:\n")
-            #     for decision in decisions:
-            #         message += f"- ✅ {decision.title}\n"
-            # send_message(
-            #     text=message, channel=bot_config.organisation.protocol_channel_name
-            # )
-            # self.summary_posted = True
+        # message = (
+        #     _(
+        #         "When you're ok with these changes, then nothing else is needed from your side."
+        #     )
+        #     + "\n"
+        #     + _("I will post this information to the channel #{protocols}").format(
+        #         protocols=bot_config.organisation.protocol_channel_name
+        #     )
+        # )
+        # send_message(text=message, channel=f"@{username}")
+
+        # message = (
+        #     f"## {self}\n"
+        #     + f"{self.page.url if self.page else ''}\n\n"
+        #     + self.ai_summary
+        # )
+        # if decisions:
+        #     message += "\n\n" + _("Decisions made:\n")
+        #     for decision in decisions:
+        #         message += f"- ✅ {decision.title}\n"
+        # send_message(
+        #     text=message, channel=bot_config.organisation.protocol_channel_name
+        # )
+        # self.summary_posted = True
 
     def generate_ai_summary(self) -> None:
         # Generate AI summary of the protocol content

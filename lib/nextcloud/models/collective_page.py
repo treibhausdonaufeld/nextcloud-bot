@@ -6,7 +6,7 @@ from typing import Any, List, cast
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
-from lib.chromadb import get_unified_collection
+from lib.chromadb import embedding_function, get_unified_collection
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import (
     CouchDBModel,
@@ -143,6 +143,9 @@ class CollectivePage(CouchDBModel):
         from lib.nextcloud.models.group import Group
 
         super().save()
+
+        if embedding_function is None:
+            return
 
         # Update ChromaDB collection with text splitting
         if self.ocs and self.content and self.content.strip():
