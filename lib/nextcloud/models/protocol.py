@@ -29,7 +29,7 @@ class Protocol(CouchDBModel):
     protocol_by: List[str] = []
     participants: List[str] = []
 
-    summary_posted: bool = False
+    summary_posted: bool = False  # not used atm
     ai_summary: str = ""
 
     def build_id(self) -> str:
@@ -315,7 +315,7 @@ class Protocol(CouchDBModel):
                 channel=f"@{username}",
             )
 
-            self.summary_posted = True
+            # self.summary_posted = True
 
             # message = (
             #     _(
@@ -440,20 +440,18 @@ class Protocol(CouchDBModel):
             self.generate_ai_summary()
 
             # Only notify if protocol is recent
-            if not self.summary_posted and self.date_obj:
+            if self.date_obj:
                 days_old = (datetime.now().date() - self.date_obj).days
                 if (
-                    bot_config.organisation.protocol_min_age_days
-                    <= days_old
-                    <= bot_config.organisation.protocol_max_age_days
+                    days_old >= 0
+                    and days_old <= bot_config.organisation.protocol_max_age_days
                 ):
                     self.notify_updated(decisions)
                 else:
                     logger.info(
-                        "Skipping notification for protocol %s: date is %d days old (must be %i-%i days)",
+                        "Skipping notification for protocol %s: date is %d days old (must be < %d)",
                         self.build_id(),
                         days_old,
-                        bot_config.organisation.protocol_min_age_days,
                         bot_config.organisation.protocol_max_age_days,
                     )
 
