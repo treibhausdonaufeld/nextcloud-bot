@@ -407,6 +407,9 @@ class Protocol(CouchDBModel):
         attr = ""
 
         for line in lines:
+            if line.strip() == "---":
+                break  # stop at horizontal rule
+
             # get the first word on the line, ignoring any leading non-word chars
             m = first_word_regex.search(line)
             if not m:
