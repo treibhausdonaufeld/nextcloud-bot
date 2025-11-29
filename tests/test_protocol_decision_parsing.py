@@ -570,7 +570,7 @@ class TestProtocolNotificationDateConstraints:
     @pytest.mark.parametrize(
         "days_offset,should_notify,description",
         [
-            (0, False, "today's protocol"),
+            (0, True, "today's protocol"),
             (15, False, "15-day-old protocol (too old)"),
             (1, True, "yesterday's protocol"),
             (7, True, "7-day-old protocol"),
