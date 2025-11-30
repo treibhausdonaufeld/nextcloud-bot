@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-29 20:25+0100\n"
+"POT-Creation-Date: 2025-11-30 18:37+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -210,31 +210,35 @@ msgstr ""
 msgid "Date: "
 msgstr ""
 
-#: lib/nextcloud/models/protocol.py:295
+#: lib/nextcloud/models/protocol.py:296
+msgid "Last update by: "
+msgstr "Zuletzt aktualisiert von: "
+
+#: lib/nextcloud/models/protocol.py:297
 msgid "Moderated by: "
 msgstr "Moderiert von: "
 
-#: lib/nextcloud/models/protocol.py:296
+#: lib/nextcloud/models/protocol.py:298
 msgid "Protocol by: "
 msgstr "Protokoll von: "
 
-#: lib/nextcloud/models/protocol.py:297
+#: lib/nextcloud/models/protocol.py:299
 msgid "Participants: "
 msgstr "Teilnehmende: "
 
-#: lib/nextcloud/models/protocol.py:299
+#: lib/nextcloud/models/protocol.py:301
 msgid "Decisions made:\n"
 msgstr "Getroffene Entscheidungen:\n"
 
-#: lib/nextcloud/models/protocol.py:305 pages/logbook.py:126
+#: lib/nextcloud/models/protocol.py:307 pages/logbook.py:126
 msgid "Objections"
 msgstr "Einwände"
 
-#: lib/nextcloud/models/protocol.py:308
+#: lib/nextcloud/models/protocol.py:310
 msgid "Valid until"
 msgstr "Gültig bis"
 
-#: lib/nextcloud/models/protocol.py:312
+#: lib/nextcloud/models/protocol.py:314
 msgid "AI Summary:"
 msgstr "KI-Zusammenfassung:"
 

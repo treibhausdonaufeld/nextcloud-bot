@@ -292,6 +292,8 @@ class Protocol(CouchDBModel):
 
         message += "\n---\n\n"
         message += _("Date: ") + self.date + "\n"
+        if self.page and self.page.ocs and self.page.ocs.lastUserId:
+            message += _("Last update by: ") + self.page.ocs.lastUserId + "\n"
         message += _("Moderated by: ") + ", ".join(self.moderated_by) + "\n"
         message += _("Protocol by: ") + ", ".join(self.protocol_by) + "\n"
         message += _("Participants: ") + ", ".join(self.participants) + "\n"
