@@ -3,7 +3,7 @@ from enum import Enum
 from functools import cached_property
 from typing import Any, List, cast
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
 from lib.chromadb import embedding_function, get_unified_collection
