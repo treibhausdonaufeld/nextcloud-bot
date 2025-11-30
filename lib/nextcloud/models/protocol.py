@@ -275,10 +275,6 @@ class Protocol(CouchDBModel):
                 url=(self.page.url if self.page else ""),
                 issues="\n- ".join(corrections),
             )
-            logger.info(
-                "Notifying user %s about protocol %s updates", username, self.build_id()
-            )
-            send_message(text=message, channel=f"@{username}")
         else:
             # generate a message to the user to praise how well the document is written
             message = _(
