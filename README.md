@@ -8,19 +8,17 @@ Features:
 
 - Calendar appointment reminder
 - Mailinglist
-- Membership overview, who contributes where
+- Groups overview and members
 - Deck reminder
-- Protocol schedules
 - Protocol summaries
-- Logbook overview
+- Logbook
 
 TODOs:
 
-- (maybe) bot checks - confirmation of protocol summary!
 - protocol statistics (moderation, protocol) schedules/assignments
-- member contribution statistics
-- test renaming of pages?!
+- moving pages to Archive after e.g. 12 months?
 - notification about parse-errors of bot-config to channel!
+- temporal suspension of members ("Karenz"), not sure yet how to implement...
 
 ## Run tests
 
