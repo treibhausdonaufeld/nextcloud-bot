@@ -311,6 +311,12 @@ class Protocol(CouchDBModel):
 
         send_message(text=message, channel=f"@{username}")
 
+        if not corrections:
+            text = _("Please manually a post in the channel #{protocols}").format(
+                protocols=bot_config.organisation.protocol_channel_name
+            )
+            send_message(text=text, channel=f"@{username}")
+
         # self.summary_posted = True
 
         # message = (

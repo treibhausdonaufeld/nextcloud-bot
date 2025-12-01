@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-11-30 18:37+0100\n"
+"POT-Creation-Date: 2025-12-01 09:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -129,7 +129,7 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-#: ./lib/menu.py:27 ./pages/groups.py:78
+#: ./lib/menu.py:27 ./pages/groups.py:78 ./pages/mentions.py:75
 msgid "Groups"
 msgstr ""
 
@@ -145,11 +145,7 @@ msgstr ""
 msgid "Logbook"
 msgstr ""
 
-#: ./lib/menu.py:31
-msgid "Pages"
-msgstr ""
-
-#: ./lib/menu.py:39
+#: ./lib/menu.py:40
 msgid "Language"
 msgstr ""
 
@@ -188,7 +184,7 @@ msgid ""
 "Please adjust the protocol accordingly. Thank you!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:284
+#: ./lib/nextcloud/models/protocol.py:280
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -196,41 +192,45 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:294
+#: ./lib/nextcloud/models/protocol.py:290
 msgid "Date: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:296
+#: ./lib/nextcloud/models/protocol.py:292
 msgid "Last update by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:297
+#: ./lib/nextcloud/models/protocol.py:293
 msgid "Moderated by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:298
+#: ./lib/nextcloud/models/protocol.py:294
 msgid "Protocol by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:299
+#: ./lib/nextcloud/models/protocol.py:295
 msgid "Participants: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:301
+#: ./lib/nextcloud/models/protocol.py:297
 msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:307 ./pages/logbook.py:126
+#: ./lib/nextcloud/models/protocol.py:303 ./pages/logbook.py:126
 msgid "Objections"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:310
+#: ./lib/nextcloud/models/protocol.py:306
 msgid "Valid until"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:314
+#: ./lib/nextcloud/models/protocol.py:310
 msgid "AI Summary:"
+msgstr ""
+
+#: ./lib/nextcloud/models/protocol.py:315
+msgid "Please manually a post in the channel #{protocols}"
 msgstr ""
 
 #: ./lib/streamlit_oauth.py:28
@@ -423,6 +423,35 @@ msgstr ""
 
 #: ./pages/logbook.py:166
 msgid "Importing file..."
+msgstr ""
+
+#: ./pages/mentions.py:13 ./pages/mentions.py:72 ./pages/mentions.py:89
+#: ./pages/mentions.py:95 ./pages/mentions.py:99
+msgid "Mentions"
+msgstr ""
+
+#: ./pages/mentions.py:34
+msgid "Processing"
+msgstr ""
+
+#: ./pages/mentions.py:71 ./pages/mentions.py:96
+msgid "User"
+msgstr ""
+
+#: ./pages/mentions.py:73
+msgid "Distinct Pages"
+msgstr ""
+
+#: ./pages/mentions.py:74
+msgid "Distinct Protocols"
+msgstr ""
+
+#: ./pages/mentions.py:98
+msgid "Mentions per User"
+msgstr ""
+
+#: ./pages/mentions.py:106
+msgid "No mentions found."
 msgstr ""
 
 #: ./pages/protocols.py:99
