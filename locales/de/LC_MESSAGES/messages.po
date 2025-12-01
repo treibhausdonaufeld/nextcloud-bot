@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-12-01 09:54+0100\n"
+"POT-Creation-Date: 2025-12-01 10:26+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -73,11 +73,11 @@ msgstr "Quell-Dokumente"
 msgid "Decision"
 msgstr "Entscheidung"
 
-#: app.py:213 app.py:229
+#: app.py:213 app.py:229 pages/mentions.py:201
 msgid "Type"
 msgstr "Typ"
 
-#: app.py:215
+#: app.py:215 pages/mentions.py:188
 msgid "Page"
 msgstr "Seite"
 
@@ -108,7 +108,7 @@ msgstr "Seiten-ID"
 msgid "URL"
 msgstr "URL"
 
-#: app.py:235 pages/collective_pages.py:54
+#: app.py:235 pages/collective_pages.py:54 pages/mentions.py:199
 msgid "Open page"
 msgstr "Seite öffnen"
 
@@ -124,7 +124,7 @@ msgstr "Keine passenden Seiten gefunden."
 msgid "Home"
 msgstr "Startseite"
 
-#: lib/menu.py:27 pages/groups.py:78 pages/mentions.py:75
+#: lib/menu.py:27 pages/groups.py:78 pages/mentions.py:140
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -437,32 +437,49 @@ msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
 msgid "Importing file..."
 msgstr "Datei wird importiert..."
 
-#: pages/mentions.py:13 pages/mentions.py:72 pages/mentions.py:89
-#: pages/mentions.py:95 pages/mentions.py:99
+#: pages/mentions.py:116 pages/mentions.py:137 pages/mentions.py:145
+#: pages/mentions.py:206
 msgid "Mentions"
 msgstr "Erwähnungen"
 
-#: pages/mentions.py:34
-msgid "Processing"
-msgstr "Verarbeite"
-
-#: pages/mentions.py:71 pages/mentions.py:96
+#: pages/mentions.py:135 pages/mentions.py:148 pages/mentions.py:160
+#: pages/mentions.py:170
 msgid "User"
 msgstr "Benutzer"
 
-#: pages/mentions.py:73
+#: pages/mentions.py:138
 msgid "Distinct Pages"
 msgstr "Unterschiedliche Seiten"
 
-#: pages/mentions.py:74
+#: pages/mentions.py:139
 msgid "Distinct Protocols"
 msgstr "Unterschiedliche Protokolle"
 
-#: pages/mentions.py:98
-msgid "Mentions per User"
-msgstr "Erwähnungen pro Benutzer"
+#: pages/mentions.py:150
+msgid "Select user for details"
+msgstr "Benutzer für Details auswählen"
 
-#: pages/mentions.py:106
+#: pages/mentions.py:152
+msgid "Select a user..."
+msgstr "Benutzer auswählen..."
+
+#: pages/mentions.py:173
+msgid "Mention Details for"
+msgstr "Erwähnungsdetails für"
+
+#: pages/mentions.py:182
+msgid "Protocol"
+msgstr "Protokoll"
+
+#: pages/mentions.py:185
+msgid "Group Page"
+msgstr "Gruppenseite"
+
+#: pages/mentions.py:210
+msgid "No snippet available"
+msgstr "Kein Textausschnitt verfügbar"
+
+#: pages/mentions.py:212
 msgid "No mentions found."
 msgstr "Keine Erwähnungen gefunden."
 
@@ -517,6 +534,15 @@ msgid ""
 msgstr ""
 "Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in "
 "Nextcloud Collectives."
+
+#~ msgid "Processing"
+#~ msgstr "Verarbeite"
+
+#~ msgid "Mentions per User"
+#~ msgstr "Erwähnungen pro Benutzer"
+
+#~ msgid "Overview"
+#~ msgstr "Übersicht"
 
 #~ msgid "Pages"
 #~ msgstr "Seiten"

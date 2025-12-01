@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-12-01 09:54+0100\n"
+"POT-Creation-Date: 2025-12-01 10:26+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,11 +76,11 @@ msgstr ""
 msgid "Decision"
 msgstr ""
 
-#: ./app.py:213 ./app.py:229
+#: ./app.py:213 ./app.py:229 ./pages/mentions.py:201
 msgid "Type"
 msgstr ""
 
-#: ./app.py:215
+#: ./app.py:215 ./pages/mentions.py:188
 msgid "Page"
 msgstr ""
 
@@ -112,7 +112,7 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: ./app.py:235 ./pages/collective_pages.py:54
+#: ./app.py:235 ./pages/collective_pages.py:54 ./pages/mentions.py:199
 msgid "Open page"
 msgstr ""
 
@@ -129,7 +129,7 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-#: ./lib/menu.py:27 ./pages/groups.py:78 ./pages/mentions.py:75
+#: ./lib/menu.py:27 ./pages/groups.py:78 ./pages/mentions.py:140
 msgid "Groups"
 msgstr ""
 
@@ -425,32 +425,49 @@ msgstr ""
 msgid "Importing file..."
 msgstr ""
 
-#: ./pages/mentions.py:13 ./pages/mentions.py:72 ./pages/mentions.py:89
-#: ./pages/mentions.py:95 ./pages/mentions.py:99
+#: ./pages/mentions.py:116 ./pages/mentions.py:137 ./pages/mentions.py:145
+#: ./pages/mentions.py:206
 msgid "Mentions"
 msgstr ""
 
-#: ./pages/mentions.py:34
-msgid "Processing"
-msgstr ""
-
-#: ./pages/mentions.py:71 ./pages/mentions.py:96
+#: ./pages/mentions.py:135 ./pages/mentions.py:148 ./pages/mentions.py:160
+#: ./pages/mentions.py:170
 msgid "User"
 msgstr ""
 
-#: ./pages/mentions.py:73
+#: ./pages/mentions.py:138
 msgid "Distinct Pages"
 msgstr ""
 
-#: ./pages/mentions.py:74
+#: ./pages/mentions.py:139
 msgid "Distinct Protocols"
 msgstr ""
 
-#: ./pages/mentions.py:98
-msgid "Mentions per User"
+#: ./pages/mentions.py:150
+msgid "Select user for details"
 msgstr ""
 
-#: ./pages/mentions.py:106
+#: ./pages/mentions.py:152
+msgid "Select a user..."
+msgstr ""
+
+#: ./pages/mentions.py:173
+msgid "Mention Details for"
+msgstr ""
+
+#: ./pages/mentions.py:182
+msgid "Protocol"
+msgstr ""
+
+#: ./pages/mentions.py:185
+msgid "Group Page"
+msgstr ""
+
+#: ./pages/mentions.py:210
+msgid "No snippet available"
+msgstr ""
+
+#: ./pages/mentions.py:212
 msgid "No mentions found."
 msgstr ""
 
