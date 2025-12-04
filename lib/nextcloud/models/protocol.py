@@ -268,7 +268,7 @@ class Protocol(CouchDBModel):
             message = _(
                 "Hello {displayname},\n\n"
                 "The protocol [{protocol}]({url}) looks generally fine, but there are some issues:\n\n- {issues}\n\n"
-                "Please adjust the protocol accordingly. Thank you!"
+                "Please fix them when you edit the protocol the next time (no hurry, take your time!). Thank you!"
             ).format(
                 displayname=displayname,
                 protocol=str(self),
