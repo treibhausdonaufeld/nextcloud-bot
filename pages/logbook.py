@@ -1,9 +1,8 @@
-import re
 from typing import List, cast
 
 import pandas as pd
 import streamlit as st
-from chromadb import Where, WhereDocument
+from chromadb import Where
 
 from lib.chromadb import get_unified_collection
 from lib.logbook_xlsx_import import import_decisions_from_excel
@@ -24,7 +23,8 @@ def get_group_names() -> List[str]:
 @st.cache_data(ttl=3600)
 def get_all_decisions(selector: dict | None = None) -> List["Decision"]:
     """Get all decisions without pagination."""
-    return Decision.get_all(selector=selector, limit=10_000)
+    decisions = Decision.get_all(selector=selector, limit=10_000)
+    return sorted(decisions, key=lambda p: p.date, reverse=True)
 
 
 # Streamlit app starts here
@@ -62,40 +62,43 @@ search_type = col3.radio(
 distances = []
 
 
+def matches_search(decision: Decision, search_text: str, search_type: str) -> bool:
+    """Check if a decision matches the search criteria in title, text, or objections."""
+    searchable_text = " ".join(
+        [decision.title or "", decision.text or "", decision.objections or ""]
+    ).lower()
+
+    search_lower = search_text.lower()
+
+    if search_type == _("Exact"):
+        return search_lower in searchable_text
+    elif search_type == _("All"):
+        words = search_lower.split()
+        return all(word in searchable_text for word in words)
+    elif search_type == _("Any"):
+        words = search_lower.split()
+        return any(word in searchable_text for word in words)
+    return False
+
+
 if search_text:
-    decision_collection = get_unified_collection()
-
-    # Build where clause to filter by source_type = "decision" and optionally by group
-    where_clause: dict[str, str] = {"source_type": Decision.__name__}
-    if selected_group:
-        where_clause["group_name"] = selected_group
-    where_clause_typed = cast(Where, where_clause)
-
-    query_kwargs = {
-        "where": where_clause_typed,
-    }
     if search_type in (_("Any"), _("All"), _("Exact")):
-        where_document = None
-        if search_type == _("Exact") or len(search_text.split()) <= 1:
-            where_document = {"$regex": rf"(?i){re.escape(search_text)}"}
-        elif search_text:
-            condition = "$and" if search_type == _("All") else "$or"
-            where_document = {
-                condition: [  # type: ignore
-                    {"$regex": rf"(?i){re.escape(word)}"}
-                    for word in search_text.split()
-                ]
-            }
-
-        results = decision_collection.get(
-            where=where_clause_typed,
-            where_document=cast(WhereDocument, where_document)
-            if where_document
-            else None,
+        # Search directly in Decision fields
+        all_decisions = get_all_decisions(
+            selector={"group_name": selected_group} if selected_group else None,
         )
-        result_ids = results["ids"]
-
+        decisions = [
+            d for d in all_decisions if matches_search(d, search_text, search_type)
+        ]
     elif search_type == _("Semantic"):
+        decision_collection = get_unified_collection()
+
+        # Build where clause to filter by source_type = "decision" and optionally by group
+        where_clause: dict[str, str] = {"source_type": Decision.__name__}
+        if selected_group:
+            where_clause["group_name"] = selected_group
+        where_clause_typed = cast(Where, where_clause)
+
         results = decision_collection.query(
             query_texts=[search_text],
             n_results=100,  # Get top 100 results for semantic search
@@ -106,16 +109,11 @@ if search_text:
         if results["distances"]:
             distances = results["distances"][0]
 
-    decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
-    total_count = len(decisions)
+        decisions = [cast(Decision, Decision.get(id)) for id in result_ids]
 else:
     decisions = get_all_decisions(
         selector={"group_name": selected_group} if selected_group else None,
     )
-
-if not search_text:
-    decisions = sorted(decisions, key=lambda p: p.date, reverse=True)
-
 
 df_display = {
     _("Date"): [d.date for d in decisions],
