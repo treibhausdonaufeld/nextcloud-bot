@@ -96,14 +96,16 @@ selected_group = col1.selectbox(
     options=([""] + groups_with_count()),
     placeholder=_("Select a group"),
 )
-# query_text = col2.text_input(_("Search protocols"), "")
-# ai_enabled = col3.checkbox(
-#     _("Use AI to answer"),
-#     value=True if settings.gemini_api_key else False,
-#     disabled=not settings.gemini_api_key,
-# )
-query_text = None
-ai_enabled = False
+if settings.gemini_api_key:
+    query_text = col2.text_input(_("Search protocols"), "")
+    ai_enabled = col3.checkbox(
+        _("Use AI to answer"),
+        value=True if settings.gemini_api_key else False,
+        disabled=not settings.gemini_api_key,
+    )
+else:
+    query_text = None
+    ai_enabled = False
 
 if selected_group and not query_text:
     protocols = [p for p in get_all_protocols() if p.group_name == selected_group]
@@ -186,6 +188,7 @@ if protocols:
                 _("Date"): protocol.date,
                 _("Title"): link if link else title,
                 _("Group"): protocol.group_name,
+                _("AI Summary"): protocol.ai_summary or "",
                 _("Moderated by"): display_users(protocol.moderated_by),
                 _("Protocol by"): display_users(protocol.protocol_by),
                 _("Participants"): display_users(protocol.participants),
