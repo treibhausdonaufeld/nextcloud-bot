@@ -110,16 +110,20 @@ elif query_text:
     where_clause: Where = cast(
         Where,
         {
-            "source_type": "page",
-            "subtype": PageSubtype.PROTOCOL.value,
+            "$and": [
+                {"source_type": {"$eq": "page"}},
+                {"subtype": {"$eq": PageSubtype.PROTOCOL.value}},
+            ]
         },
     )
     if selected_group:
         where_clause = cast(
             Where,
             {
-                "subtype": PageSubtype.PROTOCOL.value,
-                "group_name": selected_group,
+                "$and": [
+                    {"subtype": {"$eq": PageSubtype.PROTOCOL.value}},
+                    {"group_name": {"$eq": selected_group}},
+                ]
             },
         )
 
