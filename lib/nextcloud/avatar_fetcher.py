@@ -72,8 +72,9 @@ class AvatarFetcher:
             with avatar_path_jpg.open("wb") as out_file:
                 out_file.write(response.content)
 
-            # copy avatar_path_tmp to avatar_path_dot_jpg
-            shutil.copy(avatar_path_jpg, avatar_path_dot_jpg)
+            # copy to dot_jpg path only if it's different
+            if avatar_path_jpg != avatar_path_dot_jpg:
+                shutil.copy(avatar_path_jpg, avatar_path_dot_jpg)
 
             avatar_path_tmp.unlink()
         except Exception as e:
