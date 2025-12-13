@@ -54,7 +54,7 @@ search_type = col3.radio(
     _("Search Type"),
     options=[_("Semantic"), _("Any"), _("All"), _("Exact")],
     captions=[_("Semantic Search"), _("Any word"), _("All words"), _("Exact Match")],
-    index=0,
+    index=1,
     horizontal=True,
 )
 
