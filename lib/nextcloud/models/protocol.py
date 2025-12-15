@@ -176,6 +176,9 @@ class Protocol(CouchDBModel):
             )
         lines[0] = ""  # remove title line
 
+        if bot_config.organisation.protocol_decision_example_title in title:
+            return None  # skip example decisions
+
         decision = Decision(
             title=title,
             date=self.date,

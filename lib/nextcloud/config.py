@@ -31,6 +31,7 @@ class OrganisationConfig(BaseModel):
 
     # template keyword inside protocols
     protocol_template_keyword: str = "# Vorlagen"
+    protocol_decision_example_title: str = "Titel in erster Reihe und fett"
 
     # notification settings for protocols
     protocol_max_age_days: int = 14
