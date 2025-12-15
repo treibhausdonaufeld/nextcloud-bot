@@ -33,6 +33,9 @@ class OrganisationConfig(BaseModel):
     protocol_template_keyword: str = "# Vorlagen"
     protocol_decision_example_title: str = "Titel in erster Reihe und fett"
 
+    # cooldown time to wait before parsing a protocol
+    protocol_cooldown_minutes: int = 60
+
     # notification settings for protocols
     protocol_max_age_days: int = 14
 

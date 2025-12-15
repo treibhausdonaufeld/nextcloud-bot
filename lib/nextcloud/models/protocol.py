@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from datetime import date as dateType
 from datetime import datetime
 from functools import cached_property
@@ -385,9 +386,29 @@ class Protocol(CouchDBModel):
                 logger.info("Skipping AI summary: no page content available")
 
     def update_from_page(self) -> None:
+        """
+        Update the Protocol fields from the associated CollectivePage content.
+        Parses the page content to extract moderated_by, protocol_by, participants,
+        and updates the date and group_id if possible.
+        """
         page = self.page
         if not page or not page.content:
             raise ValueError("Cannot update Group: page content is missing")
+
+        # return early if not cooled down yet
+        if (
+            page.timestamp
+            and time.time() - page.timestamp
+            < bot_config.organisation.protocol_cooldown_minutes * 60
+        ):
+            page.ocs.timestamp = 1  # reset timestamp fetch page again next time
+            page.save()
+
+            logger.info(
+                "Skipping protocol update for %s: cooldown period not yet passed",
+                self.build_id(),
+            )
+            return
 
         if self.valid_date(page.title):
             self.date = page.title.split(" ")[0]  # first word as date
