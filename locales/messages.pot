@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-12-04 08:41+0100\n"
+"POT-Creation-Date: 2025-12-15 20:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,8 +51,8 @@ msgstr ""
 msgid "Load full pages instead of excerpts"
 msgstr ""
 
-#: ./app.py:140 ./pages/protocols.py:183 ./pages/protocols.py:191
-#: ./pages/protocols.py:203 ./pages/protocols.py:204
+#: ./app.py:140 ./pages/protocols.py:191 ./pages/protocols.py:199
+#: ./pages/protocols.py:211 ./pages/protocols.py:212
 msgid "AI Summary"
 msgstr ""
 
@@ -64,7 +64,7 @@ msgstr ""
 msgid "Searching documents..."
 msgstr ""
 
-#: ./app.py:178 ./pages/protocols.py:146
+#: ./app.py:178 ./pages/protocols.py:154
 msgid "Answer"
 msgstr ""
 
@@ -85,13 +85,11 @@ msgid "Page"
 msgstr ""
 
 #: ./app.py:216 ./app.py:230 ./pages/collective_pages.py:42
-#: ./pages/logbook.py:123 ./pages/protocols.py:181 ./pages/protocols.py:194
-#: ./pages/protocols.py:195
+#: ./pages/protocols.py:189 ./pages/protocols.py:202 ./pages/protocols.py:203
 msgid "Title"
 msgstr ""
 
-#: ./app.py:217 ./pages/logbook.py:121 ./pages/logbook.py:135
-#: ./pages/logbook.py:136 ./pages/protocols.py:180
+#: ./app.py:217 ./pages/logbook.py:142 ./pages/protocols.py:188
 msgid "Date"
 msgstr ""
 
@@ -112,13 +110,12 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: ./app.py:235 ./pages/collective_pages.py:54 ./pages/mentions.py:199
-msgid "Open page"
+#: ./app.py:235
+msgid "Link"
 msgstr ""
 
-#: ./app.py:235 ./pages/logbook.py:127 ./pages/logbook.py:140
-#: ./pages/logbook.py:141
-msgid "Link"
+#: ./app.py:235 ./pages/collective_pages.py:54 ./pages/mentions.py:199
+msgid "Open page"
 msgstr ""
 
 #: ./app.py:242
@@ -217,11 +214,11 @@ msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:303 ./pages/logbook.py:126
+#: ./lib/nextcloud/models/protocol.py:303 ./pages/logbook.py:156
 msgid "Objections"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:306
+#: ./lib/nextcloud/models/protocol.py:306 ./pages/logbook.py:181
 msgid "Valid until"
 msgstr ""
 
@@ -365,19 +362,19 @@ msgstr ""
 msgid "Search Type"
 msgstr ""
 
-#: ./pages/logbook.py:55 ./pages/logbook.py:77
-msgid "Any"
-msgstr ""
-
-#: ./pages/logbook.py:55 ./pages/logbook.py:77 ./pages/logbook.py:79
+#: ./pages/logbook.py:55 ./pages/logbook.py:73 ./pages/logbook.py:86
 msgid "Exact"
 msgstr ""
 
-#: ./pages/logbook.py:55 ./pages/logbook.py:77 ./pages/logbook.py:82
+#: ./pages/logbook.py:55 ./pages/logbook.py:75 ./pages/logbook.py:86
 msgid "All"
 msgstr ""
 
-#: ./pages/logbook.py:55 ./pages/logbook.py:98
+#: ./pages/logbook.py:55 ./pages/logbook.py:78 ./pages/logbook.py:86
+msgid "Any"
+msgstr ""
+
+#: ./pages/logbook.py:55 ./pages/logbook.py:94
 msgid "Semantic"
 msgstr ""
 
@@ -397,31 +394,75 @@ msgstr ""
 msgid "Exact Match"
 msgstr ""
 
-#: ./pages/logbook.py:122 ./pages/protocols.py:182
+#: ./pages/logbook.py:129
+msgid "Decision Details"
+msgstr ""
+
+#: ./pages/logbook.py:135
+msgid "Decision not found"
+msgstr ""
+
+#: ./pages/logbook.py:138 ./pages/logbook.py:172
+msgid "No Title"
+msgstr ""
+
+#: ./pages/logbook.py:143 ./pages/protocols.py:190
 msgid "Group"
 msgstr ""
 
-#: ./pages/logbook.py:124 ./pages/logbook.py:139
-msgid "Text"
-msgstr ""
-
-#: ./pages/logbook.py:125
+#: ./pages/logbook.py:145
 msgid "Valid Until"
 msgstr ""
 
-#: ./pages/logbook.py:130
+#: ./pages/logbook.py:147 ./pages/logbook.py:183
 msgid "Distance"
 msgstr ""
 
-#: ./pages/logbook.py:141
+#: ./pages/logbook.py:151
+msgid "Text"
+msgstr ""
+
+#: ./pages/logbook.py:152
+msgid "No text available"
+msgstr ""
+
+#: ./pages/logbook.py:162
 msgid "Open protocol"
 msgstr ""
 
-#: ./pages/logbook.py:153
+#: ./pages/logbook.py:193
+msgid "View Details"
+msgstr ""
+
+#: ./pages/logbook.py:198
+msgid "Open Link"
+msgstr ""
+
+#: ./pages/logbook.py:203
+msgid "No decisions found."
+msgstr ""
+
+#: ./pages/logbook.py:222
+msgid "Items per page"
+msgstr ""
+
+#: ./pages/logbook.py:246
+msgid "decisions found"
+msgstr ""
+
+#: ./pages/logbook.py:246
+msgid "Showing"
+msgstr ""
+
+#: ./pages/logbook.py:308
+msgid "Go to page"
+msgstr ""
+
+#: ./pages/logbook.py:322
 msgid "Upload XLSX file with previous decisions to import"
 msgstr ""
 
-#: ./pages/logbook.py:166
+#: ./pages/logbook.py:335
 msgid "Importing file..."
 msgstr ""
 
@@ -471,47 +512,47 @@ msgstr ""
 msgid "No mentions found."
 msgstr ""
 
-#: ./pages/protocols.py:99
+#: ./pages/protocols.py:100
 msgid "Search protocols"
 msgstr ""
 
-#: ./pages/protocols.py:101
+#: ./pages/protocols.py:102
 msgid "Use AI to answer"
 msgstr ""
 
-#: ./pages/protocols.py:184
+#: ./pages/protocols.py:192
 msgid "Moderated by"
 msgstr ""
 
-#: ./pages/protocols.py:185
+#: ./pages/protocols.py:193
 msgid "Protocol by"
 msgstr ""
 
-#: ./pages/protocols.py:186
+#: ./pages/protocols.py:194
 msgid "Participants"
 msgstr ""
 
-#: ./pages/protocols.py:205
+#: ./pages/protocols.py:213
 msgid "Click to expand"
 msgstr ""
 
-#: ./pages/protocols.py:216
+#: ./pages/protocols.py:224
 msgid "Member Statistics for"
 msgstr ""
 
-#: ./pages/protocols.py:262
+#: ./pages/protocols.py:270
 msgid "Member"
 msgstr ""
 
-#: ./pages/protocols.py:263
+#: ./pages/protocols.py:271
 msgid "Moderated"
 msgstr ""
 
-#: ./pages/protocols.py:264
+#: ./pages/protocols.py:272
 msgid "Wrote Protocol"
 msgstr ""
 
-#: ./pages/protocols.py:265
+#: ./pages/protocols.py:273
 msgid "Attended"
 msgstr ""
 

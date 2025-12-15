@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-12-04 08:41+0100\n"
+"POT-Creation-Date: 2025-12-15 20:22+0100\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -48,8 +48,8 @@ msgstr "Vollständige Seiten"
 msgid "Load full pages instead of excerpts"
 msgstr "Vollständige Seiten statt Auszügen laden"
 
-#: app.py:140 pages/protocols.py:183 pages/protocols.py:191
-#: pages/protocols.py:203 pages/protocols.py:204
+#: app.py:140 pages/protocols.py:191 pages/protocols.py:199
+#: pages/protocols.py:211 pages/protocols.py:212
 msgid "AI Summary"
 msgstr "KI-Zusammenfassung"
 
@@ -61,7 +61,7 @@ msgstr "KI-Zusammenfassung der Ergebnisse erzeugen"
 msgid "Searching documents..."
 msgstr "Durchsuche Dokumente..."
 
-#: app.py:178 pages/protocols.py:146
+#: app.py:178 pages/protocols.py:154
 msgid "Answer"
 msgstr "Antwort"
 
@@ -81,13 +81,12 @@ msgstr "Typ"
 msgid "Page"
 msgstr "Seite"
 
-#: app.py:216 app.py:230 pages/collective_pages.py:42 pages/logbook.py:123
-#: pages/protocols.py:181 pages/protocols.py:194 pages/protocols.py:195
+#: app.py:216 app.py:230 pages/collective_pages.py:42 pages/protocols.py:189
+#: pages/protocols.py:202 pages/protocols.py:203
 msgid "Title"
 msgstr "Titel"
 
-#: app.py:217 pages/logbook.py:121 pages/logbook.py:135 pages/logbook.py:136
-#: pages/protocols.py:180
+#: app.py:217 pages/logbook.py:142 pages/protocols.py:188
 msgid "Date"
 msgstr "Datum"
 
@@ -108,13 +107,13 @@ msgstr "Seiten-ID"
 msgid "URL"
 msgstr "URL"
 
+#: app.py:235
+msgid "Link"
+msgstr "Link"
+
 #: app.py:235 pages/collective_pages.py:54 pages/mentions.py:199
 msgid "Open page"
 msgstr "Seite öffnen"
-
-#: app.py:235 pages/logbook.py:127 pages/logbook.py:140 pages/logbook.py:141
-msgid "Link"
-msgstr "Link"
 
 #: app.py:242
 msgid "No matching pages found."
@@ -182,13 +181,13 @@ msgid ""
 msgstr ""
 "Hallo {displayname},\n"
 "\n"
-"Das Protokoll [{protocol}]({url}) wirkt im Großen und Ganzen in Ordnung, "
-"es gibt jedoch ein paar Punkte zu korrigieren:\n"
+"Das Protokoll [{protocol}]({url}) wirkt im Großen und Ganzen in Ordnung, es "
+"gibt jedoch ein paar Punkte zu korrigieren:\n"
 "\n"
 "- {issues}\n"
 "\n"
-"Bitte behebe diese bei der nächsten Bearbeitung des Protokolls (kein "
-"Stress, nimm dir Zeit!). Danke!"
+"Bitte behebe diese bei der nächsten Bearbeitung des Protokolls (kein Stress, "
+"nimm dir Zeit!). Danke!"
 
 #: lib/nextcloud/models/protocol.py:280
 msgid ""
@@ -228,11 +227,11 @@ msgstr "Teilnehmende: "
 msgid "Decisions made:\n"
 msgstr "Getroffene Entscheidungen:\n"
 
-#: lib/nextcloud/models/protocol.py:303 pages/logbook.py:126
+#: lib/nextcloud/models/protocol.py:303 pages/logbook.py:156
 msgid "Objections"
 msgstr "Einwände"
 
-#: lib/nextcloud/models/protocol.py:306
+#: lib/nextcloud/models/protocol.py:306 pages/logbook.py:181
 msgid "Valid until"
 msgstr "Gültig bis"
 
@@ -379,19 +378,19 @@ msgstr "Suchen"
 msgid "Search Type"
 msgstr "Suchtyp"
 
-#: pages/logbook.py:55 pages/logbook.py:77
-msgid "Any"
-msgstr "Beliebig"
-
-#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:79
+#: pages/logbook.py:55 pages/logbook.py:73 pages/logbook.py:86
 msgid "Exact"
 msgstr "Genau"
 
-#: pages/logbook.py:55 pages/logbook.py:77 pages/logbook.py:82
+#: pages/logbook.py:55 pages/logbook.py:75 pages/logbook.py:86
 msgid "All"
 msgstr "Alle"
 
-#: pages/logbook.py:55 pages/logbook.py:98
+#: pages/logbook.py:55 pages/logbook.py:78 pages/logbook.py:86
+msgid "Any"
+msgstr "Beliebig"
+
+#: pages/logbook.py:55 pages/logbook.py:94
 msgid "Semantic"
 msgstr "Semantisch"
 
@@ -411,31 +410,75 @@ msgstr "Alle Wörter"
 msgid "Exact Match"
 msgstr "Exakte Übereinstimmung"
 
-#: pages/logbook.py:122 pages/protocols.py:182
+#: pages/logbook.py:129
+msgid "Decision Details"
+msgstr "Entscheidungsdetails"
+
+#: pages/logbook.py:135
+msgid "Decision not found"
+msgstr "Entscheidung nicht gefunden"
+
+#: pages/logbook.py:138 pages/logbook.py:172
+msgid "No Title"
+msgstr "Kein Titel"
+
+#: pages/logbook.py:143 pages/protocols.py:190
 msgid "Group"
 msgstr "Gruppe"
 
-#: pages/logbook.py:124 pages/logbook.py:139
-msgid "Text"
-msgstr "Text"
-
-#: pages/logbook.py:125
+#: pages/logbook.py:145
 msgid "Valid Until"
 msgstr "Gültig bis"
 
-#: pages/logbook.py:130
+#: pages/logbook.py:147 pages/logbook.py:183
 msgid "Distance"
 msgstr "Entfernung"
 
-#: pages/logbook.py:141
+#: pages/logbook.py:151
+msgid "Text"
+msgstr "Text"
+
+#: pages/logbook.py:152
+msgid "No text available"
+msgstr "Kein Text verfügbar"
+
+#: pages/logbook.py:162
 msgid "Open protocol"
 msgstr "Protokoll öffnen"
 
-#: pages/logbook.py:153
+#: pages/logbook.py:193
+msgid "View Details"
+msgstr "Details anzeigen"
+
+#: pages/logbook.py:198
+msgid "Open Link"
+msgstr "Link öffnen"
+
+#: pages/logbook.py:203
+msgid "No decisions found."
+msgstr "Keine Entscheidungen gefunden."
+
+#: pages/logbook.py:222
+msgid "Items per page"
+msgstr "Einträge pro Seite"
+
+#: pages/logbook.py:246
+msgid "decisions found"
+msgstr "Entscheidungen gefunden"
+
+#: pages/logbook.py:246
+msgid "Showing"
+msgstr "Anzeigen"
+
+#: pages/logbook.py:308
+msgid "Go to page"
+msgstr "Zur Seite springen"
+
+#: pages/logbook.py:322
 msgid "Upload XLSX file with previous decisions to import"
 msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
 
-#: pages/logbook.py:166
+#: pages/logbook.py:335
 msgid "Importing file..."
 msgstr "Datei wird importiert..."
 
@@ -485,47 +528,47 @@ msgstr "Kein Textausschnitt verfügbar"
 msgid "No mentions found."
 msgstr "Keine Erwähnungen gefunden."
 
-#: pages/protocols.py:99
+#: pages/protocols.py:100
 msgid "Search protocols"
 msgstr "Protokolle durchsuchen"
 
-#: pages/protocols.py:101
+#: pages/protocols.py:102
 msgid "Use AI to answer"
 msgstr "KI zur Beantwortung verwenden"
 
-#: pages/protocols.py:184
+#: pages/protocols.py:192
 msgid "Moderated by"
 msgstr "Moderiert von"
 
-#: pages/protocols.py:185
+#: pages/protocols.py:193
 msgid "Protocol by"
 msgstr "Protokoll von"
 
-#: pages/protocols.py:186
+#: pages/protocols.py:194
 msgid "Participants"
 msgstr "Teilnehmende"
 
-#: pages/protocols.py:205
+#: pages/protocols.py:213
 msgid "Click to expand"
 msgstr "Zum Erweitern klicken"
 
-#: pages/protocols.py:216
+#: pages/protocols.py:224
 msgid "Member Statistics for"
 msgstr "Mitgliederstatistik für"
 
-#: pages/protocols.py:262
+#: pages/protocols.py:270
 msgid "Member"
 msgstr "Mitglied"
 
-#: pages/protocols.py:263
+#: pages/protocols.py:271
 msgid "Moderated"
 msgstr "Moderiert"
 
-#: pages/protocols.py:264
+#: pages/protocols.py:272
 msgid "Wrote Protocol"
 msgstr "Protokoll verfasst"
 
-#: pages/protocols.py:265
+#: pages/protocols.py:273
 msgid "Attended"
 msgstr "Teilgenommen"
 
