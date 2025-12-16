@@ -39,7 +39,7 @@ st.title(title)
 filter_container = st.container()
 
 # Add filter for group
-col1, col2, col3 = filter_container.columns((1, 3, 3))
+col1, col2, col3 = filter_container.columns((2, 2, 1))
 selected_group = col1.selectbox(
     label=_("Filter by group"),
     options=([""] + get_group_names()),
@@ -50,12 +50,12 @@ search_text = col2.text_input(
     _("Search"),
     "",
 )
-search_type = col3.radio(
-    _("Search Type"),
+search_type = col3.selectbox(
+    label=_("Search Type"),
     options=[_("Semantic"), _("Any"), _("All"), _("Exact")],
-    captions=[_("Semantic Search"), _("Any word"), _("All words"), _("Exact Match")],
+    # captions=[_("Semantic Search"), _("Any word"), _("All words"), _("Exact Match")],
     index=1,
-    horizontal=True,
+    # horizontal=True,
 )
 
 ## fetch data
