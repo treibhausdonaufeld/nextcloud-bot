@@ -598,3 +598,53 @@ class TestProtocolNotificationDateConstraints:
             mock_group,
             protocol_page_content,
         )
+
+    def test_protocol_cooldown_respected(
+        self,
+        mock_protocol,
+        mock_page,
+        mock_bot_config,
+        mock_group,
+        protocol_page_content,
+    ):
+        """Ensure protocol is not parsed while within cooldown and is parsed after cooldown expires."""
+        # Use datetime.timestamp() to avoid importing time in this test file
+        now_ts = datetime.now().timestamp()
+
+        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+            # Ensure a known cooldown value
+            mock_bot_config.organisation.protocol_cooldown_minutes = 60
+
+            # Prepare page with recent timestamp (within cooldown)
+            mock_page.title = f"{datetime.now().date().strftime('%Y-%m-%d')} Test Group"
+            mock_page.content = protocol_page_content
+            mock_page.timestamp = now_ts
+            mock_page.ocs = Mock()
+            mock_page.ocs.timestamp = now_ts
+
+            with patch.object(Protocol, "page", property(lambda self: mock_page)):
+                with patch.object(Decision, "get_all", return_value=[]):
+                    with patch("lib.nextcloud.models.protocol.Group") as MockGroup:
+                        MockGroup.get_for_page.return_value = mock_group
+                        MockGroup.get.return_value = mock_group
+
+                        with patch.object(Protocol, "notify_updated") as mock_notify:
+                            with patch.object(CouchDBModel, "save"):
+                                # First update: timestamp is recent -> should be skipped due to cooldown
+                                mock_protocol.update_from_page()
+                                mock_notify.assert_not_called()
+
+                                # Now simulate timestamp older than cooldown -> should trigger parsing/notification
+                                old_ts = (
+                                    now_ts
+                                    - (
+                                        mock_bot_config.organisation.protocol_cooldown_minutes
+                                        * 60
+                                    )
+                                    - 1
+                                )
+                                mock_page.timestamp = old_ts
+                                mock_page.ocs.timestamp = old_ts
+
+                                mock_protocol.update_from_page()
+                                mock_notify.assert_called_once()

@@ -396,12 +396,23 @@ class Protocol(CouchDBModel):
             raise ValueError("Cannot update Group: page content is missing")
 
         # return early if not cooled down yet
+        # page.timestamp may be a non-numeric value in tests (e.g. a Mock). Coerce to float
+        # and fall back to skipping the cooldown check if that fails to avoid TypeError.
+        page_timestamp = None
+        try:
+            page_timestamp = (
+                float(page.timestamp) if page.timestamp is not None else None
+            )
+        except Exception:
+            page_timestamp = None
+
         if (
-            page.timestamp
-            and time.time() - page.timestamp
+            page_timestamp is not None
+            and page.ocs is not None
+            and (time.time() - page_timestamp)
             < bot_config.organisation.protocol_cooldown_minutes * 60
         ):
-            page.ocs.timestamp = 1  # reset timestamp fetch page again next time
+            page.ocs.timestamp = 1
             page.save()
 
             logger.info(

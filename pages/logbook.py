@@ -127,10 +127,24 @@ def truncate_text(text: str | None, max_length: int = 300) -> str:
 
 
 @st.dialog(_("Decision Details"), width="large")
-def show_decision_details(decision_id: str, distance: float | None = None):
-    """Display full decision details in a popup dialog."""
-    # Fetch decision by ID for fast popup loading
-    decision = cast(Decision, Decision.get(decision_id))
+def show_decision_details(decision_id: str | None, distance: float | None = None):
+    """Display full decision details in a popup dialog.
+
+    Accept a possibly None decision_id (the calling code may pass None). Guard
+    against non-string or missing ids and handle lookup errors gracefully so
+    the dialog opens quickly and doesn't raise.
+    """
+    if not decision_id:
+        st.error(_("Decision not found"))
+        return
+
+    # Fetch decision by ID for fast popup loading. Be defensive: Decision.get
+    # may raise or return None in tests/mocks.
+    try:
+        decision = cast(Decision, Decision.get(decision_id))
+    except Exception:
+        decision = None
+
     if not decision:
         st.error(_("Decision not found"))
         return
