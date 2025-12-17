@@ -159,9 +159,9 @@ class Protocol(CouchDBModel):
                 .replace("__", "")
                 .strip("*")
                 .strip("_")
+                .strip("\\")
                 .strip("\n")
                 .strip("\r")
-                .strip()
             )
 
         lines = block.strip().splitlines()
@@ -170,12 +170,13 @@ class Protocol(CouchDBModel):
 
         title = clean_line(lines[0])
         for title_kw in bot_config.organisation.decision_title_keywords:
-            title = (
+            title = clean_line(
                 re.sub(rf"^{title_kw}[:\s\-]*", "", title, flags=re.IGNORECASE)
                 .strip(":")
                 .strip()
             )
-        lines[0] = ""  # remove title line
+        # remove first line
+        lines = lines[1:]
 
         if bot_config.organisation.protocol_decision_example_title in title:
             return None  # skip example decisions
@@ -189,11 +190,8 @@ class Protocol(CouchDBModel):
         )
 
         # iterate over all lines and check each line for keywords
-        for i, line in enumerate(lines[1:], start=1):
+        for i, line in enumerate(lines):
             line = clean_line(line)
-            if not line or decision.objections:
-                # skip all lines if objections already found
-                continue
 
             for valid_until_kw in bot_config.organisation.decision_valid_until_keywords:
                 if re.match(rf"^{valid_until_kw}[:\s\-]*", line, flags=re.IGNORECASE):
@@ -202,7 +200,7 @@ class Protocol(CouchDBModel):
                             rf"^{valid_until_kw}[:\s\-]*", "", line, flags=re.IGNORECASE
                         )
                     )
-                    lines[i] = line = ""  # remove line
+                    line = ""  # remove line after processing
 
             for objection_kw in bot_config.organisation.decision_objection_keywords:
                 if re.match(rf"^{objection_kw}[:\s\-]*", line, flags=re.IGNORECASE):
@@ -213,13 +211,14 @@ class Protocol(CouchDBModel):
                     )
                     if len(lines) > i + 1:
                         # add all following lines as objections too
-                        decision.objections += " ".join(
+                        decision.objections += "\n".join(
                             [clean_line(last_lines) for last_lines in lines[i + 1 :]]
                         )
-                    lines[i] = line = ""  # remove line
 
-            if line:
-                decision.text += line + " "
+            if decision.objections:
+                break  # stop processing lines after objections were set
+
+            decision.text += line + "\n"
 
         # always fill title
         if not title:

@@ -149,7 +149,9 @@ def show_decision_details(decision_id: str | None, distance: float | None = None
         st.error(_("Decision not found"))
         return
 
-    st.markdown(f"### {decision.title or _('No Title')}")
+    st.markdown(f"# {decision.title or _('No Title')}")
+
+    link = decision.page.url if decision.page else decision.external_link
 
     col1, col2 = st.columns(2)
     with col1:
@@ -157,23 +159,15 @@ def show_decision_details(decision_id: str | None, distance: float | None = None
         st.markdown(f"**{_('Group')}:** {decision.group_name or '-'}")
     with col2:
         st.markdown(f"**{_('Valid Until')}:** {decision.valid_until or '-'}")
-        if distance is not None:
-            st.markdown(f"**{_('Distance')}:** {distance:.4f}")
+        if link:
+            st.link_button(_("Open protocol"), link)
 
-    st.divider()
-
-    st.markdown(f"**{_('Text')}:**")
+    st.markdown(f"### {_('Text')}")
     st.markdown(decision.text or _("No text available"))
 
     if decision.objections:
-        st.divider()
-        st.markdown(f"**{_('Objections')}:**")
+        st.markdown(f"### {_('Objections')}")
         st.markdown(decision.objections)
-
-    link = decision.page.url if decision.page else decision.external_link
-    if link:
-        st.divider()
-        st.link_button(_("Open protocol"), link)
 
 
 def render_decision_card(decision: Decision, idx: int, distance: float | None = None):

@@ -63,6 +63,7 @@ class OrganisationConfig(BaseModel):
             "moderator",
             "moderatorin",
             "moderator:in",
+            "moderiert von",
         ]
     )
     participant_person_keywords: List[str] = Field(
