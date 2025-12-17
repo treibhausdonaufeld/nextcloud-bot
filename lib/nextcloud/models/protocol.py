@@ -37,6 +37,8 @@ class Protocol(CouchDBModel):
         return f"{self.__class__.__name__}:{self.page_id}"
 
     def __str__(self) -> str:
+        if self.page:
+            return f"{self.page.title}"
         return f"{self.date} {self.group_name or 'No Group'}"
 
     @cached_property
@@ -90,18 +92,28 @@ class Protocol(CouchDBModel):
     @classmethod
     def is_valid_protocol_title(cls, title: str) -> bool:
         """Check if the given title corresponds to a valid protocol title."""
-        _date_str, group_name = title.split(" ", 1)
-        try:
-            Group.get_by_name(group_name)  # check if group exists
-        except ValueError:
-            # Group doesn't exist, check if title would still be valid from extra_groups
-            extra_groups = bot_config.organisation.extra_groups
-            if group_name.upper() not in extra_groups.keys() and all(
-                group_name.upper() not in names for names in extra_groups.values()
-            ):
-                return False
 
-        return True and cls.valid_date(title)
+        def is_valid_group_name(name: str) -> bool:
+            try:
+                Group.get_by_name(name)  # check if group exists
+            except ValueError:
+                # Group doesn't exist, check if title would still be valid from extra_groups
+                extra_groups = bot_config.organisation.extra_groups
+                if name.upper() not in extra_groups.keys() and all(
+                    name.upper() not in names for names in extra_groups.values()
+                ):
+                    return False
+            return True
+
+        _date_str, protocol_group = title.split(" ", 1)
+
+        check = is_valid_group_name(protocol_group)
+        while not check and " " in protocol_group:
+            # try removing last word
+            protocol_group = " ".join(protocol_group.split(" ")[:-1])
+            check = is_valid_group_name(protocol_group)
+
+        return check and cls.valid_date(title)
 
     @classmethod
     def is_protocol_page(cls, page: "CollectivePage") -> bool:
@@ -157,8 +169,6 @@ class Protocol(CouchDBModel):
             return (
                 line.replace("**", "")
                 .replace("__", "")
-                .strip("*")
-                .strip("_")
                 .strip("\\")
                 .strip("\n")
                 .strip("\r")
