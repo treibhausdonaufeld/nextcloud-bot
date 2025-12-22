@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-12-15 20:22+0100\n"
+"POT-Creation-Date: 2025-12-22 19:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,11 +76,11 @@ msgstr ""
 msgid "Decision"
 msgstr ""
 
-#: ./app.py:213 ./app.py:229 ./pages/mentions.py:201
+#: ./app.py:213 ./app.py:229 ./pages/mentions.py:473
 msgid "Type"
 msgstr ""
 
-#: ./app.py:215 ./pages/mentions.py:188
+#: ./app.py:215 ./pages/mentions.py:460
 msgid "Page"
 msgstr ""
 
@@ -89,7 +89,7 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: ./app.py:217 ./pages/logbook.py:142 ./pages/protocols.py:188
+#: ./app.py:217 ./pages/logbook.py:158 ./pages/protocols.py:188
 msgid "Date"
 msgstr ""
 
@@ -114,7 +114,8 @@ msgstr ""
 msgid "Link"
 msgstr ""
 
-#: ./app.py:235 ./pages/collective_pages.py:54 ./pages/mentions.py:199
+#: ./app.py:235 ./pages/collective_pages.py:54 ./pages/mentions.py:383
+#: ./pages/mentions.py:471
 msgid "Open page"
 msgstr ""
 
@@ -126,7 +127,7 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-#: ./lib/menu.py:27 ./pages/groups.py:78 ./pages/mentions.py:140
+#: ./lib/menu.py:27 ./pages/groups.py:78 ./pages/mentions.py:410
 msgid "Groups"
 msgstr ""
 
@@ -142,35 +143,40 @@ msgstr ""
 msgid "Logbook"
 msgstr ""
 
+#: ./lib/menu.py:31 ./pages/mentions.py:254 ./pages/mentions.py:407
+#: ./pages/mentions.py:415 ./pages/mentions.py:478
+msgid "Mentions"
+msgstr ""
+
 #: ./lib/menu.py:40
 msgid "Language"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:240
+#: ./lib/nextcloud/models/protocol.py:253
 msgid "No person listed for moderations"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:242
+#: ./lib/nextcloud/models/protocol.py:255
 msgid "No person listed for protocol"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:244
+#: ./lib/nextcloud/models/protocol.py:257
 msgid "No participants listed"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:248
+#: ./lib/nextcloud/models/protocol.py:261
 msgid "Title must have a valid date in 'YYYY-MM-DD' format"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:250
+#: ./lib/nextcloud/models/protocol.py:263
 msgid "Title must be 'YYYY-MM-DD Group Name'"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:259
+#: ./lib/nextcloud/models/protocol.py:272
 msgid "Protocol contains a '{template}' section. Please remove it!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:268
+#: ./lib/nextcloud/models/protocol.py:281
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -181,7 +187,7 @@ msgid ""
 "Please fix them when you edit the protocol the next time (no hurry, take your time!). Thank you!"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:280
+#: ./lib/nextcloud/models/protocol.py:293
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -189,44 +195,44 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:290
+#: ./lib/nextcloud/models/protocol.py:303
 msgid "Date: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:292
+#: ./lib/nextcloud/models/protocol.py:305
 msgid "Last update by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:293
+#: ./lib/nextcloud/models/protocol.py:306
 msgid "Moderated by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:294
+#: ./lib/nextcloud/models/protocol.py:307
 msgid "Protocol by: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:295
+#: ./lib/nextcloud/models/protocol.py:308
 msgid "Participants: "
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:297
+#: ./lib/nextcloud/models/protocol.py:310
 msgid ""
 "Decisions made:\n"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:303 ./pages/logbook.py:156
+#: ./lib/nextcloud/models/protocol.py:316 ./pages/logbook.py:169
 msgid "Objections"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:306 ./pages/logbook.py:181
+#: ./lib/nextcloud/models/protocol.py:319 ./pages/logbook.py:189
 msgid "Valid until"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:310
+#: ./lib/nextcloud/models/protocol.py:323
 msgid "AI Summary:"
 msgstr ""
 
-#: ./lib/nextcloud/models/protocol.py:315
+#: ./lib/nextcloud/models/protocol.py:328
 msgid "Please manually a post in the channel #{protocols}"
 msgstr ""
 
@@ -318,7 +324,7 @@ msgstr ""
 msgid "Limit to User"
 msgstr ""
 
-#: ./pages/groups.py:114
+#: ./pages/groups.py:114 ./pages/mentions.py:306
 msgid "Solver"
 msgstr ""
 
@@ -378,137 +384,180 @@ msgstr ""
 msgid "Semantic"
 msgstr ""
 
-#: ./pages/logbook.py:56
-msgid "Semantic Search"
-msgstr ""
-
-#: ./pages/logbook.py:56
-msgid "Any word"
-msgstr ""
-
-#: ./pages/logbook.py:56
-msgid "All words"
-msgstr ""
-
-#: ./pages/logbook.py:56
-msgid "Exact Match"
-msgstr ""
-
 #: ./pages/logbook.py:129
 msgid "Decision Details"
 msgstr ""
 
-#: ./pages/logbook.py:135
+#: ./pages/logbook.py:138 ./pages/logbook.py:149
 msgid "Decision not found"
 msgstr ""
 
-#: ./pages/logbook.py:138 ./pages/logbook.py:172
+#: ./pages/logbook.py:152 ./pages/logbook.py:180
 msgid "No Title"
 msgstr ""
 
-#: ./pages/logbook.py:143 ./pages/protocols.py:190
+#: ./pages/logbook.py:159 ./pages/protocols.py:190
 msgid "Group"
 msgstr ""
 
-#: ./pages/logbook.py:145
+#: ./pages/logbook.py:161
 msgid "Valid Until"
 msgstr ""
 
-#: ./pages/logbook.py:147 ./pages/logbook.py:183
-msgid "Distance"
-msgstr ""
-
-#: ./pages/logbook.py:151
-msgid "Text"
-msgstr ""
-
-#: ./pages/logbook.py:152
-msgid "No text available"
-msgstr ""
-
-#: ./pages/logbook.py:162
+#: ./pages/logbook.py:163
 msgid "Open protocol"
 msgstr ""
 
-#: ./pages/logbook.py:193
+#: ./pages/logbook.py:165
+msgid "Text"
+msgstr ""
+
+#: ./pages/logbook.py:166
+msgid "No text available"
+msgstr ""
+
+#: ./pages/logbook.py:191
+msgid "Distance"
+msgstr ""
+
+#: ./pages/logbook.py:201
 msgid "View Details"
 msgstr ""
 
-#: ./pages/logbook.py:198
+#: ./pages/logbook.py:206
 msgid "Open Link"
 msgstr ""
 
-#: ./pages/logbook.py:203
+#: ./pages/logbook.py:211
 msgid "No decisions found."
 msgstr ""
 
-#: ./pages/logbook.py:222
+#: ./pages/logbook.py:230
 msgid "Items per page"
 msgstr ""
 
-#: ./pages/logbook.py:246
+#: ./pages/logbook.py:254
 msgid "decisions found"
 msgstr ""
 
-#: ./pages/logbook.py:246
+#: ./pages/logbook.py:254
 msgid "Showing"
 msgstr ""
 
-#: ./pages/logbook.py:308
+#: ./pages/logbook.py:316
 msgid "Go to page"
 msgstr ""
 
-#: ./pages/logbook.py:322
+#: ./pages/logbook.py:330
 msgid "Upload XLSX file with previous decisions to import"
 msgstr ""
 
-#: ./pages/logbook.py:335
+#: ./pages/logbook.py:343
 msgid "Importing file..."
 msgstr ""
 
-#: ./pages/mentions.py:116 ./pages/mentions.py:137 ./pages/mentions.py:145
-#: ./pages/mentions.py:206
-msgid "Mentions"
+#: ./pages/mentions.py:271
+msgid "View Mode"
 msgstr ""
 
-#: ./pages/mentions.py:135 ./pages/mentions.py:148 ./pages/mentions.py:160
-#: ./pages/mentions.py:170
+#: ./pages/mentions.py:273
+msgid "Table View"
+msgstr ""
+
+#: ./pages/mentions.py:273
+msgid "Graph View"
+msgstr ""
+
+#: ./pages/mentions.py:279
+msgid "Mention Network"
+msgstr ""
+
+#: ./pages/mentions.py:281
+msgid "🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages (gold)"
+msgstr ""
+
+#: ./pages/mentions.py:289
+msgid "Filter by User"
+msgstr ""
+
+#: ./pages/mentions.py:293
+msgid "All Users"
+msgstr ""
+
+#: ./pages/mentions.py:297
+msgid "Filter by Page Type"
+msgstr ""
+
+#: ./pages/mentions.py:300
+msgid "All Pages"
+msgstr ""
+
+#: ./pages/mentions.py:301
+msgid "Protocols Only"
+msgstr ""
+
+#: ./pages/mentions.py:302
+msgid "Group Pages Only"
+msgstr ""
+
+#: ./pages/mentions.py:313
+msgid "Graph Height"
+msgstr ""
+
+#: ./pages/mentions.py:356
+msgid "Total pages mentioning user: {count}"
+msgstr ""
+
+#: ./pages/mentions.py:372
+msgid "... and {count} more pages"
+msgstr ""
+
+#: ./pages/mentions.py:389
+msgid "Users mentioned in this page: {count}"
+msgstr ""
+
+#: ./pages/mentions.py:397
+msgid "No data to display with current filters."
+msgstr ""
+
+#: ./pages/mentions.py:405 ./pages/mentions.py:420 ./pages/mentions.py:432
+#: ./pages/mentions.py:442
 msgid "User"
 msgstr ""
 
-#: ./pages/mentions.py:138
+#: ./pages/mentions.py:408
 msgid "Distinct Pages"
 msgstr ""
 
-#: ./pages/mentions.py:139
+#: ./pages/mentions.py:409
 msgid "Distinct Protocols"
 msgstr ""
 
-#: ./pages/mentions.py:150
+#: ./pages/mentions.py:422
 msgid "Select user for details"
 msgstr ""
 
-#: ./pages/mentions.py:152
+#: ./pages/mentions.py:424
 msgid "Select a user..."
 msgstr ""
 
-#: ./pages/mentions.py:173
+#: ./pages/mentions.py:445
 msgid "Mention Details for"
 msgstr ""
 
-#: ./pages/mentions.py:182
+#: ./pages/mentions.py:454
 msgid "Protocol"
 msgstr ""
 
-#: ./pages/mentions.py:185
+#: ./pages/mentions.py:457
 msgid "Group Page"
 msgstr ""
 
-#: ./pages/mentions.py:210
+#: ./pages/mentions.py:482
 msgid "No snippet available"
 msgstr ""
 
-#: ./pages/mentions.py:212
+#: ./pages/mentions.py:484
 msgid "No mentions found."
 msgstr ""
 
