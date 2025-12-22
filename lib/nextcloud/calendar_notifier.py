@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import caldav
-import niquests
 import pytz
 from pycouchdb.client import Database
 from pycouchdb.exceptions import NotFound
@@ -84,19 +83,10 @@ class Notifier:
                 "events": {},
             }
 
-        # Create a session with HTTP/3 disabled to avoid MustDowngradeError
-        # when the server advertises HTTP/3 support but can't handle it
-        session = niquests.Session(disable_http3=True)
-        session.auth = (
-            settings.nextcloud.admin_username,
-            settings.nextcloud.admin_password,
-        )
-
         client = caldav.DAVClient(
             url=cal_config.caldav_url,
             username=settings.nextcloud.admin_username,
             password=settings.nextcloud.admin_password,
-            session=session,
         )
         self.calendar = client.calendar(url=cal_config.caldav_url)
 
