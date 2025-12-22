@@ -97,7 +97,7 @@ all_groups = cast(list[Group], Group.get_all())
 # koordinationskreis as top_group
 
 
-cols = st.columns(6)
+cols = st.columns(7)
 hierarchical = cols[0].checkbox(_("Hierarchical layout"), value=False)
 with_members = cols[1].checkbox(_("With Members"), value=True)
 with_subgroups = cols[2].checkbox(_("With Subgroups"), value=True)
@@ -115,6 +115,7 @@ solver = cols[5].selectbox(
     options=["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"],
     index=2,
 )
+graph_height = cols[6].slider(_("Graph Height"), 300, 1200, 700, 100)
 
 if isinstance(limit_group, Group):
     top_group = limit_group
@@ -193,8 +194,8 @@ for group in top_level_groups + [top_group]:
             add_members(subgroup, nodes, edges, level=4, limit_user=limit_user)
 
 config = Config(
-    width=1000,
-    height=500,
+    width=1400,
+    height=graph_height,
     directed=False,
     nodeHighlightBehavior=True,
     highlightColor="#BE3230",
