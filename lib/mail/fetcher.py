@@ -83,6 +83,18 @@ class MailFetcher:
             logging.warning("Ignoring autoreply message: %s", message["From"])
             return
 
+        if config.restrict_sender:
+            all_emails = nc_users.get_all_emails() | set(
+                config.additional_allowed_senders
+            )
+
+            if original_sender_email.lower() not in all_emails:
+                logging.warning(
+                    "Ignoring message from unauthorized sender %s",
+                    original_sender_email,
+                )
+                return
+
         if config.reply_to_original_sender:
             if "Reply-To" in message:
                 message.replace_header("Reply-To", message["From"])

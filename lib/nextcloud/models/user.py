@@ -167,3 +167,7 @@ class NCUserList:
     def get_all_usernames(self) -> List[str]:
         """Return mail addresses for all users in given list of groups"""
         return sorted(self.users.keys())
+
+    def get_all_emails(self) -> Set[str]:
+        """Return mail addresses for all users in given list of groups"""
+        return {u.ocs.email.lower() for u in self.users.values() if u.ocs.email}

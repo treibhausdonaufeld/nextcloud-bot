@@ -138,9 +138,14 @@ class MailerListItem(BaseModel):
 
 class MailerConfig(BaseModel):
     restrict_sender: bool = False
+    additional_allowed_senders: List[str] = Field(default_factory=list)
     reply_to_original_sender: bool = True
     send_to_sender: bool = False
     lists: Dict[str, MailerListItem] = Field(default_factory=dict)
+
+    @field_validator("additional_allowed_senders", mode="before")
+    def to_lower(cls, v: List[str]) -> List[str]:
+        return [email.lower() for email in v]
 
 
 class BotConfig(BaseModel):
