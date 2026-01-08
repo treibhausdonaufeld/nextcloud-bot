@@ -1,5 +1,4 @@
 import chromadb
-import google.generativeai.client as genai
 import httpx
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
@@ -32,8 +31,6 @@ embedding_function: (
 
 # Use ChromaDB native embedding functions
 if settings.chromadb.gemini_api_key:
-    genai.configure(api_key=settings.chromadb.gemini_api_key)
-
     embedding_function = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
         api_key=settings.chromadb.gemini_api_key,
         task_type="retrieval_document",

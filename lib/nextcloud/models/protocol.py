@@ -421,7 +421,7 @@ class Protocol(CouchDBModel):
             and (time.time() - page_timestamp)
             < bot_config.organisation.protocol_cooldown_minutes * 60
         ):
-            page.ocs.timestamp = 1
+            page.updated_at = 1
             page.save()
 
             logger.info(
