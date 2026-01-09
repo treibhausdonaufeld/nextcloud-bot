@@ -30,14 +30,6 @@ class OCSUser(BaseModel):
 
     quota: dict | None = None
 
-    @field_validator("quota", mode="before")
-    @classmethod
-    def convert_empty_list_to_none(cls, v):
-        """Handle API quirk where empty quota comes as [] instead of {} or null."""
-        if isinstance(v, list) and not v:
-            return None
-        return v
-
     manager: str | None = None
     additional_mail: List[str] = Field(default_factory=list)
 
@@ -59,6 +51,14 @@ class OCSUser(BaseModel):
     notify_email: str | None = Field(None, alias="notify_email")
 
     backend_capabilities: dict | None = Field(None, alias="backendCapabilities")
+
+    @field_validator("quota", mode="before")
+    @classmethod
+    def convert_empty_list_to_none(cls, v):
+        """Handle API quirk where empty quota comes as [] instead of {} or null."""
+        if isinstance(v, list) and not v:
+            return None
+        return v
 
 
 class NCUser(CouchDBModel):
