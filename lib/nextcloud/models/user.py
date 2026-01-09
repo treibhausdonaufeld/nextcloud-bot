@@ -3,7 +3,7 @@ from functools import cached_property
 from typing import Dict, List, Set
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
@@ -28,7 +28,15 @@ class OCSUser(BaseModel):
     backend: str | None = None
     subadmin: List[str] = Field(default_factory=list)
 
-    quota: dict | None
+    quota: dict | None = None
+
+    @field_validator("quota", mode="before")
+    @classmethod
+    def convert_empty_list_to_none(cls, v):
+        """Handle API quirk where empty quota comes as [] instead of {} or null."""
+        if isinstance(v, list) and not v:
+            return None
+        return v
 
     manager: str | None = None
     additional_mail: List[str] = Field(default_factory=list)
