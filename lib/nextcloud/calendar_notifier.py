@@ -148,7 +148,8 @@ class Notifier:
         # cur["calendar"] = f"{calendar}"
         cur["summary"] = component.get("summary")
         cur["uid"] = str(component.get("uid") or "")
-        cur["description"] = component.get("description")
+        cur["description"] = str(component.get("description"))
+        cur["location"] = str(component.get("location"))
         ## month/day/year time? Never ever do that!
         ## It's one of the most confusing date formats ever!
         ## Use year-month-day time instead ... https://xkcd.com/1179/
