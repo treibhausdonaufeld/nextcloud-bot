@@ -37,7 +37,7 @@ class OrganisationConfig(BaseModel):
     protocol_cooldown_minutes: int = 60
 
     # notification settings for protocols
-    protocol_max_age_days: int = 14
+    protocol_max_age_days: int = 30
 
     decision_title_keywords: List[str] = Field(
         default_factory=lambda: ["entscheidung", "decision", "beschluss", "resolution"]
