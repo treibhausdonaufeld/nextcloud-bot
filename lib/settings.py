@@ -8,6 +8,11 @@ import sentry_sdk
 from pydantic import BaseModel, HttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Configure logging to suppress verbose HTTP logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("chromadb").setLevel(logging.WARNING)
+
 
 # Translation functions that will be updated by set_language()
 def _(message: str) -> str:

@@ -1,6 +1,7 @@
 from functools import cached_property
 from typing import List, cast
 
+
 from lib.chromadb import embedding_function, get_unified_collection
 from lib.couchdb import couchdb
 from lib.nextcloud.models.base import CouchDBModel
@@ -66,8 +67,8 @@ class Decision(CouchDBModel):
 
         return [cls(**d) for d in results.get("docs", [])]
 
-    def save(self) -> None:
-        super().save()
+    def save(self, skip_set_updated_at: bool = False) -> None:
+        super().save(skip_set_updated_at=skip_set_updated_at)
 
         if embedding_function is None:
             return

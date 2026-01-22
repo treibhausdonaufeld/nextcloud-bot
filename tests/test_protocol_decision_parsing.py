@@ -16,6 +16,7 @@ def mock_bot_config():
     """Provide a mock bot_config with default organisation settings."""
     config = MagicMock()
     config.organisation = OrganisationConfig()
+    config.organisation.protocol_max_age_days = 14
     return config
 
 

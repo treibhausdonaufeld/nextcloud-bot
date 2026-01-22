@@ -136,7 +136,15 @@ class NCUserList:
                 "User data could not be fetched, response was %s", response.text
             )
 
-        for username, user_data in response.json()["ocs"]["data"]["users"].items():
+        # Get current users from Nextcloud
+        nextcloud_users = response.json()["ocs"]["data"]["users"]
+        nextcloud_usernames = set(nextcloud_users.keys())
+
+        # Get current users from CouchDB
+        current_usernames = set(self.users.keys())
+
+        # Save/update users from Nextcloud
+        for username, user_data in nextcloud_users.items():
             if "id" in user_data:
                 user_data["nextcloud_id"] = user_data.pop("id")
             ocs_user = OCSUser(**user_data)
@@ -144,6 +152,15 @@ class NCUserList:
             user.build_id()
             user.save()
             logger.debug("Saved user %s to CouchDB", username)
+
+        # Delete users that no longer exist in Nextcloud
+        users_to_delete = current_usernames - nextcloud_usernames
+        for username in users_to_delete:
+            user = self.users[username]
+            user.delete()
+            logger.info(
+                "Deleted user %s from CouchDB (no longer exists in Nextcloud)", username
+            )
 
         # Refresh cache after updating from Nextcloud
         self.load_users()

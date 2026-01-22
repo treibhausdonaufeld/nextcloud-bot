@@ -422,7 +422,7 @@ class Protocol(CouchDBModel):
             < bot_config.organisation.protocol_cooldown_minutes * 60
         ):
             page.updated_at = 1
-            page.save()
+            page.save(skip_set_updated_at=True)
 
             logger.info(
                 "Skipping protocol update for %s: cooldown period not yet passed",

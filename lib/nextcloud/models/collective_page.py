@@ -139,10 +139,10 @@ class CollectivePage(CouchDBModel):
     ) -> List["CollectivePage"]:
         return cast(List[CollectivePage], super().get_all(*args, **kwargs))
 
-    def save(self) -> None:
+    def save(self, skip_set_updated_at: bool = False) -> None:
         from lib.nextcloud.models.group import Group
 
-        super().save()
+        super().save(skip_set_updated_at=skip_set_updated_at)
 
         if embedding_function is None:
             return

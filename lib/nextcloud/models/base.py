@@ -92,11 +92,12 @@ class CouchDBModel(BaseModel):
         """Build the document id."""
         raise NotImplementedError
 
-    def save(self) -> None:
+    def save(self, skip_set_updated_at: bool = False) -> None:
         """Save the current instance to CouchDB."""
         db = couchdb()
 
-        self.updated_at = int(datetime.now().timestamp())
+        if not skip_set_updated_at:
+            self.updated_at = int(datetime.now().timestamp())
 
         if not self.id and hasattr(self, "build_id"):
             self.id = getattr(self, "build_id")()

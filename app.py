@@ -85,7 +85,12 @@ def search_documents(query: str, n_results: int = 25) -> List[Document]:
         )
 
         documents = []
-        if results["documents"] and results["documents"][0]:
+        if (
+            results["documents"]
+            and results["documents"][0]
+            and results["metadatas"]
+            and results["metadatas"][0]
+        ):
             for doc, metadata in zip(results["documents"][0], results["metadatas"][0]):
                 if doc:  # Only include non-empty documents
                     documents.append(
