@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import caldav
+import httpx
 import pytz
 from pycouchdb.client import Database
 from pycouchdb.exceptions import NotFound
@@ -83,12 +84,14 @@ class Notifier:
                 "events": {},
             }
 
-        client = caldav.DAVClient(
-            url=cal_config.caldav_url,
-            username=settings.nextcloud.admin_username,
-            password=settings.nextcloud.admin_password,
-        )
-        self.calendar = client.calendar(url=cal_config.caldav_url)
+        # Disable HTTP/3 by only allowing HTTP/1.1 and HTTP/2
+        with httpx.Client(http1=True, http2=True):
+            client = caldav.DAVClient(
+                url=cal_config.caldav_url,
+                username=settings.nextcloud.admin_username,
+                password=settings.nextcloud.admin_password,
+            )
+            self.calendar = client.calendar(url=cal_config.caldav_url)
 
     def _local_datetime(self, date) -> str:
         """
@@ -167,12 +170,15 @@ class Notifier:
         if not self.calendar:
             return
 
-        events: list[Any] = self.calendar.search(
-            start=datetime.now() + timedelta(days=self.config.search_start_days or 0),
-            end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
-            expand=True,
-            event=True,
-        )
+        # Disable HTTP/3 by only allowing HTTP/1.1 and HTTP/2
+        with httpx.Client(http1=True, http2=True):
+            events: list[Any] = self.calendar.search(
+                start=datetime.now()
+                + timedelta(days=self.config.search_start_days or 0),
+                end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
+                expand=True,
+                event=True,
+            )
 
         for e in events:
             for component in e.icalendar_instance.walk():
@@ -188,7 +194,11 @@ class Notifier:
 
     def check_event(self, event_data):
         for channel, keywords in self.config.channel_keywords.items():
-            summary = event_data["summary"].lower()
+            summary = event_data["summary"]
+            if not summary:
+                continue
+
+            summary = summary.lower()
             if any(s in summary for s in keywords):
                 self.send_event_notification(channel, event_data)
                 break
