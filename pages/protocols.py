@@ -16,7 +16,6 @@ from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.protocol import Protocol
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
-from lib.streamlit_oauth import load_user_data
 
 
 def prompt_ai(protocols: List[Protocol], question: str) -> Generator[str, None, None]:
@@ -75,7 +74,6 @@ title = _("Protocols").format(common_name=settings.name)
 st.set_page_config(page_title=title, page_icon="📝", layout="wide")
 
 menu()
-load_user_data()
 
 db = couchdb()
 

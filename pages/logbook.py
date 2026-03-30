@@ -10,7 +10,6 @@ from lib.menu import menu
 from lib.nextcloud.models.decision import Decision
 from lib.nextcloud.models.group import Group
 from lib.settings import _, settings
-from lib.streamlit_oauth import load_user_data
 
 
 @st.cache_data(ttl=300)
@@ -32,7 +31,6 @@ title = _("Logbook").format(common_name=settings.name)
 st.set_page_config(page_title=title, page_icon="✅", layout="wide")
 
 menu()
-load_user_data()
 
 st.title(title)
 

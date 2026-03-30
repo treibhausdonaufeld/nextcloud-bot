@@ -1,7 +1,4 @@
-import time
-
 import streamlit as st
-from streamlit_cookies_controller import CookieController
 from streamlit_js_eval import get_browser_language
 
 from lib.settings import (
@@ -13,10 +10,6 @@ from lib.settings import (
 
 
 def menu():
-    if "user_data" not in st.session_state:
-        st.session_state.controller = CookieController()
-        time.sleep(0.5)
-
     language = st.session_state.language = st.session_state.get(
         "language", (get_browser_language() or settings.default_language)[0:2]
     )

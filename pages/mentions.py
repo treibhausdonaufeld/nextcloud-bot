@@ -7,7 +7,6 @@ from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage, PageSubtype
 from lib.nextcloud.models.user import NCUser, NCUserList
 from lib.settings import _, settings, user_regex
-from lib.streamlit_oauth import load_user_data
 
 node_label_font = "#E0E0E0" if st.context.theme.type == "dark" else "#2C2C2C"
 
@@ -255,7 +254,6 @@ title = _("Mentions").format(common_name=settings.name)
 st.set_page_config(page_title=title, page_icon="📣", layout="wide")
 
 menu()
-load_user_data()
 
 user_list = NCUserList()
 
@@ -288,9 +286,9 @@ if mention_counts:
         limit_user_graph = cols[0].selectbox(
             _("Filter by User"),
             options=[""] + sorted([uid for uid in user_list.users.keys()]),
-            format_func=lambda uid: str(user_list[uid].ocs.displayname)
-            if uid
-            else _("All Users"),
+            format_func=lambda uid: (
+                str(user_list[uid].ocs.displayname) if uid else _("All Users")
+            ),
             key="graph_user_filter",
         )
         limit_page_type = cols[1].selectbox(

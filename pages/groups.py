@@ -9,7 +9,6 @@ from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.group import Group
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
-from lib.streamlit_oauth import load_user_data
 
 node_label_font = "#E0E0E0" if st.context.theme.type == "dark" else "#2C2C2C"
 
@@ -79,7 +78,6 @@ title = _("Groups").format(common_name=settings.name)
 st.set_page_config(page_title=title, page_icon="⭕", layout="wide")
 
 menu()
-load_user_data()
 
 db = couchdb()
 

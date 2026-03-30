@@ -9,14 +9,12 @@ from lib.menu import menu
 from lib.nextcloud.models.collective_page import CollectivePage
 from lib.nextcloud.models.user import NCUserList
 from lib.settings import _, settings
-from lib.streamlit_oauth import load_user_data
 
 # Streamlit app starts here
 title = _("Timeline")
 st.set_page_config(page_title=title, page_icon="⌛", layout="wide")
 
 menu()
-load_user_data()
 
 db = couchdb()
 
