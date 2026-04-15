@@ -50,6 +50,10 @@ def add_members(
 ) -> None:
     members = [m for m in group.all_members if not limit_user or m == limit_user]
     for member_name in members:
+        user = user_list.get_user_by_uid(member_name)
+        if not user:
+            continue
+
         member_id = f"{group.name}:{member_name}"
 
         if member_name in group.coordination:
@@ -62,7 +66,7 @@ def add_members(
         nodes.append(
             Node(
                 id=member_id,
-                label=str(user_list[member_name]),
+                label=str(user),
                 size=10,
                 color=color,
                 title=member_name,
