@@ -153,13 +153,15 @@ class NCUserList:
             user.save()
             logger.debug("Saved user %s to CouchDB", username)
 
-        # Delete users that no longer exist in Nextcloud
-        users_to_delete = current_usernames - nextcloud_usernames
-        for username in users_to_delete:
+        # Mark users that no longer exist in Nextcloud as disabled
+        users_to_disable = current_usernames - nextcloud_usernames
+        for username in users_to_disable:
             user = self.users[username]
-            user.delete()
+            user.ocs.enabled = False
+            user.save()
             logger.info(
-                "Deleted user %s from CouchDB (no longer exists in Nextcloud)", username
+                "Marked user %s as disabled in CouchDB (no longer exists in Nextcloud)",
+                username,
             )
 
         # Refresh cache after updating from Nextcloud
@@ -192,6 +194,14 @@ class NCUserList:
     def get_all_usernames(self) -> List[str]:
         """Return mail addresses for all users in given list of groups"""
         return sorted(self.users.keys())
+
+    def get_enabled_users(self) -> List[NCUser]:
+        """Return all users that are currently enabled."""
+        return [u for u in self.users.values() if u.ocs.enabled]
+
+    def get_enabled_usernames(self) -> List[str]:
+        """Return usernames for users that are currently enabled."""
+        return sorted(u.username for u in self.get_enabled_users())
 
     def get_all_emails(self) -> Set[str]:
         """Return mail addresses for all users in given list of groups"""

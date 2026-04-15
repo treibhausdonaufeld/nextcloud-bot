@@ -260,7 +260,7 @@ user_list = NCUserList()
 st.title(title)
 
 # Get cached mention counts
-users = list(user_list.users.values())
+users = user_list.get_enabled_users()
 mention_counts = get_mention_counts(users)
 
 if mention_counts:
@@ -285,7 +285,7 @@ if mention_counts:
         cols = st.columns(4)
         limit_user_graph = cols[0].selectbox(
             _("Filter by User"),
-            options=[""] + sorted([uid for uid in user_list.users.keys()]),
+            options=[""] + user_list.get_enabled_usernames(),
             format_func=lambda uid: (
                 str(user_list[uid].ocs.displayname) if uid else _("All Users")
             ),

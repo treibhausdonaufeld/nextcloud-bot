@@ -105,7 +105,7 @@ limit_group = cols[3].selectbox(
 )
 limit_user = cols[4].selectbox(
     _("Limit to User"),
-    options=[""] + sorted([uid for uid in user_list.users.keys()]),
+    options=[""] + user_list.get_enabled_usernames(),
     format_func=lambda uid: str(user_list[uid].ocs.displayname) if uid else "",
 )
 solver = cols[5].selectbox(
