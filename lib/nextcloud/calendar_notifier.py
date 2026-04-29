@@ -83,7 +83,7 @@ class Notifier:
                 "events": {},
             }
 
-        client = caldav.DAVClient(
+        client = caldav.get_davclient(
             url=cal_config.caldav_url,
             username=settings.nextcloud.admin_username,
             password=settings.nextcloud.admin_password,
