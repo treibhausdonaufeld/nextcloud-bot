@@ -107,6 +107,9 @@ class AvatarConfig(BaseModel):
     fetch_avatar: bool = True
     avatar_folder: str = "/avatare"
     avatar_refresh_seconds: int = 86400
+    avatar_sources: List[str] = Field(
+        default_factory=lambda: ["authentik", "nextcloud"]
+    )
 
 
 class DeckChannelMappingItem(BaseModel):

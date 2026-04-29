@@ -141,7 +141,7 @@ class NCUserList:
         nextcloud_usernames = set(nextcloud_users.keys())
 
         # Get current users from CouchDB
-        current_usernames = set(self.users.keys())
+        current_usernames = {u.username for u in self.get_enabled_users()}
 
         # Save/update users from Nextcloud
         for username, user_data in nextcloud_users.items():
