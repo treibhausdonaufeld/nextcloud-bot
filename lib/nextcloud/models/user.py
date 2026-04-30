@@ -201,7 +201,12 @@ class NCUserList:
 
     def get_enabled_usernames(self) -> List[str]:
         """Return usernames for users that are currently enabled."""
-        return sorted(u.username for u in self.get_enabled_users())
+        return [
+            u.username
+            for u in sorted(
+                self.get_enabled_users(), key=lambda u: u.ocs.displayname or ""
+            )
+        ]
 
     def get_all_emails(self) -> Set[str]:
         """Return mail addresses for all users in given list of groups"""
