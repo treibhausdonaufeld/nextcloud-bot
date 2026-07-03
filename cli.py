@@ -62,5 +62,30 @@ def import_xlsx(xlsx_path: str) -> None:
         click.echo(f"  {msg}", err=True)
 
 
+@cli.command()
+@click.argument("json_path", type=click.Path(exists=True))
+def import_decisions(json_path: str) -> None:
+    """Import logbook decisions from a CouchDB JSON export.
+
+    Create the file in the old setup with
+    scripts/export_decisions_couchdb.py. Importing is idempotent (upsert by
+    page_id + title), and page-bound decisions are replaced — not
+    duplicated — by a later `sync --update-all`.
+    """
+    import json
+
+    from app.services.logbook_import import import_decisions_from_records
+
+    with open(json_path, encoding="utf-8") as f:
+        records = json.load(f)
+    if not isinstance(records, list):
+        raise click.ClickException("Expected a JSON array of decision records")
+
+    errors = [msg for msg in import_decisions_from_records(records) if msg]
+    click.echo(f"Imported {len(records) - len(errors)}/{len(records)} decisions")
+    for msg in errors:
+        click.echo(f"  {msg}", err=True)
+
+
 if __name__ == "__main__":
     cli()

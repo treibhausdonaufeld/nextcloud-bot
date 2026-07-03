@@ -1,8 +1,59 @@
-from typing import Generator
+from typing import Any, Generator
 
 from pandas import DataFrame
 
 from app.models.decision import Decision
+
+# Fields accepted from a CouchDB decision export
+# (see scripts/export_decisions_couchdb.py)
+EXPORT_FIELDS = (
+    "title",
+    "text",
+    "date",
+    "group_name",
+    "valid_until",
+    "objections",
+    "external_link",
+)
+
+
+def import_decisions_from_records(records: list[dict[str, Any]]) -> Generator[str]:
+    """
+    Import decisions from a CouchDB export (list of dicts).
+
+    Records keep their `page_id`, so the Decision natural key matches what
+    protocol re-parsing produces: importing is an upsert and a later
+    `sync --update-all` replaces page-bound decisions instead of
+    duplicating them.
+
+    Yields:
+        str: Empty string on successful record import, error message on failure
+    """
+    for idx, record in enumerate(records):
+        row_num = idx + 1
+        try:
+            decision_data = {
+                field: str(record.get(field) or "") for field in EXPORT_FIELDS
+            }
+
+            if not decision_data["title"] and not decision_data["text"]:
+                yield f"Record {row_num}: Missing both title and text"
+                continue
+
+            if not decision_data["date"]:
+                yield f"Record {row_num}: Missing date"
+                continue
+
+            page_id = record.get("page_id")
+            decision = Decision(
+                page_id=int(page_id) if page_id else None,
+                **decision_data,  # type: ignore[arg-type]
+            )
+            decision.store()
+
+            yield ""
+        except Exception as e:
+            yield f"Record {row_num}: {str(e)}"
 
 
 def import_decisions_from_excel(df: DataFrame) -> Generator[str]:

@@ -85,6 +85,10 @@ async def _init_schema() -> None:
 
 def init_db() -> None:
     """Create the SQLite file, tables, indexes and the FTS5 search table."""
+    # Models register themselves on import; make sure they all exist in the
+    # registry before create_all runs (entrypoints may import models lazily).
+    import app.models  # noqa: F401
+
     db_path = _sqlite_path(settings.database_url)
     if db_path:
         db_path.parent.mkdir(parents=True, exist_ok=True)
