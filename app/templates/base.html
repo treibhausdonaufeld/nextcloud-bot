@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="{{ lang }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ settings.name }}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/pico.min.css" />
+    <link rel="stylesheet" href="/static/app.css" />
+    <script src="/static/htmx.min.js"></script>
+  </head>
+  <body>
+    <header class="container-fluid">
+      <nav class="main-nav">
+        <ul>
+          <li><strong>{{ settings.name }}</strong></li>
+          <li><a href="/" {% if current_path == '/' %}aria-current="page"{% endif %}>🏠 {{ _("Home") }}</a></li>
+          <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}>⭕ {{ _("Groups") }}</a></li>
+          <li><a href="/timeline" {% if current_path.startswith('/timeline') %}aria-current="page"{% endif %}>⌛ {{ _("Timeline") }}</a></li>
+          <li><a href="/protocols" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}>📝 {{ _("Protocols") }}</a></li>
+          <li><a href="/logbook" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}>✅ {{ _("Logbook") }}</a></li>
+          <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}>📣 {{ _("Mentions") }}</a></li>
+        </ul>
+        <ul>
+          <li>
+            <form action="/lang" method="get">
+              <input type="hidden" name="next" value="{{ current_path }}" />
+              <select name="code" aria-label="{{ _('Language') }}" onchange="this.form.submit()">
+                {% for code, name in available_languages.items() %}
+                  <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </li>
+        </ul>
+      </nav>
+    </header>
+    <main class="container-fluid">{% block content %}{% endblock %}</main>
+  </body>
+</html>

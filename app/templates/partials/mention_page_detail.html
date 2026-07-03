@@ -1,0 +1,16 @@
+<article>
+  {% if page %}
+    <h3>{{ page.title }}</h3>
+    {% if page.url %}
+      <p><a href="{{ page.url }}" target="_blank">{{ _("Open page") }}</a></p>
+    {% endif %}
+    <p>{{ _("Users mentioned in this page: {count}").format(count=mentioned_users | length) }}</p>
+    <ul>
+      {% for name in mentioned_users %}
+        <li>{{ name }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>{{ _("No matching pages found.") }}</p>
+  {% endif %}
+</article>

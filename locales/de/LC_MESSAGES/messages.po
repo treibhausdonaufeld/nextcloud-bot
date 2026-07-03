@@ -2,7 +2,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2025-12-22 19:58+0100\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-07-03 19:34+0000\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -12,168 +13,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
-#: app.py:113
-msgid "{common_name} Dashboard"
-msgstr "{common_name} Übersicht"
-
-#: app.py:118
-msgid "Ask a Question"
-msgstr "Frage stellen"
-
-#: app.py:121
-msgid "Search or ask about collective pages"
-msgstr "Suche oder frage zu Kollektivseiten"
-
-#: app.py:122
-msgid "e.g., What decisions were made about...?"
-msgstr "z.B. Welche Entscheidungen wurden bezüglich ... getroffen?"
-
-#: app.py:125
-msgid "Advanced Options"
-msgstr "Erweiterte Optionen"
-
-#: app.py:128
-msgid "Chunks size"
-msgstr "Größe der Textabschnitte"
-
-#: app.py:132
-msgid "Number of chunks to include in context"
-msgstr "Anzahl der Abschnitte, die im Kontext aufgenommen werden sollen"
-
-#: app.py:135
-msgid "Full pages"
-msgstr "Vollständige Seiten"
-
-#: app.py:137
-msgid "Load full pages instead of excerpts"
-msgstr "Vollständige Seiten statt Auszügen laden"
-
-#: app.py:140 pages/protocols.py:191 pages/protocols.py:199
-#: pages/protocols.py:211 pages/protocols.py:212
-msgid "AI Summary"
-msgstr "KI-Zusammenfassung"
-
-#: app.py:142
-msgid "Generate AI summary of results"
-msgstr "KI-Zusammenfassung der Ergebnisse erzeugen"
-
-#: app.py:148
-msgid "Searching documents..."
-msgstr "Durchsuche Dokumente..."
-
-#: app.py:178 pages/protocols.py:154
-msgid "Answer"
-msgstr "Antwort"
-
-#: app.py:181
-msgid "Source Documents"
-msgstr "Quell-Dokumente"
-
-#: app.py:213
-msgid "Decision"
-msgstr "Entscheidung"
-
-#: app.py:213 app.py:229 pages/mentions.py:473
-msgid "Type"
-msgstr "Typ"
-
-#: app.py:215 pages/mentions.py:460
-msgid "Page"
-msgstr "Seite"
-
-#: app.py:216 app.py:230 pages/collective_pages.py:42 pages/protocols.py:189
-#: pages/protocols.py:202 pages/protocols.py:203
-msgid "Title"
-msgstr "Titel"
-
-#: app.py:217 pages/logbook.py:158 pages/protocols.py:188
-msgid "Date"
-msgstr "Datum"
-
-#: app.py:218 app.py:231
-msgid "Chunk"
-msgstr "Abschnitt"
-
-#: app.py:219 app.py:232
-msgid "Content"
-msgstr "Inhalt"
-
-#: app.py:220 app.py:233
-msgid "Page ID"
-msgstr "Seiten-ID"
-
-#: app.py:221 app.py:234 pages/collective_pages.py:46
-#: pages/collective_pages.py:53 pages/collective_pages.py:54
-msgid "URL"
-msgstr "URL"
-
-#: app.py:235
-msgid "Link"
-msgstr "Link"
-
-#: app.py:235 pages/collective_pages.py:54 pages/mentions.py:383
-#: pages/mentions.py:471
-msgid "Open page"
-msgstr "Seite öffnen"
-
-#: app.py:242
-msgid "No matching pages found."
-msgstr "Keine passenden Seiten gefunden."
-
-#: lib/menu.py:26
-msgid "Home"
-msgstr "Startseite"
-
-#: lib/menu.py:27 pages/groups.py:78 pages/mentions.py:410
-msgid "Groups"
-msgstr "Gruppen"
-
-#: lib/menu.py:28 pages/timeline.py:15
-msgid "Timeline"
-msgstr "Zeitstrahl"
-
-#: lib/menu.py:29 pages/protocols.py:74
-msgid "Protocols"
-msgstr "Protokolle"
-
-#: lib/menu.py:30 pages/logbook.py:31
-msgid "Logbook"
-msgstr "Logbuch"
-
-#: lib/menu.py:31 pages/mentions.py:254 pages/mentions.py:407
-#: pages/mentions.py:415 pages/mentions.py:478
-msgid "Mentions"
-msgstr "Erwähnungen"
-
-#: lib/menu.py:40
-msgid "Language"
-msgstr "Sprache"
-
-#: lib/nextcloud/models/protocol.py:253
 msgid "No person listed for moderations"
 msgstr "Keine Person für Moderationen aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:255
 msgid "No person listed for protocol"
 msgstr "Keine Person für das Protokoll aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:257
 msgid "No participants listed"
 msgstr "Keine Teilnehmenden aufgeführt"
 
-#: lib/nextcloud/models/protocol.py:261
 msgid "Title must have a valid date in 'YYYY-MM-DD' format"
 msgstr "Der Titel muss ein gültiges Datum im Format 'JJJJ-MM-TT' enthalten"
 
-#: lib/nextcloud/models/protocol.py:263
 msgid "Title must be 'YYYY-MM-DD Group Name'"
 msgstr "Der Titel muss 'JJJJ-MM-TT Gruppenname' sein"
 
-#: lib/nextcloud/models/protocol.py:272
+#, python-brace-format
 msgid "Protocol contains a '{template}' section. Please remove it!"
 msgstr "Das Protokoll enthält einen Abschnitt '{template}'. Bitte entfernen!"
 
-#: lib/nextcloud/models/protocol.py:281
+#, python-brace-format
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -195,7 +54,7 @@ msgstr ""
 "Bitte behebe diese bei der nächsten Bearbeitung des Protokolls (kein Stress, "
 "nimm dir Zeit!). Danke!"
 
-#: lib/nextcloud/models/protocol.py:293
+#, python-brace-format
 msgid ""
 "Hello {displayname},\n"
 "\n"
@@ -209,427 +68,455 @@ msgstr ""
 "sorgfältige Arbeit.\n"
 "\n"
 
-#: lib/nextcloud/models/protocol.py:303
 msgid "Date: "
 msgstr "Datum: "
 
-#: lib/nextcloud/models/protocol.py:305
 msgid "Last update by: "
 msgstr "Zuletzt aktualisiert von: "
 
-#: lib/nextcloud/models/protocol.py:306
 msgid "Moderated by: "
 msgstr "Moderiert von: "
 
-#: lib/nextcloud/models/protocol.py:307
 msgid "Protocol by: "
 msgstr "Protokoll von: "
 
-#: lib/nextcloud/models/protocol.py:308
 msgid "Participants: "
 msgstr "Teilnehmende: "
 
-#: lib/nextcloud/models/protocol.py:310
 msgid "Decisions made:\n"
 msgstr "Getroffene Entscheidungen:\n"
 
-#: lib/nextcloud/models/protocol.py:316 pages/logbook.py:169
 msgid "Objections"
 msgstr "Einwände"
 
-#: lib/nextcloud/models/protocol.py:319 pages/logbook.py:189
 msgid "Valid until"
 msgstr "Gültig bis"
 
-#: lib/nextcloud/models/protocol.py:323
-msgid "AI Summary:"
-msgstr "KI-Zusammenfassung:"
-
-#: lib/nextcloud/models/protocol.py:328
+#, python-brace-format
 msgid "Please manually a post in the channel #{protocols}"
 msgstr "Bitte erstelle manuell einen Beitrag im Kanal #{protocols}"
 
-#: lib/streamlit_oauth.py:28
-msgid "Click here to Login"
-msgstr "Hier klicken, um sich anzumelden"
+msgid "Home"
+msgstr "Startseite"
 
-#: lib/streamlit_oauth.py:39
-msgid "Logout"
-msgstr "Abmelden"
+msgid "Groups"
+msgstr "Gruppen"
 
-#: lib/streamlit_oauth.py:48
-msgid "Logged in as {username}"
-msgstr "Angemeldet als {username}"
+msgid "Timeline"
+msgstr "Zeitstrahl"
 
-#: lib/streamlit_oauth.py:69
-msgid ""
-"You are not authorized to view this page. Please contact the administrator."
-msgstr ""
-"Du bist nicht berechtigt, diese Seite anzusehen. Bitte kontaktiere den "
-"Administrator."
+msgid "Protocols"
+msgstr "Protokolle"
 
-#: pages/collective_pages.py:14
-msgid "Collective Pages"
-msgstr "Kollektivseiten"
+msgid "Logbook"
+msgstr "Logbuch"
 
-#: pages/collective_pages.py:31
-msgid "Search filePath"
-msgstr "Dateipfad durchsuchen"
+msgid "Mentions"
+msgstr "Erwähnungen"
 
-#: pages/collective_pages.py:41
-msgid "ID"
-msgstr "ID"
+msgid "Language"
+msgstr "Sprache"
 
-#: pages/collective_pages.py:43
-msgid "filePath"
-msgstr "Dateipfad"
+#, python-brace-format
+msgid "{common_name} Dashboard"
+msgstr "{common_name} Übersicht"
 
-#: pages/collective_pages.py:44
-msgid "subtype"
-msgstr "Untertyp"
-
-#: pages/collective_pages.py:45
-msgid "is_readme"
-msgstr "ist_readme"
-
-#: pages/collective_pages.py:47
-msgid "Timestamp"
-msgstr "Zeitstempel"
-
-#: pages/groups.py:29
-msgid "Parent Group"
-msgstr "Übergeordnete Gruppe"
-
-#: pages/groups.py:32
-msgid "Short Names"
-msgstr "Kurznamen"
-
-#: pages/groups.py:34
-msgid "Coordination"
-msgstr "Koordination"
-
-#: pages/groups.py:35
-msgid "Delegates"
-msgstr "Delegierte"
-
-#: pages/groups.py:36
-msgid "Members"
-msgstr "Mitglieder"
-
-#: pages/groups.py:40
-msgid "Subgroups"
-msgstr "Untergruppen"
-
-#: pages/groups.py:101
-msgid "Hierarchical layout"
-msgstr "Hierarchische Darstellung"
-
-#: pages/groups.py:102
-msgid "With Members"
-msgstr "Mit Mitgliedern"
-
-#: pages/groups.py:103
-msgid "With Subgroups"
-msgstr "Mit Untergruppen"
-
-#: pages/groups.py:105
-msgid "Limit to Top Group"
-msgstr "Auf oberste Gruppe beschränken"
-
-#: pages/groups.py:109
-msgid "Limit to User"
-msgstr "Auf Benutzer beschränken"
-
-#: pages/groups.py:114 pages/mentions.py:306
-msgid "Solver"
-msgstr "Löser"
-
-#: pages/groups.py:133
-msgid "No groups could be found"
-msgstr "Es konnten keine Gruppen gefunden werden"
-
-#: pages/groups.py:231
-msgid "Roles in Groups"
-msgstr "Rollen in Gruppen"
-
-#: pages/groups.py:235
-msgid "(Coordination)"
-msgstr "(Koordination)"
-
-#: pages/groups.py:237
-msgid "(Delegate)"
-msgstr "(Delegierter)"
-
-#: pages/groups.py:243
-msgid "Pages mentioning User"
-msgstr "Seiten, die den Benutzer erwähnen"
-
-#: pages/groups.py:253
-msgid "Total Mentions: {count}"
-msgstr "Erwähnungen insgesamt: {count}"
-
-#: pages/logbook.py:44 pages/protocols.py:95
-msgid "Filter by group"
-msgstr "Nach Gruppe filtern"
-
-#: pages/logbook.py:46 pages/protocols.py:97
-msgid "Select a group"
-msgstr "Gruppe auswählen"
-
-#: pages/logbook.py:50
 msgid "Search"
 msgstr "Suchen"
 
-#: pages/logbook.py:54
-msgid "Search Type"
-msgstr "Suchtyp"
+msgid "Search collective pages and decisions"
+msgstr "Kollektiv-Seiten und Beschlüsse durchsuchen"
 
-#: pages/logbook.py:55 pages/logbook.py:73 pages/logbook.py:86
-msgid "Exact"
-msgstr "Genau"
+msgid "Type"
+msgstr "Typ"
 
-#: pages/logbook.py:55 pages/logbook.py:75 pages/logbook.py:86
-msgid "All"
-msgstr "Alle"
+msgid "Pages and decisions"
+msgstr "Seiten und Beschlüsse"
 
-#: pages/logbook.py:55 pages/logbook.py:78 pages/logbook.py:86
-msgid "Any"
-msgstr "Beliebig"
+msgid "Pages"
+msgstr "Seiten"
 
-#: pages/logbook.py:55 pages/logbook.py:94
-msgid "Semantic"
-msgstr "Semantisch"
+msgid "Decisions"
+msgstr "Beschlüsse"
 
-#: pages/logbook.py:129
-msgid "Decision Details"
-msgstr "Entscheidungsdetails"
+msgid "Results"
+msgstr "Ergebnisse"
 
-#: pages/logbook.py:138 pages/logbook.py:149
-msgid "Decision not found"
-msgstr "Entscheidung nicht gefunden"
+msgid "Hierarchical layout"
+msgstr "Hierarchische Darstellung"
 
-#: pages/logbook.py:152 pages/logbook.py:180
-msgid "No Title"
-msgstr "Kein Titel"
+msgid "With Members"
+msgstr "Mit Mitgliedern"
 
-#: pages/logbook.py:159 pages/protocols.py:190
-msgid "Group"
-msgstr "Gruppe"
+msgid "With Subgroups"
+msgstr "Mit Untergruppen"
 
-#: pages/logbook.py:161
-msgid "Valid Until"
-msgstr "Gültig bis"
+msgid "Limit to Top Group"
+msgstr "Auf oberste Gruppe beschränken"
 
-#: pages/logbook.py:163
-msgid "Open protocol"
-msgstr "Protokoll öffnen"
+msgid "Limit to User"
+msgstr "Auf Benutzer beschränken"
 
-#: pages/logbook.py:165
-msgid "Text"
-msgstr "Text"
+msgid "Solver"
+msgstr "Löser"
 
-#: pages/logbook.py:166
-msgid "No text available"
-msgstr "Kein Text verfügbar"
-
-#: pages/logbook.py:191
-msgid "Distance"
-msgstr "Entfernung"
-
-#: pages/logbook.py:201
-msgid "View Details"
-msgstr "Details anzeigen"
-
-#: pages/logbook.py:206
-msgid "Open Link"
-msgstr "Link öffnen"
-
-#: pages/logbook.py:211
-msgid "No decisions found."
-msgstr "Keine Entscheidungen gefunden."
-
-#: pages/logbook.py:230
-msgid "Items per page"
-msgstr "Einträge pro Seite"
-
-#: pages/logbook.py:254
-msgid "decisions found"
-msgstr "Entscheidungen gefunden"
-
-#: pages/logbook.py:254
-msgid "Showing"
-msgstr "Anzeigen"
-
-#: pages/logbook.py:316
-msgid "Go to page"
-msgstr "Zur Seite springen"
-
-#: pages/logbook.py:330
-msgid "Upload XLSX file with previous decisions to import"
-msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
-
-#: pages/logbook.py:343
-msgid "Importing file..."
-msgstr "Datei wird importiert..."
-
-#: pages/mentions.py:271
-msgid "View Mode"
-msgstr "Ansichtsmodus"
-
-#: pages/mentions.py:273
-msgid "Table View"
-msgstr "Tabellenansicht"
-
-#: pages/mentions.py:273
-msgid "Graph View"
-msgstr "Netzwerkansicht"
-
-#: pages/mentions.py:279
-msgid "Mention Network"
-msgstr "Erwähnungsnetzwerk"
-
-#: pages/mentions.py:281
-msgid ""
-"🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
-"(gold)"
-msgstr "🔴 Benutzer | 📋 Protokolle (blau) | 👥 Gruppenseiten (grün) | 📄 Andere Seiten (gold)"
-
-#: pages/mentions.py:289
-msgid "Filter by User"
-msgstr "Nach Benutzer filtern"
-
-#: pages/mentions.py:293
-msgid "All Users"
-msgstr "Alle Benutzer"
-
-#: pages/mentions.py:297
-msgid "Filter by Page Type"
-msgstr "Nach Seitentyp filtern"
-
-#: pages/mentions.py:300
-msgid "All Pages"
-msgstr "Alle Seiten"
-
-#: pages/mentions.py:301
-msgid "Protocols Only"
-msgstr "Nur Protokolle"
-
-#: pages/mentions.py:302
-msgid "Group Pages Only"
-msgstr "Nur Gruppenseiten"
-
-#: pages/mentions.py:313
 msgid "Graph Height"
 msgstr "Höhe des Graphen"
 
-#: pages/mentions.py:356
-msgid "Total pages mentioning user: {count}"
-msgstr "Seiten, die den Benutzer erwähnen: {count}"
+msgid "Errors encountered:"
+msgstr "Aufgetretene Fehler:"
 
-#: pages/mentions.py:372
-msgid "... and {count} more pages"
-msgstr "... und {count} weitere Seiten"
+msgid "Filter by group"
+msgstr "Nach Gruppe filtern"
 
-#: pages/mentions.py:389
-msgid "Users mentioned in this page: {count}"
-msgstr "In dieser Seite erwähnte Benutzer: {count}"
+msgid "Search Type"
+msgstr "Suchtyp"
 
-#: pages/mentions.py:397
-msgid "No data to display with current filters."
-msgstr "Keine Daten für die aktuellen Filter vorhanden."
+msgid "Fulltext"
+msgstr "Volltext"
 
-#: pages/mentions.py:405 pages/mentions.py:420 pages/mentions.py:432
-#: pages/mentions.py:442
-msgid "User"
-msgstr "Benutzer"
+msgid "Any"
+msgstr "Beliebig"
 
-#: pages/mentions.py:408
-msgid "Distinct Pages"
-msgstr "Unterschiedliche Seiten"
+msgid "All"
+msgstr "Alle"
 
-#: pages/mentions.py:409
-msgid "Distinct Protocols"
-msgstr "Unterschiedliche Protokolle"
+msgid "Exact"
+msgstr "Genau"
 
-#: pages/mentions.py:422
-msgid "Select user for details"
-msgstr "Benutzer für Details auswählen"
+msgid "Items per page"
+msgstr "Einträge pro Seite"
 
-#: pages/mentions.py:424
-msgid "Select a user..."
-msgstr "Benutzer auswählen..."
+msgid "No decisions found."
+msgstr "Keine Entscheidungen gefunden."
 
-#: pages/mentions.py:445
-msgid "Mention Details for"
-msgstr "Erwähnungsdetails für"
+msgid "decisions found"
+msgstr "Entscheidungen gefunden"
 
-#: pages/mentions.py:454
-msgid "Protocol"
-msgstr "Protokoll"
+msgid "Showing"
+msgstr "Anzeigen"
 
-#: pages/mentions.py:457
-msgid "Group Page"
-msgstr "Gruppenseite"
+msgid "No Title"
+msgstr "Kein Titel"
 
-#: pages/mentions.py:482
-msgid "No snippet available"
-msgstr "Kein Textausschnitt verfügbar"
+msgid "View Details"
+msgstr "Details anzeigen"
 
-#: pages/mentions.py:484
+msgid "Date"
+msgstr "Datum"
+
+msgid "Group"
+msgstr "Gruppe"
+
+msgid "Valid Until"
+msgstr "Gültig bis"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "No text available"
+msgstr "Kein Text verfügbar"
+
+msgid "Open protocol"
+msgstr "Protokoll öffnen"
+
+msgid "Upload XLSX file with previous decisions to import"
+msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
+
+msgid "Import"
+msgstr "Importieren"
+
 msgid "No mentions found."
 msgstr "Keine Erwähnungen gefunden."
 
-#: pages/protocols.py:100
+msgid "Table View"
+msgstr "Tabellenansicht"
+
+msgid "Graph View"
+msgstr "Netzwerkansicht"
+
+msgid "Mention Network"
+msgstr "Erwähnungsnetzwerk"
+
+msgid ""
+"🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
+"(gold)"
+msgstr ""
+"🔴 Benutzer | 📋 Protokolle (blau) | 👥 Gruppenseiten (grün) | 📄 Andere "
+"Seiten (gold)"
+
+msgid "Filter by User"
+msgstr "Nach Benutzer filtern"
+
+msgid "All Users"
+msgstr "Alle Benutzer"
+
+msgid "Filter by Page Type"
+msgstr "Nach Seitentyp filtern"
+
+msgid "All Pages"
+msgstr "Alle Seiten"
+
+msgid "Protocols Only"
+msgstr "Nur Protokolle"
+
+msgid "Group Pages Only"
+msgstr "Nur Gruppenseiten"
+
+msgid "User"
+msgstr "Benutzer"
+
+msgid "Distinct Pages"
+msgstr "Unterschiedliche Seiten"
+
+msgid "Distinct Protocols"
+msgstr "Unterschiedliche Protokolle"
+
 msgid "Search protocols"
 msgstr "Protokolle durchsuchen"
 
-#: pages/protocols.py:102
-msgid "Use AI to answer"
-msgstr "KI zur Beantwortung verwenden"
+msgid "Title"
+msgstr "Titel"
 
-#: pages/protocols.py:192
 msgid "Moderated by"
 msgstr "Moderiert von"
 
-#: pages/protocols.py:193
 msgid "Protocol by"
 msgstr "Protokoll von"
 
-#: pages/protocols.py:194
 msgid "Participants"
 msgstr "Teilnehmende"
 
-#: pages/protocols.py:213
-msgid "Click to expand"
-msgstr "Zum Erweitern klicken"
+msgid "No matching pages found."
+msgstr "Keine passenden Seiten gefunden."
 
-#: pages/protocols.py:224
 msgid "Member Statistics for"
 msgstr "Mitgliederstatistik für"
 
-#: pages/protocols.py:270
 msgid "Member"
 msgstr "Mitglied"
 
-#: pages/protocols.py:271
 msgid "Moderated"
 msgstr "Moderiert"
 
-#: pages/protocols.py:272
 msgid "Wrote Protocol"
 msgstr "Protokoll verfasst"
 
-#: pages/protocols.py:273
 msgid "Attended"
 msgstr "Teilgenommen"
 
-#: pages/timeline.py:33
+#, python-format
 msgid ""
 "No timeline data found. Please create and populate the '%s' page in "
 "Nextcloud Collectives."
 msgstr ""
 "Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in "
 "Nextcloud Collectives."
+
+msgid "Parent Group"
+msgstr "Übergeordnete Gruppe"
+
+msgid "Short Names"
+msgstr "Kurznamen"
+
+msgid "Coordination"
+msgstr "Koordination"
+
+msgid "Delegates"
+msgstr "Delegierte"
+
+msgid "Members"
+msgstr "Mitglieder"
+
+msgid "Subgroups"
+msgstr "Untergruppen"
+
+msgid "Open page"
+msgstr "Seite öffnen"
+
+#, python-brace-format
+msgid "Users mentioned in this page: {count}"
+msgstr "In dieser Seite erwähnte Benutzer: {count}"
+
+msgid "Mention Details for"
+msgstr "Erwähnungsdetails für"
+
+#, python-brace-format
+msgid "Total pages mentioning user: {count}"
+msgstr "Seiten, die den Benutzer erwähnen: {count}"
+
+msgid "Protocol"
+msgstr "Protokoll"
+
+msgid "Group Page"
+msgstr "Gruppenseite"
+
+msgid "Page"
+msgstr "Seite"
+
+msgid "No snippet available"
+msgstr "Kein Textausschnitt verfügbar"
+
+msgid "Source Documents"
+msgstr "Quell-Dokumente"
+
+msgid "Content"
+msgstr "Inhalt"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Decision"
+msgstr "Entscheidung"
+
+msgid "Roles in Groups"
+msgstr "Rollen in Gruppen"
+
+msgid "(Coordination)"
+msgstr "(Koordination)"
+
+msgid "(Delegate)"
+msgstr "(Delegierter)"
+
+msgid "Pages mentioning User"
+msgstr "Seiten, die den Benutzer erwähnen"
+
+#, python-brace-format
+msgid "Total Mentions: {count}"
+msgstr "Erwähnungen insgesamt: {count}"
+
+#~ msgid "Ask a Question"
+#~ msgstr "Frage stellen"
+
+#~ msgid "Search or ask about collective pages"
+#~ msgstr "Suche oder frage zu Kollektivseiten"
+
+#~ msgid "e.g., What decisions were made about...?"
+#~ msgstr "z.B. Welche Entscheidungen wurden bezüglich ... getroffen?"
+
+#~ msgid "Advanced Options"
+#~ msgstr "Erweiterte Optionen"
+
+#~ msgid "Chunks size"
+#~ msgstr "Größe der Textabschnitte"
+
+#~ msgid "Number of chunks to include in context"
+#~ msgstr "Anzahl der Abschnitte, die im Kontext aufgenommen werden sollen"
+
+#~ msgid "Full pages"
+#~ msgstr "Vollständige Seiten"
+
+#~ msgid "Load full pages instead of excerpts"
+#~ msgstr "Vollständige Seiten statt Auszügen laden"
+
+#~ msgid "AI Summary"
+#~ msgstr "KI-Zusammenfassung"
+
+#~ msgid "Generate AI summary of results"
+#~ msgstr "KI-Zusammenfassung der Ergebnisse erzeugen"
+
+#~ msgid "Searching documents..."
+#~ msgstr "Durchsuche Dokumente..."
+
+#~ msgid "Answer"
+#~ msgstr "Antwort"
+
+#~ msgid "Chunk"
+#~ msgstr "Abschnitt"
+
+#~ msgid "Page ID"
+#~ msgstr "Seiten-ID"
+
+#~ msgid "URL"
+#~ msgstr "URL"
+
+#~ msgid "AI Summary:"
+#~ msgstr "KI-Zusammenfassung:"
+
+#~ msgid "Click here to Login"
+#~ msgstr "Hier klicken, um sich anzumelden"
+
+#~ msgid "Logout"
+#~ msgstr "Abmelden"
+
+#~ msgid "Logged in as {username}"
+#~ msgstr "Angemeldet als {username}"
+
+#~ msgid ""
+#~ "You are not authorized to view this page. Please contact the "
+#~ "administrator."
+#~ msgstr ""
+#~ "Du bist nicht berechtigt, diese Seite anzusehen. Bitte kontaktiere den "
+#~ "Administrator."
+
+#~ msgid "Collective Pages"
+#~ msgstr "Kollektivseiten"
+
+#~ msgid "Search filePath"
+#~ msgstr "Dateipfad durchsuchen"
+
+#~ msgid "ID"
+#~ msgstr "ID"
+
+#~ msgid "filePath"
+#~ msgstr "Dateipfad"
+
+#~ msgid "subtype"
+#~ msgstr "Untertyp"
+
+#~ msgid "is_readme"
+#~ msgstr "ist_readme"
+
+#~ msgid "Timestamp"
+#~ msgstr "Zeitstempel"
+
+#~ msgid "No groups could be found"
+#~ msgstr "Es konnten keine Gruppen gefunden werden"
+
+#~ msgid "Select a group"
+#~ msgstr "Gruppe auswählen"
+
+#~ msgid "Semantic"
+#~ msgstr "Semantisch"
+
+#~ msgid "Decision Details"
+#~ msgstr "Entscheidungsdetails"
+
+#~ msgid "Decision not found"
+#~ msgstr "Entscheidung nicht gefunden"
+
+#~ msgid "Distance"
+#~ msgstr "Entfernung"
+
+#~ msgid "Open Link"
+#~ msgstr "Link öffnen"
+
+#~ msgid "Go to page"
+#~ msgstr "Zur Seite springen"
+
+#~ msgid "Importing file..."
+#~ msgstr "Datei wird importiert..."
+
+#~ msgid "View Mode"
+#~ msgstr "Ansichtsmodus"
+
+#~ msgid "... and {count} more pages"
+#~ msgstr "... und {count} weitere Seiten"
+
+#~ msgid "No data to display with current filters."
+#~ msgstr "Keine Daten für die aktuellen Filter vorhanden."
+
+#~ msgid "Select user for details"
+#~ msgstr "Benutzer für Details auswählen"
+
+#~ msgid "Select a user..."
+#~ msgstr "Benutzer auswählen..."
+
+#~ msgid "Use AI to answer"
+#~ msgstr "KI zur Beantwortung verwenden"
+
+#~ msgid "Click to expand"
+#~ msgstr "Zum Erweitern klicken"
 
 #~ msgid "Semantic Search"
 #~ msgstr "Semantische Suche"
@@ -672,9 +559,6 @@ msgstr ""
 
 #~ msgid "Overview"
 #~ msgstr "Übersicht"
-
-#~ msgid "Pages"
-#~ msgstr "Seiten"
 
 #~ msgid ""
 #~ "Hello {displayname},\n"

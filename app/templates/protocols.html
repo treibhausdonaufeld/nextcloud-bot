@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Protocols") }}{% endblock %}
+{% block content %}
+  <h1>{{ _("Protocols") }}</h1>
+
+  <form class="filter-form" method="get" action="/protocols">
+    <label>
+      {{ _("Filter by group") }}
+      <select name="group" onchange="this.form.submit()">
+        <option value=""></option>
+        {% for g in group_options %}
+          <option value="{{ g }}" {% if g == selected_group %}selected{% endif %}>{{ g }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      {{ _("Search protocols") }}
+      <input type="search" name="q" value="{{ q }}" />
+    </label>
+    <button type="submit">{{ _("Search") }}</button>
+  </form>
+
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ _("Date") }}</th>
+            <th>{{ _("Title") }}</th>
+            <th>{{ _("Group") }}</th>
+            <th>{{ _("Moderated by") }}</th>
+            <th>{{ _("Protocol by") }}</th>
+            <th>{{ _("Participants") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td>{{ row.date }}</td>
+              <td>
+                {% if row.url %}<a href="{{ row.url }}" target="_blank">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}
+              </td>
+              <td>{{ row.group }}</td>
+              <td>{{ row.moderated_by }}</td>
+              <td>{{ row.protocol_by }}</td>
+              <td>{{ row.participants }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>{{ _("No matching pages found.") }}</p>
+  {% endif %}
+
+  {% if selected_group and member_data %}
+    <h3>{{ _("Member Statistics for") }} {{ selected_group }}</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ _("Member") }}</th>
+            <th>{{ _("Moderated") }}</th>
+            <th>{{ _("Wrote Protocol") }}</th>
+            <th>{{ _("Attended") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in member_data %}
+            <tr>
+              <td>{{ m.name }}</td>
+              <td>{{ m.moderated }}</td>
+              <td>{{ m.protocol }}</td>
+              <td>{{ m.attended }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+{% endblock %}

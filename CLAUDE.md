@@ -15,24 +15,27 @@ uv sync --dev                     # install all deps incl. dev group
 uv run pytest                     # run tests
 uv run pytest tests/test_group_parsing.py                         # single file
 uv run pytest tests/test_protocol_decision_parsing.py::TestProtocolDecisionExtraction::test_extract_single_decision  # single test
-uv run pytest --cov=lib --cov-report=html --cov-report=term       # coverage (source = lib/ only)
+uv run pytest --cov=app --cov-report=html --cov-report=term       # coverage (source = app/ only)
 pre-commit run --all-files        # lint: ruff + ruff-format + mypy (mypy.ini) + prettier + misc hooks
 uv sync -U                        # upgrade packages
 ```
 
-Running the two entrypoints locally (both need services from `compose.yml`: CouchDB on :5984, ChromaDB on :8800, imaginary on :9001):
+Running locally (no external services needed; the SQLite file defaults to `data/nextcloud_bot.db`, override with `DATABASE_URL`):
 
 ```bash
-uv run streamlit run app.py       # web UI on :8501
-uv run python runner.py           # one sync/notify iteration
-uv run python runner.py --loop    # background worker loop
-uv run python runner.py --update-all | --update-pages 1,2 | --clear-chromadb | --clear-parsed-data
+uv run uvicorn app.main:app --reload    # web UI + background worker on :8000
+WORKER_ENABLED=false uv run uvicorn app.main:app --reload   # UI only
+uv run python cli.py sync               # one manual sync/notify iteration
+uv run python cli.py sync --update-all  # re-fetch and re-parse all pages
+uv run python cli.py sync --update-pages 1,2
+uv run python cli.py clear-parsed-data
+uv run python cli.py import-xlsx decisions.xlsx
 ```
 
-Translations (gettext, German is the only translated locale):
+Translations (gettext via Babel, German is the only translated locale; extraction covers `*.py` and `app/templates/*.html`, see `babel.cfg`):
 
 ```bash
-make update_po                    # extract strings from *.py into locales/*.po
+make update_po                    # extract strings into locales/*.po (needs gettext tools)
 make compile                      # compile .po -> .mo (required for changes to show up)
 ```
 
@@ -40,29 +43,37 @@ CI (`.github/workflows/docker-build.yml`) runs pre-commit, pytest, and builds/pu
 
 ## Architecture
 
-Two entrypoints share the `lib/` package:
+One container runs everything. `app/main.py` builds the Ravyn app: routes, Jinja2 templates (`app/templates/`), vendored static assets (`app/static/`: Pico.css, htmx, plotly-basic, vis-network — no CDN), and an `on_startup` hook that initializes the database and spawns the background worker as an asyncio task.
 
-- **`app.py` + `pages/*.py`** — Streamlit multi-page UI (dashboards, semantic search, RAG Q&A via Gemini). Every page must call `menu()` from `lib/menu.py` first; it sets the language and renders the sidebar nav (page registration happens there, not in `.streamlit/`).
-- **`runner.py`** — Click CLI worker. Each iteration: update user list from Nextcloud → fetch changed Collectives pages → parse groups/protocols → run periodic tasks (avatar fetching, mailinglist distribution, calendar/deck reminders). Deployed as a separate container (`datafetcher` in compose) from the UI (`analytics`).
+- **Controllers** (`app/controllers/`) are synchronous handlers (Ravyn runs them in a threadpool): dashboard (FTS search), groups (vis-network org chart), timeline (plotly from markdown tables on a Collectives page), protocols, logbook (decision cards + XLSX import), mentions (table + network graph). Graph pages fetch JSON endpoints (`/groups/graph.json`, `/mentions/graph.json`) and load click-detail partials via htmx.
+- **Worker** (`app/worker.py`) is the former runner loop: update user list from Nextcloud → fetch changed Collectives pages → parse groups/protocols → periodic tasks (avatar fetching via Pillow, mailinglist distribution, calendar/deck reminders). It runs sync code via `asyncio.to_thread` and sleeps according to `sleep_minutes`/quiet hours from the bot config.
+- **`cli.py`** is a Click CLI for one-off operations (manual sync, clear parsed data, XLSX import).
 
-### Storage
+### Storage — SQLite via Edgy, with a sync bridge
 
-- **CouchDB** (via `pycouchdb`) is the primary store. `lib/nextcloud/models/base.py` defines `CouchDBModel`: Pydantic models persisted as documents with a `type` field set to the class name as discriminator. Queries go through Mango `_find` selectors (`get_all`, `get_by`); required Mango indexes are created at startup in `lib/couchdb.py`, which also installs a JavaScript map/reduce view `_design/mentions` counting `mention://user/<name>` occurrences in page content — `pages/mentions.py` and `pages/groups.py` query that view directly. `calendar_notifier.py` and `deck_reminder.py` bypass the model layer and store processed-item state as raw docs.
-- **ChromaDB** holds embeddings in a single collection (`lib/chromadb.py`); embedding function is Gemini or a HuggingFace server depending on settings, or disabled if neither is configured. `CollectivePage.save()` chunks content (langchain text splitter) and upserts embeddings; `Decision.save()` embeds one document. Deletes must cascade to ChromaDB — keep `save()`/`delete()` overrides in sync.
+`app/db.py` owns the Edgy registry and a **dedicated database event-loop thread**: Edgy is async-first but the parsing pipeline/worker are sync, so ALL database access goes through `run_db(coro)`, which dispatches to that single loop (one connection pool, serialized SQLite writes, WAL mode). Never await Edgy queries on the server loop directly.
+
+`app/models/base.py` defines `BaseDBModel`: sync facade methods `store()`/`remove()`/`fetch()`/`fetch_one()`/`count()`. Conventions:
+
+- `natural_key_fields` makes `store()` upsert by natural key (e.g. `page_id`, `username`, Decision's computed `natural_key`) instead of inserting duplicates.
+- Persistence side effects go in `after_store()`/`before_remove()` hooks — `CollectivePage` rebuilds the `mentions` table and the FTS index there and cascades deletes to Protocol/Decision; `Decision` maintains its own FTS entry. Keep these hooks in sync when adding indexed content.
+- `__init__` materializes field defaults eagerly (Edgy leaves them unset until insert), so fresh instances support plain attribute access.
+
+Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page|decision), maintained in the store/remove hooks and queried via `app.db.search()` (unicode61 tokenizer, prefix matching, bm25 ranking, `snippet()` highlighting). The `mentions` table replaces the old CouchDB map/reduce view; `KVState` is a small key-value store for calendar/deck processed-item state.
 
 ### Configuration — two layers
 
-1. **Env vars** → `lib/settings.py` (pydantic-settings, nested delimiter `__`, e.g. `NEXTCLOUD__BASE_URL`). Infrastructure: URLs, credentials, Sentry, Gemini key.
-2. **Runtime bot config lives in Nextcloud itself**: `BotConfig.load_config()` (`lib/nextcloud/config.py`) fetches a Collectives page (`configuration_page_id`) and parses a YAML block out of it. This holds all the keyword lists that drive markdown parsing (group prefixes, protocol/decision/moderation keywords), notification channel mappings, cooldowns, quiet hours. `config.example.yml` documents the shape. Parsing behavior changes are usually config-keyword changes, not code changes.
+1. **Env vars** → `app/settings.py` (pydantic-settings, nested delimiter `__`, e.g. `NEXTCLOUD__BASE_URL`). Infrastructure: URLs, credentials, Sentry, `DATABASE_URL`.
+2. **Runtime bot config lives in Nextcloud itself**: `BotConfig.load_config()` (`app/services/config.py`) fetches a Collectives page (`configuration_page_id`) and parses a YAML block out of it. This holds all the keyword lists that drive markdown parsing (group prefixes, protocol/decision/moderation keywords), notification channel mappings, cooldowns, quiet hours. `config.example.yml` documents the shape. Parsing behavior changes are usually config-keyword changes, not code changes.
 
 ### Parsing pipeline
 
-`collectives_loader.py` fetches page metadata via the Nextcloud OCS Collectives API and raw markdown via WebDAV (admin Basic auth), storing `CollectivePage` docs. `collectives_parser.py` classifies pages by title/path into `Group` or `Protocol` subtypes; the models' `update_from_page()` methods do the actual keyword-driven markdown parsing. Protocols extract decisions from `::: success ... :::` blocks into `Decision` docs (deleting a protocol/page cascades to its decisions). User mentions everywhere use `user_regex` from `lib/settings.py` (`mention://user/<name>`).
+`app/services/collectives_loader.py` fetches page metadata via the Nextcloud OCS Collectives API and raw markdown via WebDAV (admin Basic auth), upserting `CollectivePage` rows. `collectives_parser.py` classifies pages by title/path into group/protocol subtypes; the models' `update_from_page()` methods do the actual keyword-driven markdown parsing. Protocols extract decisions from `::: success ... :::` blocks into `Decision` rows (deleting a protocol/page cascades to its decisions). User mentions everywhere use `user_regex` from `app/settings.py` (`mention://user/<name>`).
 
 ### i18n
 
-User-facing strings must be wrapped with `_()` (or `_n()`) imported from `lib.settings`. `set_language()` swaps the gettext catalog at runtime; the UI picks language from the browser, the runner uses `settings.default_language`. After adding/changing strings run `make update_po`, translate in `locales/de/LC_MESSAGES/messages.po`, then `make compile`.
+User-facing strings in Python must be wrapped with `_()` (or `_n()`) from `app.settings`; templates get `_`/`_n` passed in explicitly via `app/i18n.py::template_context` (the request language comes from the `lang` cookie or Accept-Language). The gettext catalog is stored in a ContextVar, so per-request switching is thread-safe; `locale.setlocale` is process-global and only set once at startup. After adding/changing strings run `make update_po`, translate in `locales/de/LC_MESSAGES/messages.po`, then `make compile`.
 
 ## Tests
 
-`tests/conftest.py` injects `MagicMock` modules for `chromadb` and `google.genai`/`google.generativeai` into `sys.modules` **before** any `lib` import — that's what lets model code import without network access. Tests mock `bot_config` and patch `CouchDBModel.save`/`delete`; no live CouchDB is used. Coverage focuses on markdown parsing (`Group.update_from_page`, `Protocol.extract_decisions`) and the calendar notifier; loaders, mail, and pages are untested.
+Tests run without a database: they mock `bot_config` and patch `store`/`remove`/`fetch` on the models, so the Edgy registry never connects. `tests/conftest.py` resets the class-level caches (`Group._cached_groups`, `NCUserList._cached_users`) between tests. Coverage focuses on markdown parsing (`Group.update_from_page`, `Protocol.extract_decisions`) and the calendar notifier; loaders, mail, and controllers are untested.

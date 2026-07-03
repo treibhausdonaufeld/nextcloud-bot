@@ -2,15 +2,12 @@
 LOCALES_DIR=locales
 DOMAIN=messages
 
-# Specify the files or patterns to search for translatable strings
-FILES=$(shell find . -name "*.py" -not -path "./.venv/*" -not -path "./.*")
-
 # Default target
 all: update_po
 
-# Target to generate .pot file
+# Target to generate .pot file (python sources + Jinja2 templates, see babel.cfg)
 .pot:
-	@pygettext3.py -d $(DOMAIN) -o $(LOCALES_DIR)/$(DOMAIN).pot $(FILES)
+	@uv run pybabel extract -F babel.cfg --no-location -o $(LOCALES_DIR)/$(DOMAIN).pot .
 
 # Target to update .po files in each language directory
 update_po: .pot

@@ -1,128 +1,47 @@
 ---
-x-common-settings: &common-settings
-  image: ghcr.io/treibhausdonaufeld/nextcloud-bot:latest
-  restart: always
-  environment:
-    LOGLEVEL: ${LOGLEVEL:-INFO}
-    AUTH__PROVIDER_BASE_URL: 'https://auth.example.com'
-    AUTH__CLIENT_ID: 'secretpassword'
-    AUTH__CLIENT_SECRET: 'secretpassword'
-    AUTH__AUTHENTIK_TOKEN: 'secretpassword'
-
-    NEXTCLOUD__BASE_URL: 'https://wir.example.com'
-    NEXTCLOUD__ADMIN_USERNAME: 'admin'
-    NEXTCLOUD__ADMIN_PASSWORD: 'secretpassword'
-
-    ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
-    # ROCKETCHAT__ERROR_CHANNEL="#ug-it"
-    ROCKETCHAT__INFO_CHANNEL: '#my-channel'
-    ROCKETCHAT__ERROR_CHANNEL: '#my-channel'
-
-    MAILINGLIST__IMAP_SERVER: 'ssl01.alldomains.hosting'
-    MAILINGLIST__IMAP_USERNAME: 'list@example.com'
-    MAILINGLIST__IMAP_PASSWORD: 'secretpassword'
-
-    MAILINGLIST__SMTP_SERVER: 'smtp.eu.mailgun.org'
-    MAILINGLIST__SMTP_PORT: 587
-    MAILINGLIST__SMTP_USERNAME: 'postmaster@lists.example.com'
-    MAILINGLIST__SMTP_PASSWORD: 'secretpassword'
-
-    COUCHDB__URL: 'http://admin:password@couchdb:5984/'
-    CHROMADB__HOST: 'chromadb'
-    CHROMADB__PORT: 8000
-
-    GEMINI_API_KEY: 'secretpassword'
-    IMAGINARY_URL: 'http://imaginary:9000'
-  volumes:
-    - /mnt/thd-data/nc-bot/avatare:/tmp/avatare
-
 services:
-  # nginx_avatare:
-  #   image: nginx:alpine-slim
-  #   restart: always
-  #   volumes:
-  #     - ./avatare_nginx.conf:/etc/nginx/conf.d/default.conf
-  #     - /mnt/thd-data/nc-automation/avatare:/var/www/avatare
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 30s
+  bot:
+    image: ghcr.io/treibhausdonaufeld/nextcloud-bot:latest
+    restart: always
+    environment:
+      LOGLEVEL: ${LOGLEVEL:-INFO}
+      AUTH__PROVIDER_BASE_URL: 'https://auth.example.com'
+      AUTH__AUTHENTIK_TOKEN: 'secretpassword'
 
-  #   labels:
-  #     caddy: avatare.example.com
-  #     caddy.reverse_proxy: "{{upstreams 80}}"
-  #     caddy.tls: "/etc/ssl/thd-certs/treibhaus-cert.pem /etc/ssl/thd-certs/treibhaus-key.pem"
+      NEXTCLOUD__BASE_URL: 'https://wir.example.com'
+      NEXTCLOUD__ADMIN_USERNAME: 'admin'
+      NEXTCLOUD__ADMIN_PASSWORD: 'secretpassword'
 
-  #   networks:
-  #     - caddy
+      ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
+      ROCKETCHAT__INFO_CHANNEL: '#my-channel'
+      ROCKETCHAT__ERROR_CHANNEL: '#my-channel'
 
-  datafetcher:
-    <<: *common-settings
-    command: /bin/sh -c "python3 runner.py --loop"
+      MAILINGLIST__IMAP_SERVER: 'ssl01.alldomains.hosting'
+      MAILINGLIST__IMAP_USERNAME: 'list@example.com'
+      MAILINGLIST__IMAP_PASSWORD: 'secretpassword'
 
-  analytics:
-    <<: *common-settings
+      MAILINGLIST__SMTP_SERVER: 'smtp.eu.mailgun.org'
+      MAILINGLIST__SMTP_PORT: 587
+      MAILINGLIST__SMTP_USERNAME: 'postmaster@lists.example.com'
+      MAILINGLIST__SMTP_PASSWORD: 'secretpassword'
+
+      DATABASE_URL: 'sqlite+aiosqlite:////data/nextcloud_bot.db'
+    volumes:
+      - /mnt/thd-data/nc-bot/data:/data
+      - /mnt/thd-data/nc-bot/avatare:/tmp/avatare
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8501/_stcore/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
       interval: 30s
       timeout: 10s
       retries: 5
     labels:
       caddy: nc-bot.example.com
-      caddy.reverse_proxy: '{{upstreams 8501}}'
+      caddy.reverse_proxy: '{{upstreams 8000}}'
       caddy.import: oauth2_snippet
       caddy.tls: '/etc/ssl/thd-certs/treibhaus-cert.pem /etc/ssl/thd-certs/treibhaus-key.pem'
     networks:
       - caddy
 
-  couchdb:
-    image: couchdb
-    restart: always
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=password
-    volumes:
-      - /mnt/thd-data/nc-bot/couch-data:/opt/couchdb/data
-
-  chromadb:
-    image: chromadb/chroma:latest
-    restart: always
-    environment:
-      - CHROMA_SERVER_HOST=0.0.0.0
-      - CHROMA_SERVER_HTTP_PORT=8000
-      - CHROMA_DB_IMPL=duckdb+parquet
-      - CHROMA_PERSIST_DIRECTORY=/data
-      - ANONYMIZED_TELEMETRY=False
-    volumes:
-      - /mnt/thd-data/nc-bot/chroma-data:/data
-
-  imaginary:
-    image: h2non/imaginary:latest
-    restart: always
-
-  # embedding-server:
-  #   image: ${EMBEDDING_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.8} #default image with CPU support
-  #   command: --model-id ${ST_MODEL:-BAAI/bge-small-en-v1.5} --revision ${ST_MODEL_REVISION:-main} #configure model and model revision paramters
-  #   platform: linux/amd64 #right now the images are only available for linux
-  #   # environment:
-  #     # ST_MODEL="BAAI/bge-large-en-v1.5"
-  #     # ST_MODEL="BAAI/bge-multilingual-gemma2"
-
-  #     # multilanguage model
-  #     # ST_MODEL: "BAAI/bge-m3"  # (works well, but large)
-  #   volumes:
-  #     - hfmodels:/data #by default we create a volume for the models.
-
-  # permission-cleaner:
-  #   build: .
-  #   volumes:
-  #     - /mnt/thd-data/nextcloud/data/appdata_ocijucikhlb7/collectives/1:/data
-  #   restart: always
-
 networks:
   caddy:
     external: true
-# volumes:
-#   hfmodels: {}

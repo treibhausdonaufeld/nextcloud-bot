@@ -1,0 +1,35 @@
+{% if query %}
+  {% if results %}
+    <h3>{{ _("Source Documents") }}</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ _("Type") }}</th>
+            <th>{{ _("Title") }}</th>
+            <th>{{ _("Date") }}</th>
+            <th>{{ _("Content") }}</th>
+            <th>{{ _("Link") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ _("Decision") if r.doc_type == "decision" else _("Page") }}</td>
+              <td>{{ r.title }}</td>
+              <td>{{ r.date }}</td>
+              <td>{{ r.snippet | safe }}</td>
+              <td>
+                {% if r.url %}<a href="{{ r.url }}" target="_blank">{{ _("Open page") }}</a>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>{{ _("No matching pages found.") }}</p>
+  {% endif %}
+{% endif %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Groups") }}{% endblock %}
+{% block content %}
+  <h1>{{ _("Groups") }}</h1>
+
+  <form class="filter-form" method="get" action="/groups">
+    <input type="hidden" name="submitted" value="1" />
+    <label>
+      <input type="checkbox" name="hierarchical" value="true" {% if hierarchical %}checked{% endif %} onchange="this.form.submit()" />
+      {{ _("Hierarchical layout") }}
+    </label>
+    <label>
+      <input type="checkbox" name="with_members" value="true" {% if with_members %}checked{% endif %} onchange="this.form.submit()" />
+      {{ _("With Members") }}
+    </label>
+    <label>
+      <input type="checkbox" name="with_subgroups" value="true" {% if with_subgroups %}checked{% endif %} onchange="this.form.submit()" />
+      {{ _("With Subgroups") }}
+    </label>
+    <label>
+      {{ _("Limit to Top Group") }}
+      <select name="limit_group" onchange="this.form.submit()">
+        <option value=""></option>
+        {% for g in all_groups %}
+          <option value="{{ g.name }}" {% if g.name == limit_group %}selected{% endif %}>{{ g.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      {{ _("Limit to User") }}
+      <select name="limit_user" onchange="this.form.submit()">
+        <option value=""></option>
+        {% for u in users %}
+          <option value="{{ u.username }}" {% if u.username == limit_user %}selected{% endif %}>{{ u.displayname }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      {{ _("Solver") }}
+      <select name="solver" onchange="this.form.submit()">
+        {% for s in ["barnesHut", "repulsion", "forceAtlas2Based", "hierarchicalRepulsion"] %}
+          <option value="{{ s }}" {% if s == solver %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      {{ _("Graph Height") }}
+      <input type="number" name="height" value="{{ height }}" min="300" max="1200" step="100" onchange="this.form.submit()" style="width: 6rem" />
+    </label>
+  </form>
+
+  <div id="graph" style="height: {{ height }}px"></div>
+
+  <div id="detail">
+    {% if limit_user %}
+      <div hx-get="/groups/detail?node={{ limit_user | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
+    {% elif limit_group %}
+      <div hx-get="/groups/detail?node={{ limit_group | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
+    {% endif %}
+  </div>
+
+  <script src="/static/vis-network.min.js"></script>
+  <script>
+    const params = new URLSearchParams({
+      with_members: '{{ "true" if with_members else "false" }}',
+      with_subgroups: '{{ "true" if with_subgroups else "false" }}',
+      limit_group: '{{ limit_group }}',
+      limit_user: '{{ limit_user }}',
+    });
+    const fontColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? '#E0E0E0' : '#2C2C2C';
+
+    fetch('/groups/graph.json?' + params.toString())
+      .then((r) => r.json())
+      .then((data) => {
+        data.nodes.forEach((n) => {
+          n.font = { color: fontColor };
+          if (n.shape === 'dot') n.size = n.size * 1.5;
+        });
+        const container = document.getElementById('graph');
+        const network = new vis.Network(
+          container,
+          { nodes: new vis.DataSet(data.nodes), edges: new vis.DataSet(data.edges) },
+          {
+            layout: { hierarchical: { enabled: {{ 'true' if hierarchical else 'false' }}, direction: 'UD' } },
+            physics: {
+              enabled: {{ 'false' if hierarchical else 'true' }},
+              solver: '{{ solver }}',
+              stabilization: { iterations: 200 },
+            },
+            edges: { smooth: true, color: { opacity: 0.6 } },
+            interaction: { hover: true },
+          }
+        );
+        network.on('selectNode', (ev) => {
+          const nodeId = ev.nodes[0];
+          if (nodeId) {
+            htmx.ajax('GET', '/groups/detail?node=' + encodeURIComponent(nodeId), '#detail');
+          }
+        });
+      });
+  </script>
+{% endblock %}

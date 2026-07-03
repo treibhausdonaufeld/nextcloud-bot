@@ -12,15 +12,15 @@ is plain full-text search via SQLite FTS5.
 
 ## Target stack
 
-| Concern | Today | Target |
-| --- | --- | --- |
-| Web framework | Streamlit (`app.py`, `pages/*`) | **Ravyn** (`pip install ravyn[standard]`), sync+async handlers, served by uvicorn |
-| ORM / storage | CouchDB via `pycouchdb` + custom `CouchDBModel` | **Edgy** (Ravyn's native ORM, async-first, Django-like queries, Alembic-based migrations) on **SQLite** |
-| Search | ChromaDB + Gemini/HF embeddings (semantic) | **SQLite FTS5** virtual table — plain full-text search, no vector/AI retrieval |
-| Frontend | Streamlit widgets, plotly, streamlit-agraph | **Jinja2 templates + htmx** (partial updates, forms, search-as-you-type) + **Pico.css** for styling; vendored **plotly.js** for the timeline chart and **vis-network** for the group/mention graphs (same library streamlit-agraph wraps) — all static assets served by Ravyn, no CDN |
-| Background worker | separate `datafetcher` container running `runner.py --loop` | in-process **asyncz scheduler** (`ravyn[schedulers]`) or a lifespan background task inside the same app |
-| Avatar conversion | external `imaginary` container | **Pillow** in-process (JPEG conversion is the only feature used) |
-| Containers | datafetcher, analytics, couchdb, chromadb, imaginary | **one** service; volume for the SQLite file + avatars |
+| Concern           | Today                                                       | Target                                                                                                                                                                                                                                                                                |
+| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web framework     | Streamlit (`app.py`, `pages/*`)                             | **Ravyn** (`pip install ravyn[standard]`), sync+async handlers, served by uvicorn                                                                                                                                                                                                     |
+| ORM / storage     | CouchDB via `pycouchdb` + custom `CouchDBModel`             | **Edgy** (Ravyn's native ORM, async-first, Django-like queries, Alembic-based migrations) on **SQLite**                                                                                                                                                                               |
+| Search            | ChromaDB + Gemini/HF embeddings (semantic)                  | **SQLite FTS5** virtual table — plain full-text search, no vector/AI retrieval                                                                                                                                                                                                        |
+| Frontend          | Streamlit widgets, plotly, streamlit-agraph                 | **Jinja2 templates + htmx** (partial updates, forms, search-as-you-type) + **Pico.css** for styling; vendored **plotly.js** for the timeline chart and **vis-network** for the group/mention graphs (same library streamlit-agraph wraps) — all static assets served by Ravyn, no CDN |
+| Background worker | separate `datafetcher` container running `runner.py --loop` | in-process **asyncz scheduler** (`ravyn[schedulers]`) or a lifespan background task inside the same app                                                                                                                                                                               |
+| Avatar conversion | external `imaginary` container                              | **Pillow** in-process (JPEG conversion is the only feature used)                                                                                                                                                                                                                      |
+| Containers        | datafetcher, analytics, couchdb, chromadb, imaginary        | **one** service; volume for the SQLite file + avatars                                                                                                                                                                                                                                 |
 
 Why Edgy and not SQLModel/SQLAlchemy: it is the ORM Ravyn integrates natively (registry
 plugs into the app lifecycle), its query API (`Model.query.filter(...)`) maps almost 1:1
@@ -36,16 +36,16 @@ needed** — after deploying, run a full re-sync (`--update-all`) to rebuild the
 The only data not reproducible from Nextcloud are manually imported logbook decisions;
 re-import them via the existing XLSX upload.
 
-| CouchDB doc (`type`) | SQLite table | Notes |
-| --- | --- | --- |
-| `CollectivePage` | `collective_pages` | flatten the nested `ocs` object into columns (id, title, filePath, timestamp, …); keep `content` TEXT; index `(timestamp)` |
-| `Group` | `groups` | members/coordination/delegates as JSON columns (or a `group_members` join table if querying by user becomes common) |
-| `Protocol` | `protocols` | FK → `collective_pages`; participants as JSON |
-| `Decision` | `decisions` | FK → `protocols`/`collective_pages` (nullable for XLSX imports); index `(group_name, date)` |
-| `NCUser` | `users` | flatten `OCSUser`; keep `enabled` flag logic from `NCUserList.update_from_nextcloud()` |
-| `_design/mentions` JS view | `mentions` table `(page_id, username, count)` | populated at page-save time by running `user_regex` over content — replaces the map/reduce view queried by `pages/mentions.py` and `pages/groups.py` |
-| raw docs `calendar_notifier_events`, `deck_reminder_cards` | `kv_state` table `(key TEXT PK, value JSON)` | tiny key-value store; removes the ad-hoc `couchdb().get/save` calls |
-| ChromaDB collection | `page_search` FTS5 virtual table over pages + decisions | rebuilt/updated in the same save path that used to upsert embeddings |
+| CouchDB doc (`type`)                                       | SQLite table                                            | Notes                                                                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CollectivePage`                                           | `collective_pages`                                      | flatten the nested `ocs` object into columns (id, title, filePath, timestamp, …); keep `content` TEXT; index `(timestamp)`                           |
+| `Group`                                                    | `groups`                                                | members/coordination/delegates as JSON columns (or a `group_members` join table if querying by user becomes common)                                  |
+| `Protocol`                                                 | `protocols`                                             | FK → `collective_pages`; participants as JSON                                                                                                        |
+| `Decision`                                                 | `decisions`                                             | FK → `protocols`/`collective_pages` (nullable for XLSX imports); index `(group_name, date)`                                                          |
+| `NCUser`                                                   | `users`                                                 | flatten `OCSUser`; keep `enabled` flag logic from `NCUserList.update_from_nextcloud()`                                                               |
+| `_design/mentions` JS view                                 | `mentions` table `(page_id, username, count)`           | populated at page-save time by running `user_regex` over content — replaces the map/reduce view queried by `pages/mentions.py` and `pages/groups.py` |
+| raw docs `calendar_notifier_events`, `deck_reminder_cards` | `kv_state` table `(key TEXT PK, value JSON)`            | tiny key-value store; removes the ad-hoc `couchdb().get/save` calls                                                                                  |
+| ChromaDB collection                                        | `page_search` FTS5 virtual table over pages + decisions | rebuilt/updated in the same save path that used to upsert embeddings                                                                                 |
 
 CouchDB-specific machinery that simply disappears: `_rev` conflict retry, Mango index
 bootstrapping, the in-process LRU instance cache (SQLite is local and fast; drop it
@@ -111,14 +111,14 @@ functions injected into the Jinja2 environment, and language selection moves fro
 
 ### Phase 3 — Views (one per current Streamlit page)
 
-| Route | Replaces | Rendering |
-| --- | --- | --- |
-| `GET /` | `app.py` dashboard | search form (htmx live results from FTS5) + results table with page links |
-| `GET /groups` | `pages/groups.py` | vis-network org chart from a JSON endpoint; member details as htmx partial on node click |
-| `GET /timeline` | `pages/timeline.py` | same markdown-table parsing, rendered with plotly.js (timeline/scatter) from a JSON endpoint |
-| `GET /protocols` | `pages/protocols.py` | table + FTS5 search |
-| `GET /logbook` | `pages/logbook.py` | decision cards with pagination + filters (htmx), XLSX upload form |
-| `GET /mentions` | `pages/mentions.py` | counts/graph from the `mentions` table (vis-network + table) |
+| Route            | Replaces             | Rendering                                                                                    |
+| ---------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| `GET /`          | `app.py` dashboard   | search form (htmx live results from FTS5) + results table with page links                    |
+| `GET /groups`    | `pages/groups.py`    | vis-network org chart from a JSON endpoint; member details as htmx partial on node click     |
+| `GET /timeline`  | `pages/timeline.py`  | same markdown-table parsing, rendered with plotly.js (timeline/scatter) from a JSON endpoint |
+| `GET /protocols` | `pages/protocols.py` | table + FTS5 search                                                                          |
+| `GET /logbook`   | `pages/logbook.py`   | decision cards with pagination + filters (htmx), XLSX upload form                            |
+| `GET /mentions`  | `pages/mentions.py`  | counts/graph from the `mentions` table (vis-network + table)                                 |
 
 Auth stays where it is today: the app itself is unauthenticated and the reverse proxy
 (Caddy + oauth2 snippet in prod) terminates OAuth — no auth code needed in the app.
