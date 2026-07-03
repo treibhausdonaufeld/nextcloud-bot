@@ -6,8 +6,8 @@ Replace the current four-container stack (Streamlit UI, runner worker, CouchDB, 
 — plus imaginary) with **one container** running a single [Ravyn](https://www.ravyn.dev/)
 application that serves the web UI, runs the background sync/notification loop in-process,
 and stores everything in a **SQLite** file. The embedding/RAG stack (ChromaDB, langchain
-text splitters, embedding functions) is dropped for now; text search is served by SQLite
-FTS5 instead.
+text splitters, embedding functions, and the retrieval-fed Gemini Q&A on the dashboard)
+is removed entirely; all search is plain full-text search via SQLite FTS5.
 
 ## Target stack
 
@@ -15,7 +15,7 @@ FTS5 instead.
 | --- | --- | --- |
 | Web framework | Streamlit (`app.py`, `pages/*`) | **Ravyn** (`pip install ravyn[standard]`), sync+async handlers, served by uvicorn |
 | ORM / storage | CouchDB via `pycouchdb` + custom `CouchDBModel` | **Edgy** (Ravyn's native ORM, async-first, Django-like queries, Alembic-based migrations) on **SQLite** |
-| Semantic search | ChromaDB + Gemini/HF embeddings | **SQLite FTS5** virtual table (keyword/full-text); Gemini Q&A stays optional, fed by FTS5 retrieval instead of vector retrieval |
+| Search | ChromaDB + Gemini/HF embeddings (semantic) | **SQLite FTS5** virtual table — plain full-text search, no vector/AI retrieval |
 | Frontend | Streamlit widgets, plotly, streamlit-agraph | **Jinja2 templates + htmx** (partial updates, forms, search-as-you-type) + **Pico.css** for styling; vendored **plotly.js** for the timeline chart and **vis-network** for the group/mention graphs (same library streamlit-agraph wraps) — all static assets served by Ravyn, no CDN |
 | Background worker | separate `datafetcher` container running `runner.py --loop` | in-process **asyncz scheduler** (`ravyn[schedulers]`) or a lifespan background task inside the same app |
 | Avatar conversion | external `imaginary` container | **Pillow** in-process (JPEG conversion is the only feature used) |
@@ -89,7 +89,10 @@ functions injected into the Jinja2 environment, and language selection moves fro
    triggers or explicit re-index on page/decision save.
 6. Strip all embedding code: delete `lib/chromadb.py`, remove chunk-upsert from
    `CollectivePage.save()`, embedding upsert/delete from `Decision`, `--clear-chromadb`
-   from the CLI.
+   from the CLI, and the retrieval+Gemini Q&A code in `app.py` (`search_documents`,
+   `prompt_ai_stream`) and the semantic-search branches of `pages/logbook.py` and
+   `pages/protocols.py`. `google-genai` stays only for the worker-side protocol AI
+   summaries (`Protocol.generate_ai_summary`), which are unrelated to search.
 
 ### Phase 2 — Ravyn app + background worker
 
@@ -107,10 +110,10 @@ functions injected into the Jinja2 environment, and language selection moves fro
 
 | Route | Replaces | Rendering |
 | --- | --- | --- |
-| `GET /` | `app.py` dashboard | search form (htmx live results from FTS5), results table, optional streamed Gemini answer (SSE or chunked response) |
+| `GET /` | `app.py` dashboard | search form (htmx live results from FTS5) + results table with page links |
 | `GET /groups` | `pages/groups.py` | vis-network org chart from a JSON endpoint; member details as htmx partial on node click |
 | `GET /timeline` | `pages/timeline.py` | same markdown-table parsing, rendered with plotly.js (timeline/scatter) from a JSON endpoint |
-| `GET /protocols` | `pages/protocols.py` | table + FTS5 search + optional Gemini summary |
+| `GET /protocols` | `pages/protocols.py` | table + FTS5 search (shows the stored per-protocol AI summary field as today) |
 | `GET /logbook` | `pages/logbook.py` | decision cards with pagination + filters (htmx), XLSX upload form |
 | `GET /mentions` | `pages/mentions.py` | counts/graph from the `mentions` table (vis-network + table) |
 
@@ -132,16 +135,15 @@ Auth stays where it is today: the app itself is unauthenticated and the reverse 
 
 ### Deliberately out of scope (for now)
 
-- Vector/semantic search and the embedding servers (FTS5 keyword search replaces it; the
-  save-path hook point is kept so embeddings can return later).
 - Async-ifying the Nextcloud/IMAP/CalDAV clients (threadpool is fine at this scale).
 - Any auth inside the app (proxy-terminated, as today).
 
 ## Risks / notes
 
-- **FTS5 vs. semantic search**: keyword search will feel different for the German-language
-  Q&A ("Ask a question") flow; the `unicode61` tokenizer handles umlauts, but stemming is
-  absent. Acceptable per "drop embeddings for now".
+- **FTS5 vs. semantic search**: the dashboard's "Ask a question" RAG flow is removed, not
+  ported — the dashboard becomes a plain full-text search over pages and decisions. The
+  `unicode61` tokenizer handles umlauts, but there is no German stemming and no
+  meaning-based matching; users must search by words that actually appear in the text.
 - **Single process** means a long-running sync iteration shares the event loop with web
   requests — hence the threadpool rule in Phase 2.
 - **SQLite concurrency**: enable WAL mode; one writer (the worker) + read-mostly web
