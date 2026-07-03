@@ -6,8 +6,9 @@ Replace the current four-container stack (Streamlit UI, runner worker, CouchDB, 
 — plus imaginary) with **one container** running a single [Ravyn](https://www.ravyn.dev/)
 application that serves the web UI, runs the background sync/notification loop in-process,
 and stores everything in a **SQLite** file. The embedding/RAG stack (ChromaDB, langchain
-text splitters, embedding functions, and the retrieval-fed Gemini Q&A on the dashboard)
-is removed entirely; all search is plain full-text search via SQLite FTS5.
+text splitters, embedding functions) and **all Gemini usage** (the retrieval-fed Q&A on
+the dashboard and the worker-side protocol AI summaries) are removed entirely; all search
+is plain full-text search via SQLite FTS5.
 
 ## Target stack
 
@@ -87,12 +88,14 @@ functions injected into the Jinja2 environment, and language selection moves fro
    calendar/deck state.
 5. Set up FTS5 (raw SQL migration; Edgy runs on SQLAlchemy so `text()` DDL is fine) with
    triggers or explicit re-index on page/decision save.
-6. Strip all embedding code: delete `lib/chromadb.py`, remove chunk-upsert from
-   `CollectivePage.save()`, embedding upsert/delete from `Decision`, `--clear-chromadb`
-   from the CLI, and the retrieval+Gemini Q&A code in `app.py` (`search_documents`,
-   `prompt_ai_stream`) and the semantic-search branches of `pages/logbook.py` and
-   `pages/protocols.py`. `google-genai` stays only for the worker-side protocol AI
-   summaries (`Protocol.generate_ai_summary`), which are unrelated to search.
+6. Strip all embedding and Gemini code: delete `lib/chromadb.py`, remove chunk-upsert
+   from `CollectivePage.save()`, embedding upsert/delete from `Decision`,
+   `--clear-chromadb` from the CLI, the retrieval+Gemini Q&A code in `app.py`
+   (`search_documents`, `prompt_ai_stream`), the semantic-search branches of
+   `pages/logbook.py` and `pages/protocols.py`, and `Protocol.generate_ai_summary` with
+   its `ai_summary` field. Drop `google-genai`/`google-generativeai` from dependencies
+   and `gemini_api_key`/`gemini_model` (top-level and in the ChromaDB block) from
+   `lib/settings.py`.
 
 ### Phase 2 — Ravyn app + background worker
 
@@ -113,7 +116,7 @@ functions injected into the Jinja2 environment, and language selection moves fro
 | `GET /` | `app.py` dashboard | search form (htmx live results from FTS5) + results table with page links |
 | `GET /groups` | `pages/groups.py` | vis-network org chart from a JSON endpoint; member details as htmx partial on node click |
 | `GET /timeline` | `pages/timeline.py` | same markdown-table parsing, rendered with plotly.js (timeline/scatter) from a JSON endpoint |
-| `GET /protocols` | `pages/protocols.py` | table + FTS5 search (shows the stored per-protocol AI summary field as today) |
+| `GET /protocols` | `pages/protocols.py` | table + FTS5 search |
 | `GET /logbook` | `pages/logbook.py` | decision cards with pagination + filters (htmx), XLSX upload form |
 | `GET /mentions` | `pages/mentions.py` | counts/graph from the `mentions` table (vis-network + table) |
 
@@ -126,10 +129,11 @@ Auth stays where it is today: the app itself is unauthenticated and the reverse 
    healthcheck on a `/health` route.
 2. `compose.yml` / `compose.prod.yml`: single `bot` service with a volume for
    `/data` (SQLite file, avatars); delete couchdb/chromadb/imaginary/datafetcher services
-   and `COUCHDB__*`/`CHROMADB__*`/`IMAGINARY_URL` env vars.
-3. `tests/conftest.py`: drop the `sys.modules` ChromaDB mocking; use an in-memory SQLite
-   Edgy registry fixture instead. The parsing tests (groups, protocol decisions, calendar
-   notifier) carry over nearly unchanged since they already mock persistence.
+   and `COUCHDB__*`/`CHROMADB__*`/`IMAGINARY_URL`/`GEMINI_API_KEY` env vars.
+3. `tests/conftest.py`: drop the `sys.modules` mocking of `chromadb` and
+   `google.genai`/`google.generativeai` (nothing imports them anymore); use an in-memory
+   SQLite Edgy registry fixture instead. The parsing tests (groups, protocol decisions,
+   calendar notifier) carry over nearly unchanged since they already mock persistence.
 4. Update `mypy.ini` (remove pycouchdb/streamlit overrides), pre-commit, README, and this
    file's sibling `CLAUDE.md`.
 
