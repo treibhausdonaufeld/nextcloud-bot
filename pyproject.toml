@@ -22,7 +22,6 @@ dependencies = [
     "openpyxl>=3.1.5",
     "click>=8.3.0",
     "simplemma>=1.2.0",
-    "compound-split>=1.0.2",
 ]
 
 [dependency-groups]

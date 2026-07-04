@@ -9,25 +9,29 @@ FTS5's unicode61 tokenizer has no stemming and German is rich in inflection
 - queries are expanded so each term also matches via its lemma and compound
   parts
 
-Lemmatization uses simplemma (German + English), compound splitting uses
-compound-split (CharSplit). Both are pure Python; results are memoized.
+Lemmatization uses simplemma (German + English). Compound splitting is
+dictionary-based on simplemma's vocabulary: a long word is split when both
+halves (allowing a German linking element like the Fugen-s) are known words.
+Results are memoized.
 """
 
 import re
 from functools import lru_cache
 
 import simplemma
-from compound_split import char_split
 
 TOKEN_RE = re.compile(r"\w[\w-]*")
 
 LANGS = ("de", "en")
 
-# only try to split reasonably long, purely alphabetic words, and only accept
-# confident splits (e.g. "Budget" -> "Bud"/"Get" scores ~0.43 and is junk)
+# only try to split reasonably long, purely alphabetic words into parts that
+# are proper words themselves (avoids junk like "Budget" -> "Bud"/"Get")
 MIN_COMPOUND_LENGTH = 8
-COMPOUND_SCORE_THRESHOLD = 0.6
-MIN_PART_LENGTH = 3
+MIN_PART_LENGTH = 4
+
+# German linking elements (Fugenelemente) tried between compound parts,
+# e.g. "Arbeitszeit" -> "Arbeit" + s + "Zeit"
+LINKING_ELEMENTS = ("s", "es", "n", "en", "er", "e")
 
 
 @lru_cache(maxsize=100_000)
@@ -40,28 +44,51 @@ def lemmatize(token: str) -> str:
 
 
 @lru_cache(maxsize=100_000)
+def _is_word(word: str) -> bool:
+    return simplemma.is_known(word, lang="de") or simplemma.is_known(
+        word.capitalize(), lang="de"
+    )
+
+
+def _split_compound(token: str) -> tuple[str, str] | None:
+    """Split a lowercased word into two known words, or None."""
+    candidates = []
+    for i in range(MIN_PART_LENGTH, len(token) - MIN_PART_LENGTH + 1):
+        first, second = token[:i], token[i:]
+        if not _is_word(second):
+            continue
+        if _is_word(first):
+            candidates.append((len(second), first, second))
+            continue
+        # allow a linking element at the end of the first part
+        for link in LINKING_ELEMENTS:
+            stem = first[: -len(link)] if first.endswith(link) else None
+            if stem and len(stem) >= MIN_PART_LENGTH and _is_word(stem):
+                candidates.append((len(second), stem, second))
+                break
+    if not candidates:
+        return None
+    # prefer the split with the longest second part (the head of the compound)
+    _, first, second = max(candidates)
+    return first, second
+
+
+@lru_cache(maxsize=100_000)
 def compound_parts(token: str) -> tuple[str, ...]:
     """Parts of a German compound word, lowercased, incl. their lemmas."""
     if len(token) < MIN_COMPOUND_LENGTH or not token.isalpha():
         return ()
-    try:
-        candidates = char_split.split_compound(token)
-    except Exception:
-        return ()
-    if not candidates:
-        return ()
-    score, *parts = candidates[0]
-    if score < COMPOUND_SCORE_THRESHOLD:
+    split = _split_compound(token.lower())
+    if split is None:
         return ()
 
     result: list[str] = []
-    for part in parts:
-        if len(part) < MIN_PART_LENGTH:
-            continue
-        lowered = part.lower()
-        if lowered not in result:
-            result.append(lowered)
-        lemma = lemmatize(part)
+    for part in split:
+        if part not in result:
+            result.append(part)
+        # compound parts are usually nouns — lemmatize capitalized to avoid
+        # verb readings (e.g. "garten" -> "garen")
+        lemma = lemmatize(part.capitalize())
         if lemma not in result:
             result.append(lemma)
     return tuple(result)

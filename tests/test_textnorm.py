@@ -22,7 +22,7 @@ class TestCompoundParts:
         assert "geräte" in parts or "gerät" in parts
 
     def test_rejects_low_confidence_splits(self):
-        # "Budget" -> "Bud"/"Get" scores below the threshold
+        # "Bud"/"Get" are not known German words, so "Budget" stays whole
         assert compound_parts("Budget") == ()
 
     def test_skips_short_and_non_alpha_tokens(self):
