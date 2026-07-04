@@ -17,7 +17,7 @@
     {% for entry in mention_pages %}
       {% for line in entry.lines %}
         <li>
-          <strong><a href="{{ entry.page.url }}" target="_blank">{{ entry.page.title }}</a></strong>: {{ line }}
+          <strong><a href="{{ entry.page.url }}" target="_blank" rel="noopener noreferrer">{{ entry.page.title }}</a></strong>: {{ line }}
         </li>
       {% endfor %}
     {% endfor %}

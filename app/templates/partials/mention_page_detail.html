@@ -2,7 +2,7 @@
   {% if page %}
     <h3>{{ page.title }}</h3>
     {% if page.url %}
-      <p><a href="{{ page.url }}" target="_blank">{{ _("Open page") }}</a></p>
+      <p><a href="{{ page.url }}" target="_blank" rel="noopener noreferrer">{{ _("Open page") }}</a></p>
     {% endif %}
     <p>{{ _("Users mentioned in this page: {count}").format(count=mentioned_users | length) }}</p>
     <ul>

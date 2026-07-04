@@ -21,7 +21,7 @@
         {% if section.figure %}
           <div id="chart-{{ loop.index }}"></div>
         {% else %}
-          <p>{{ 'No events to display for "%s"' | format(section.header) }}</p>
+          <p>{{ _('No events to display for "%s"') | format(section.header) }}</p>
         {% endif %}
       </div>
     {% endfor %}

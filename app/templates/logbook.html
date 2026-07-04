@@ -5,7 +5,7 @@
 
   {% if import_created is defined %}
     {% if import_created %}
-      <article>✅ {{ "Successfully imported %d decisions!" | format(import_created) }}</article>
+      <article>✅ {{ _("Successfully imported %d decisions!") | format(import_created) }}</article>
     {% endif %}
     {% if import_errors %}
       <article>
@@ -84,7 +84,7 @@
           {% endif %}
         </details>
         {% if card.link %}
-          <p><a href="{{ card.link }}" target="_blank">{{ _("Open protocol") }}</a></p>
+          <p><a href="{{ card.link }}" target="_blank" rel="noopener noreferrer">{{ _("Open protocol") }}</a></p>
         {% endif %}
       </article>
     {% endfor %}

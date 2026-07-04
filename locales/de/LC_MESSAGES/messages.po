@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-04 18:06+0000\n"
+"POT-Creation-Date: 2026-07-04 20:33+0000\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -163,6 +163,10 @@ msgstr "Löser"
 msgid "Graph Height"
 msgstr "Höhe des Graphen"
 
+#, python-format
+msgid "Successfully imported %d decisions!"
+msgstr "%d Beschlüsse erfolgreich importiert!"
+
 msgid "Errors encountered:"
 msgstr "Aufgetretene Fehler:"
 
@@ -315,6 +319,10 @@ msgid ""
 msgstr ""
 "Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in "
 "Nextcloud Collectives."
+
+#, python-format
+msgid "No events to display for \"%s\""
+msgstr "Keine Ereignisse für \"%s\" vorhanden"
 
 msgid "Parent Group"
 msgstr "Übergeordnete Gruppe"

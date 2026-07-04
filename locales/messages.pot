@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-04 18:06+0000\n"
+"POT-Creation-Date: 2026-07-04 20:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -151,6 +151,10 @@ msgid "Solver"
 msgstr ""
 
 msgid "Graph Height"
+msgstr ""
+
+#, python-format
+msgid "Successfully imported %d decisions!"
 msgstr ""
 
 msgid "Errors encountered:"
@@ -300,6 +304,10 @@ msgstr ""
 msgid ""
 "No timeline data found. Please create and populate the '%s' page in "
 "Nextcloud Collectives."
+msgstr ""
+
+#, python-format
+msgid "No events to display for \"%s\""
 msgstr ""
 
 msgid "Parent Group"

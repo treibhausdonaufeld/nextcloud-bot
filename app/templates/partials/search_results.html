@@ -22,7 +22,7 @@
               <td>{{ r.date }}</td>
               <td>{{ r.snippet | safe }}</td>
               <td>
-                {% if r.url %}<a href="{{ r.url }}" target="_blank">{{ _("Open page") }}</a>{% endif %}
+                {% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ _("Open page") }}</a>{% endif %}
               </td>
             </tr>
           {% endfor %}

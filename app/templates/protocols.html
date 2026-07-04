@@ -38,7 +38,7 @@
             <tr>
               <td>{{ row.date }}</td>
               <td>
-                {% if row.url %}<a href="{{ row.url }}" target="_blank">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}
+                {% if row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener noreferrer">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}
               </td>
               <td>{{ row.group }}</td>
               <td>{{ row.moderated_by }}</td>

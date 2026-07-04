@@ -311,5 +311,12 @@ def timeline_page(request: Request) -> Template:
 
     context["timeline_page_name"] = settings.nextcloud.timeline_page_name
     context["sections"] = build_section_figures(md_text) if md_text.strip() else []
-    context["figures_json"] = json.dumps(context["sections"])
+    # escape <, > and & so page-provided titles cannot break out of the
+    # <script type="application/json"> block (XSS via "</script>")
+    context["figures_json"] = (
+        json.dumps(context["sections"])
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
     return Template(name="timeline.html", context=context)

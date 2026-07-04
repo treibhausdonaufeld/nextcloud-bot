@@ -11,7 +11,7 @@
         - {{ entry.page.formatted_timestamp or "" }}
       </summary>
       {% if entry.page.url %}
-        <p><a href="{{ entry.page.url }}" target="_blank">{{ _("Open page") }}</a></p>
+        <p><a href="{{ entry.page.url }}" target="_blank" rel="noopener noreferrer">{{ _("Open page") }}</a></p>
       {% endif %}
       {% if entry.snippets %}
         <p><strong>{{ _("Mentions") }}:</strong></p>

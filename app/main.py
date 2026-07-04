@@ -39,7 +39,9 @@ def health() -> dict:
 def switch_language(
     request: Request, code: str = "", next: str = "/"
 ) -> RedirectResponse:
-    if not next.startswith("/"):
+    # only allow local paths: scheme-relative URLs (//host, /\host) would
+    # allow an open redirect
+    if not next.startswith("/") or next.startswith("//") or "\\" in next:
         next = "/"
     response = RedirectResponse(url=next, status_code=302)
     if code in available_languages:
