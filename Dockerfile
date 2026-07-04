@@ -35,6 +35,9 @@ ENV DATABASE_URL="sqlite+aiosqlite:////data/nextcloud_bot.db"
 
 EXPOSE 8000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
