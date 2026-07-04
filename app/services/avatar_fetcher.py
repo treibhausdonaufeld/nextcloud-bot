@@ -195,8 +195,17 @@ class AvatarFetcher:
 
             if avatar_url.startswith("data:image"):
                 # Inline base64 data URL: data:image/<type>;base64,<data>
+                header, _, _ = avatar_url.partition(",")
+                if "svg" in header:
+                    logger.debug(
+                        "authentik returned an SVG avatar for uid %s, skipping "
+                        "(unsupported by Pillow)",
+                        username,
+                    )
+                    return None
+
                 try:
-                    header, encoded = avatar_url.split(",", 1)
+                    _, encoded = avatar_url.split(",", 1)
                     image_content = base64.b64decode(encoded)
                 except Exception as e:
                     logger.debug(
@@ -211,9 +220,9 @@ class AvatarFetcher:
                 avatar_response.raise_for_status()
 
                 content_type = avatar_response.headers.get("Content-Type", "")
-                if not content_type.startswith("image/"):
+                if not content_type.startswith("image/") or "svg" in content_type:
                     logger.debug(
-                        "authentik returned non-image content-type '%s' for uid %s, skipping",
+                        "authentik returned non-raster content-type '%s' for uid %s, skipping",
                         content_type,
                         username,
                     )
