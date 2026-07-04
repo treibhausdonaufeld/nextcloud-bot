@@ -1,11 +1,13 @@
-"""Logbook: browse and search decisions, import from XLSX."""
+"""Logbook: browse and search decisions.
 
-import asyncio
+XLSX import is intentionally CLI-only (`cli.py import-xlsx`); there is no web
+upload route.
+"""
+
 import logging
-from io import BytesIO
 from typing import Any
 
-from ravyn import File, Request, Template, UploadFile, get, post
+from ravyn import Request, Template, get
 
 from app.db import search
 from app.i18n import template_context
@@ -76,7 +78,6 @@ def logbook_context(
     search_type: str,
     page: int,
     per_page: int,
-    **extra,
 ) -> dict:
     decisions = find_decisions(group, q, search_type)
 
@@ -115,7 +116,6 @@ def logbook_context(
         selected_group=group,
         q=q,
         search_type=search_type,
-        **extra,
     )
 
 
@@ -131,50 +131,4 @@ def logbook_page(
     return Template(
         name="logbook.html",
         context=logbook_context(request, group, q, search_type, page, per_page),
-    )
-
-
-def _run_import(content: bytes) -> tuple[int, list[str]]:
-    import pandas as pd
-
-    from app.services.logbook_import import import_decisions_from_excel
-
-    created_count = 0
-    errors: list[str] = []
-    df = pd.read_excel(BytesIO(content))
-    for result in import_decisions_from_excel(df):
-        if result == "":
-            created_count += 1
-        else:
-            errors.append(result)
-    return created_count, errors
-
-
-@post("/logbook/import")
-async def logbook_import(
-    request: Request,
-    data: UploadFile = File(),  # type: ignore[assignment]
-) -> Template:
-    created_count = 0
-    errors: list[str] = []
-    try:
-        content = await data.read()
-        # pandas + DB writes are blocking — keep them off the event loop
-        created_count, errors = await asyncio.to_thread(_run_import, content)
-    except Exception as e:  # invalid file etc.
-        errors.append(str(e))
-
-    return Template(
-        name="logbook.html",
-        context=await asyncio.to_thread(
-            logbook_context,
-            request,
-            "",
-            "",
-            "fulltext",
-            1,
-            DEFAULT_ITEMS_PER_PAGE,
-            import_created=created_count,
-            import_errors=errors,
-        ),
     )

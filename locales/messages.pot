@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-04 20:33+0000\n"
+"POT-Creation-Date: 2026-07-04 23:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -153,14 +153,13 @@ msgstr ""
 msgid "Graph Height"
 msgstr ""
 
-#, python-format
-msgid "Successfully imported %d decisions!"
-msgstr ""
-
-msgid "Errors encountered:"
+msgid "Search decisions…"
 msgstr ""
 
 msgid "Filter by group"
+msgstr ""
+
+msgid "All groups"
 msgstr ""
 
 msgid "Search Type"
@@ -181,13 +180,18 @@ msgstr ""
 msgid "Items per page"
 msgstr ""
 
+#, python-format
+msgid "%d / page"
+msgstr ""
+
 msgid "No decisions found."
 msgstr ""
 
-msgid "decisions found"
+#, python-format
+msgid "%(total)s decisions"
 msgstr ""
 
-msgid "Showing"
+msgid "showing"
 msgstr ""
 
 msgid "No Title"
@@ -217,10 +221,19 @@ msgstr ""
 msgid "Open protocol"
 msgstr ""
 
-msgid "Upload XLSX file with previous decisions to import"
+msgid "Pagination"
 msgstr ""
 
-msgid "Import"
+msgid "First page"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "Last page"
 msgstr ""
 
 msgid "No mentions found."

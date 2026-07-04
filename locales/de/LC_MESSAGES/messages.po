@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-04 20:33+0000\n"
+"POT-Creation-Date: 2026-07-04 23:13+0200\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -163,15 +163,14 @@ msgstr "Löser"
 msgid "Graph Height"
 msgstr "Höhe des Graphen"
 
-#, python-format
-msgid "Successfully imported %d decisions!"
-msgstr "%d Beschlüsse erfolgreich importiert!"
-
-msgid "Errors encountered:"
-msgstr "Aufgetretene Fehler:"
+msgid "Search decisions…"
+msgstr "Entscheidungen durchsuchen…"
 
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
+
+msgid "All groups"
+msgstr "Alle Gruppen"
 
 msgid "Search Type"
 msgstr "Suchtyp"
@@ -191,14 +190,19 @@ msgstr "Genau"
 msgid "Items per page"
 msgstr "Einträge pro Seite"
 
+#, python-format
+msgid "%d / page"
+msgstr "%d / Seite"
+
 msgid "No decisions found."
 msgstr "Keine Entscheidungen gefunden."
 
-msgid "decisions found"
-msgstr "Entscheidungen gefunden"
+#, python-format
+msgid "%(total)s decisions"
+msgstr "%(total)s Entscheidungen"
 
-msgid "Showing"
-msgstr "Anzeigen"
+msgid "showing"
+msgstr "zeige"
 
 msgid "No Title"
 msgstr "Kein Titel"
@@ -227,11 +231,20 @@ msgstr "Kein Text verfügbar"
 msgid "Open protocol"
 msgstr "Protokoll öffnen"
 
-msgid "Upload XLSX file with previous decisions to import"
-msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
+msgid "Pagination"
+msgstr "Seitennavigation"
 
-msgid "Import"
-msgstr "Importieren"
+msgid "First page"
+msgstr "Erste Seite"
+
+msgid "Previous page"
+msgstr "Vorherige Seite"
+
+msgid "Next page"
+msgstr "Nächste Seite"
+
+msgid "Last page"
+msgstr "Letzte Seite"
 
 msgid "No mentions found."
 msgstr "Keine Erwähnungen gefunden."
@@ -395,6 +408,25 @@ msgstr "Seiten, die den Benutzer erwähnen"
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr "Erwähnungen insgesamt: {count}"
+
+#, python-format
+#~ msgid "Successfully imported %d decisions!"
+#~ msgstr "%d Beschlüsse erfolgreich importiert!"
+
+#~ msgid "Errors encountered:"
+#~ msgstr "Aufgetretene Fehler:"
+
+#~ msgid "decisions found"
+#~ msgstr "Entscheidungen gefunden"
+
+#~ msgid "Showing"
+#~ msgstr "Anzeigen"
+
+#~ msgid "Upload XLSX file with previous decisions to import"
+#~ msgstr "XLSX-Datei mit früheren Entscheidungen zum Import hochladen"
+
+#~ msgid "Import"
+#~ msgstr "Importieren"
 
 #~ msgid "Ask a Question"
 #~ msgstr "Frage stellen"

@@ -1,115 +1,95 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Logbook") }}{% endblock %}
 {% block content %}
-  <h1>{{ _("Logbook") }}</h1>
+  <header class="page-head">
+    <h1>{{ _("Logbook") }}</h1>
+  </header>
 
-  {% if import_created is defined %}
-    {% if import_created %}
-      <article>✅ {{ _("Successfully imported %d decisions!") | format(import_created) }}</article>
-    {% endif %}
-    {% if import_errors %}
-      <article>
-        ⚠️ {{ _("Errors encountered:") }}
-        <ul>
-          {% for error in import_errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-      </article>
-    {% endif %}
-  {% endif %}
-
-  <form class="filter-form" method="get" action="/logbook">
-    <label>
-      {{ _("Filter by group") }}
-      <select name="group" onchange="this.form.submit()">
-        <option value=""></option>
+  <form class="toolbar" method="get" action="/logbook">
+    <div class="toolbar-search" role="search">
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Search decisions…') }}" />
+      <button type="submit">{{ _("Search") }}</button>
+    </div>
+    <div class="toolbar-filters">
+      <select name="group" aria-label="{{ _('Filter by group') }}" onchange="this.form.submit()">
+        <option value="">{{ _("All groups") }}</option>
         {% for g in group_names %}
           <option value="{{ g }}" {% if g == selected_group %}selected{% endif %}>{{ g }}</option>
         {% endfor %}
       </select>
-    </label>
-    <label>
-      {{ _("Search") }}
-      <input type="search" name="q" value="{{ q }}" />
-    </label>
-    <label>
-      {{ _("Search Type") }}
-      <select name="search_type">
+      <select name="search_type" aria-label="{{ _('Search Type') }}" onchange="this.form.submit()">
         <option value="fulltext" {% if search_type == "fulltext" %}selected{% endif %}>{{ _("Fulltext") }}</option>
         <option value="any" {% if search_type == "any" %}selected{% endif %}>{{ _("Any") }}</option>
         <option value="all" {% if search_type == "all" %}selected{% endif %}>{{ _("All") }}</option>
         <option value="exact" {% if search_type == "exact" %}selected{% endif %}>{{ _("Exact") }}</option>
       </select>
-    </label>
-    <label>
-      {{ _("Items per page") }}
-      <select name="per_page" onchange="this.form.submit()">
+      <select name="per_page" aria-label="{{ _('Items per page') }}" onchange="this.form.submit()">
         {% for n in per_page_options %}
-          <option value="{{ n }}" {% if n == per_page %}selected{% endif %}>{{ n }}</option>
+          <option value="{{ n }}" {% if n == per_page %}selected{% endif %}>{{ _("%d / page") | format(n) }}</option>
         {% endfor %}
       </select>
-    </label>
-    <button type="submit">{{ _("Search") }}</button>
+    </div>
   </form>
 
   {% if not cards %}
-    <p>{{ _("No decisions found.") }}</p>
+    <p class="empty-state">{{ _("No decisions found.") }}</p>
   {% else %}
-    <p>
-      <strong>{{ total }}</strong> {{ _("decisions found") }} |
-      {{ _("Showing") }} {{ start_idx + 1 }}-{{ end_idx }}
+    <p class="result-count">
+      {{ _("%(total)s decisions") | format(total=total) }}
+      <span>· {{ _("showing") }} {{ start_idx + 1 }}–{{ end_idx }}</span>
     </p>
 
-    {% for card in cards %}
-      <article class="decision-card">
-        <h4>{{ card.decision.title or _("No Title") }}</h4>
-        <p class="meta">
-          {% if card.decision.date %}📅 {{ card.decision.date }}{% endif %}
-          {% if card.decision.group_name %} | 👥 {{ card.decision.group_name }}{% endif %}
-          {% if card.decision.valid_until %} | ⏰ {{ _("Valid until") }}: {{ card.decision.valid_until }}{% endif %}
-        </p>
-        {% if card.truncated %}<p>{{ card.truncated }}</p>{% endif %}
-        <details>
-          <summary>{{ _("View Details") }}</summary>
-          <p><strong>{{ _("Date") }}:</strong> {{ card.decision.date }}</p>
-          <p><strong>{{ _("Group") }}:</strong> {{ card.decision.group_name or "-" }}</p>
-          <p><strong>{{ _("Valid Until") }}:</strong> {{ card.decision.valid_until or "-" }}</p>
-          {% if card.decision.context %}
-            <p><strong>{{ _("Context") }}:</strong> {{ card.decision.context }}</p>
+    <div class="decision-list">
+      {% for card in cards %}
+        <article class="decision-card">
+          <h4>{{ card.decision.title or _("No Title") }}</h4>
+          <p class="meta">
+            {% if card.decision.date %}<span>📅 {{ card.decision.date }}</span>{% endif %}
+            {% if card.decision.group_name %}<span>👥 {{ card.decision.group_name }}</span>{% endif %}
+            {% if card.decision.valid_until %}<span>⏰ {{ _("Valid until") }}: {{ card.decision.valid_until }}</span>{% endif %}
+          </p>
+          {% if card.truncated %}<p class="excerpt">{{ card.truncated }}</p>{% endif %}
+          <details>
+            <summary>{{ _("View Details") }}</summary>
+            <p><strong>{{ _("Date") }}:</strong> {{ card.decision.date }}</p>
+            <p><strong>{{ _("Group") }}:</strong> {{ card.decision.group_name or "-" }}</p>
+            <p><strong>{{ _("Valid Until") }}:</strong> {{ card.decision.valid_until or "-" }}</p>
+            {% if card.decision.context %}
+              <p><strong>{{ _("Context") }}:</strong> {{ card.decision.context }}</p>
+            {% endif %}
+            <h5>{{ _("Text") }}</h5>
+            <p style="white-space: pre-wrap">{{ card.decision.text or _("No text available") }}</p>
+            {% if card.decision.objections %}
+              <h5>{{ _("Objections") }}</h5>
+              <p style="white-space: pre-wrap">{{ card.decision.objections }}</p>
+            {% endif %}
+          </details>
+          {% if card.link %}
+            <p class="card-actions"><a href="{{ card.link }}" target="_blank" rel="noopener noreferrer">{{ _("Open protocol") }} ↗</a></p>
           {% endif %}
-          <h5>{{ _("Text") }}</h5>
-          <p style="white-space: pre-wrap">{{ card.decision.text or _("No text available") }}</p>
-          {% if card.decision.objections %}
-            <h5>{{ _("Objections") }}</h5>
-            <p style="white-space: pre-wrap">{{ card.decision.objections }}</p>
-          {% endif %}
-        </details>
-        {% if card.link %}
-          <p><a href="{{ card.link }}" target="_blank" rel="noopener noreferrer">{{ _("Open protocol") }}</a></p>
-        {% endif %}
-      </article>
-    {% endfor %}
+        </article>
+      {% endfor %}
+    </div>
 
     {% if total_pages > 1 %}
       {% set base_query = "group=" ~ (selected_group | urlencode) ~ "&q=" ~ (q | urlencode) ~ "&search_type=" ~ search_type ~ "&per_page=" ~ per_page %}
-      <nav>
-        <ul>
-          <li>{% if page > 1 %}<a href="/logbook?{{ base_query }}&page=1">⏮️</a>{% endif %}</li>
-          <li>{% if page > 1 %}<a href="/logbook?{{ base_query }}&page={{ page - 1 }}">◀️</a>{% endif %}</li>
-          <li>{{ page }} / {{ total_pages }}</li>
-          <li>{% if page < total_pages %}<a href="/logbook?{{ base_query }}&page={{ page + 1 }}">▶️</a>{% endif %}</li>
-          <li>{% if page < total_pages %}<a href="/logbook?{{ base_query }}&page={{ total_pages }}">⏭️</a>{% endif %}</li>
-        </ul>
+      <nav class="pagination" aria-label="{{ _('Pagination') }}">
+        {% if page > 1 %}
+          <a href="/logbook?{{ base_query }}&page=1" aria-label="{{ _('First page') }}">«</a>
+          <a href="/logbook?{{ base_query }}&page={{ page - 1 }}" aria-label="{{ _('Previous page') }}">‹</a>
+        {% else %}
+          <span class="disabled">«</span>
+          <span class="disabled">‹</span>
+        {% endif %}
+        <span class="page-status">{{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="/logbook?{{ base_query }}&page={{ page + 1 }}" aria-label="{{ _('Next page') }}">›</a>
+          <a href="/logbook?{{ base_query }}&page={{ total_pages }}" aria-label="{{ _('Last page') }}">»</a>
+        {% else %}
+          <span class="disabled">›</span>
+          <span class="disabled">»</span>
+        {% endif %}
       </nav>
     {% endif %}
   {% endif %}
-
-  <hr />
-
-  <h3>{{ _("Upload XLSX file with previous decisions to import") }}</h3>
-  <form method="post" action="/logbook/import" enctype="multipart/form-data">
-    <fieldset role="group">
-      <input type="file" name="data" accept=".xlsx" required />
-      <button type="submit">{{ _("Import") }}</button>
-    </fieldset>
-  </form>
 {% endblock %}
