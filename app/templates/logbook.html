@@ -73,6 +73,9 @@
           <p><strong>{{ _("Date") }}:</strong> {{ card.decision.date }}</p>
           <p><strong>{{ _("Group") }}:</strong> {{ card.decision.group_name or "-" }}</p>
           <p><strong>{{ _("Valid Until") }}:</strong> {{ card.decision.valid_until or "-" }}</p>
+          {% if card.decision.context %}
+            <p><strong>{{ _("Context") }}:</strong> {{ card.decision.context }}</p>
+          {% endif %}
           <h5>{{ _("Text") }}</h5>
           <p style="white-space: pre-wrap">{{ card.decision.text or _("No text available") }}</p>
           {% if card.decision.objections %}

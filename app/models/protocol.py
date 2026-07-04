@@ -146,16 +146,26 @@ class Protocol(BaseDBModel):
             d.remove()
 
         # Simple regex to find ::: success blocks
-        decision_blocks = re.findall(r"::: success(.*?):::", page.content, re.DOTALL)
-
         decisions: List[Decision] = []
-        for block in decision_blocks:
-            decision: Decision | None = self.save_decision(block)
+        for match in re.finditer(r"::: success(.*?):::", page.content, re.DOTALL):
+            context = self.heading_before(page.content, match.start())
+            decision: Decision | None = self.save_decision(
+                match.group(1), context=context
+            )
             if decision is not None:
                 decisions.append(decision)
         return decisions
 
-    def save_decision(self, block: str) -> Decision | None:
+    @staticmethod
+    def heading_before(content: str, position: int) -> str:
+        """Return the nearest markdown heading above `position` (agenda item)."""
+        for line in reversed(content[:position].splitlines()):
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                return stripped.lstrip("#").strip()
+        return ""
+
+    def save_decision(self, block: str, context: str = "") -> Decision | None:
         """Parse and save on decision from a markdown block."""
 
         def clean_line(line: str) -> str:
@@ -190,6 +200,7 @@ class Protocol(BaseDBModel):
             date=self.date,
             page_id=self.page_id,
             group_name=group.name if group else "",
+            context=context,
         )
 
         # iterate over all lines and check each line for keywords

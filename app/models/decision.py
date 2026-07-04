@@ -22,6 +22,10 @@ class Decision(BaseDBModel):
 
     external_link: str = edgy.CharField(max_length=1024, default="")
 
+    # Surrounding context from the protocol (the agenda heading above the
+    # decision block) — indexed for search and shown in the detail view.
+    context: str = edgy.TextField(default="")
+
     # Deterministic key mirroring the old CouchDB document id, so re-parsing
     # a protocol or re-importing an XLSX updates instead of duplicating.
     # Computed in store(); the default only exists so instances can be
@@ -67,9 +71,18 @@ class Decision(BaseDBModel):
 
     def after_store(self) -> None:
         if self.title or self.text:
-            update_search_index(
-                "decision", str(self.id), self.title, self.title + " " + self.text
+            # index the decision together with its context (agenda heading,
+            # objections, group, date) so searches match on surroundings too
+            body_parts = (
+                self.title,
+                self.text,
+                self.objections,
+                self.context,
+                self.group_name,
+                self.date,
             )
+            body = " ".join(part for part in body_parts if part)
+            update_search_index("decision", str(self.id), self.title, body)
 
     def before_remove(self) -> None:
         remove_from_search_index("decision", str(self.id))

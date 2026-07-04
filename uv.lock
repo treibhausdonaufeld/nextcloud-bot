@@ -182,6 +182,15 @@ wheels = [
 ]
 
 [[package]]
+name = "compound-split"
+version = "1.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/e2/35961725c69e542f12917a48899cf3a4820a1d8399f4d5f90c6a59d0a48c/compound_split-1.0.2.tar.gz", hash = "sha256:862f782e6a528c110295b33dc37094338fadf5d825c75ef2614592b3dce3a658", size = 18927315, upload-time = "2020-10-08T10:46:36.484Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/86/c5b9faf27d65fad28d2218620a71046777ad54d5742e68e469a61e7c84cb/compound_split-1.0.2-py3-none-any.whl", hash = "sha256:68de08c7172694352e3638ec480207ec9f95ac84aad4a0051ba7199e4f195772", size = 19440103, upload-time = "2020-10-08T10:46:19.537Z" },
+]
+
+[[package]]
 name = "coverage"
 version = "7.13.5"
 source = { registry = "https://pypi.org/simple" }
@@ -950,6 +959,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "caldav" },
     { name = "click" },
+    { name = "compound-split" },
     { name = "edgy", extra = ["sqlite"] },
     { name = "jinja2" },
     { name = "openpyxl" },
@@ -962,6 +972,7 @@ dependencies = [
     { name = "ravyn" },
     { name = "requests" },
     { name = "sentry-sdk" },
+    { name = "simplemma" },
     { name = "tzlocal" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -984,6 +995,7 @@ dev = [
 requires-dist = [
     { name = "caldav", specifier = ">=1.4.0" },
     { name = "click", specifier = ">=8.3.0" },
+    { name = "compound-split", specifier = ">=1.0.2" },
     { name = "edgy", extras = ["sqlite"], specifier = ">=0.32" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
@@ -996,6 +1008,7 @@ requires-dist = [
     { name = "ravyn", specifier = ">=0.3" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "sentry-sdk", specifier = ">=2.14.0" },
+    { name = "simplemma", specifier = ">=1.2.0" },
     { name = "tzlocal", specifier = ">=5.3.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
@@ -1668,6 +1681,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/26/b3/fb8291170d0e844173164709fc0fa0c221ed75a5da740c8746f2a83b4eb1/sentry_sdk-2.58.0.tar.gz", hash = "sha256:c1144d947352d54e5b7daa63596d9f848adf684989c06c4f5a659f0c85a18f6f", size = 438764, upload-time = "2026-04-13T17:23:26.265Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/eb/d875669993b762556ae8b2efd86219943b4c0864d22204d622a9aee3052b/sentry_sdk-2.58.0-py2.py3-none-any.whl", hash = "sha256:688d1c704ddecf382ea3326f21a67453d4caa95592d722b7c780a36a9d23109e", size = 460919, upload-time = "2026-04-13T17:23:24.675Z" },
+]
+
+[[package]]
+name = "simplemma"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/21/11ae67cc092d4109be9c80df42441bf0f438a20ff7d22e44658fa3cdb0d9/simplemma-1.2.0.tar.gz", hash = "sha256:f561a9f0f41400d52ed4a0674a3e0423df64c41f5390602d2f071d6b687c5e68", size = 67542207, upload-time = "2026-06-01T17:16:52.937Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/29/ec27f68195841041b583661f4094a4edfd83601a8db43ab2901b4c4ae229/simplemma-1.2.0-py3-none-any.whl", hash = "sha256:a02fcbbb9eecc9c0e56eaea0c482eb43bf8bec8e33f45024b321a483bf77d854", size = 67520844, upload-time = "2026-06-01T17:16:25.604Z" },
 ]
 
 [[package]]

@@ -71,9 +71,84 @@ CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
     doc_id UNINDEXED,
     title,
     body,
+    lemmas,
     tokenize="unicode61 remove_diacritics 2"
 )
 """
+
+
+async def _table_columns(table: str) -> set[str]:
+    rows = await database.fetch_all(f"PRAGMA table_info({table})")
+    return {row._mapping["name"] for row in rows}
+
+
+async def _migrate_schema() -> None:
+    """Bring pre-existing databases up to the current schema.
+
+    Edgy's create_all does not alter existing tables, and the FTS5 virtual
+    table cannot be altered at all — when its layout changed, drop and
+    rebuild it from the stored pages and decisions.
+    """
+    from app.textnorm import index_terms
+
+    if "context" not in await _table_columns("decisions"):
+        await database.execute(
+            "ALTER TABLE decisions ADD COLUMN context TEXT NOT NULL DEFAULT ''"
+        )
+        logger.info("Migrated decisions table: added context column")
+
+    if "lemmas" in await _table_columns("search_index"):
+        return
+
+    logger.info("Rebuilding search index with lemmas column")
+    await database.execute("DROP TABLE IF EXISTS search_index")
+    await database.execute(SEARCH_INDEX_DDL)
+
+    pages = await database.fetch_all(
+        "SELECT page_id, title, content FROM collective_pages"
+        " WHERE content IS NOT NULL AND TRIM(content) != ''"
+    )
+    for row in pages:
+        page = row._mapping
+        await database.execute(
+            "INSERT INTO search_index (doc_type, doc_id, title, body, lemmas)"
+            " VALUES ('page', :i, :title, :body, :lemmas)",
+            {
+                "i": str(page["page_id"]),
+                "title": page["title"],
+                "body": page["content"],
+                "lemmas": index_terms(page["title"] + " " + page["content"]),
+            },
+        )
+
+    decisions = await database.fetch_all(
+        "SELECT id, title, text, objections, context, group_name, date FROM decisions"
+    )
+    for row in decisions:
+        decision = row._mapping
+        body = " ".join(
+            part
+            for part in (
+                decision["title"],
+                decision["text"],
+                decision["objections"],
+                decision["context"],
+                decision["group_name"],
+                decision["date"],
+            )
+            if part
+        )
+        await database.execute(
+            "INSERT INTO search_index (doc_type, doc_id, title, body, lemmas)"
+            " VALUES ('decision', :i, :title, :body, :lemmas)",
+            {
+                "i": str(decision["id"]),
+                "title": decision["title"],
+                "body": body,
+                "lemmas": index_terms(body),
+            },
+        )
+    logger.info("Reindexed %d pages and %d decisions", len(pages), len(decisions))
 
 
 async def _init_schema() -> None:
@@ -81,6 +156,7 @@ async def _init_schema() -> None:
     await database.execute("PRAGMA journal_mode=WAL")
     await registry.create_all()
     await database.execute(SEARCH_INDEX_DDL)
+    await _migrate_schema()
 
 
 def init_db() -> None:
@@ -109,7 +185,14 @@ def _sqlite_path(url: str) -> Path | None:
 
 
 def update_search_index(doc_type: str, doc_id: str, title: str, body: str) -> None:
-    """Insert or replace a document in the FTS5 index."""
+    """Insert or replace a document in the FTS5 index.
+
+    Besides the raw title/body, a `lemmas` column with lemmatized tokens and
+    compound-word parts is indexed so inflected German queries still match.
+    """
+    from app.textnorm import index_terms
+
+    lemmas = index_terms(title + " " + body)
 
     async def _update() -> None:
         await database.execute(
@@ -117,9 +200,15 @@ def update_search_index(doc_type: str, doc_id: str, title: str, body: str) -> No
             {"t": doc_type, "i": doc_id},
         )
         await database.execute(
-            "INSERT INTO search_index (doc_type, doc_id, title, body)"
-            " VALUES (:t, :i, :title, :body)",
-            {"t": doc_type, "i": doc_id, "title": title, "body": body},
+            "INSERT INTO search_index (doc_type, doc_id, title, body, lemmas)"
+            " VALUES (:t, :i, :title, :body, :lemmas)",
+            {
+                "t": doc_type,
+                "i": doc_id,
+                "title": title,
+                "body": body,
+                "lemmas": lemmas,
+            },
         )
 
     run_db(_update())
@@ -139,10 +228,21 @@ def fts_escape(query: str) -> str:
     """Turn free-form user input into a safe FTS5 MATCH expression.
 
     Every whitespace-separated term is quoted (disabling FTS5 operator
-    syntax) and suffixed with * for prefix matching.
+    syntax) and suffixed with * for prefix matching. Each term is expanded
+    with its lemma and compound parts (OR-ed), so "Gießkannen" also matches
+    documents that only contain "Gießkanne" — and vice versa via the
+    document-side `lemmas` column.
     """
-    terms = [t.replace('"', "") for t in query.split()]
-    return " ".join(f'"{t}"*' for t in terms if t)
+    from app.textnorm import token_variants
+
+    groups = []
+    for term in query.split():
+        term = term.replace('"', "")
+        if not term:
+            continue
+        quoted = [f'"{variant}"*' for variant in token_variants(term)]
+        groups.append(quoted[0] if len(quoted) == 1 else f"({' OR '.join(quoted)})")
+    return " ".join(groups)
 
 
 def search(
@@ -153,10 +253,12 @@ def search(
     if not match:
         return []
 
+    # column weights: title counts double, lemma matches score lower than
+    # literal body matches
     sql = (
         "SELECT doc_type, doc_id, title,"
         " snippet(search_index, 3, '<mark>', '</mark>', ' … ', 32) AS snippet,"
-        " bm25(search_index) AS score"
+        " bm25(search_index, 0.0, 0.0, 2.0, 1.0, 0.5) AS score"
         " FROM search_index WHERE search_index MATCH :q"
     )
     values: dict[str, Any] = {"q": match}
