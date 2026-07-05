@@ -3,6 +3,16 @@ services:
   bot:
     image: ghcr.io/treibhausdonaufeld/nextcloud-bot:latest
     restart: always
+    # Runtime hardening — the image runs as unprivileged uid/gid 1000.
+    # The bind-mounted host dirs below must be owned by 1000:1000, e.g.
+    #   sudo chown -R 1000:1000 /mnt/thd-data/nc-bot/data /mnt/thd-data/nc-bot/avatare
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       LOGLEVEL: ${LOGLEVEL:-INFO}
       AUTH__PROVIDER_BASE_URL: 'https://auth.example.com'

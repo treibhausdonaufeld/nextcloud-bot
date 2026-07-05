@@ -6,6 +6,14 @@ services:
       - .env
     ports:
       - '127.0.0.1:8000:8000'
+    # Runtime hardening
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
       interval: 30s

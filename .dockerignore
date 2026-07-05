@@ -1,12 +1,38 @@
+# Secrets / local env — never bake into the image
+.env
+.env.*
+!.env.example
+.envrc
+
+# VCS & CI
+.git
+.github
+.gitignore
+
+# Local data & runtime artifacts
 data
 data-local
 logs
-venv
+htmlcov
+.coverage
+*.db
 
-Dockerfile
-Makefile
-
-.mypy_cache
+# Python / tooling caches
 .venv
+venv
+__pycache__
+*.pyc
+.mypy_cache
 .ruff_cache
-.git
+.pytest_cache
+
+# Editor / node
+.vscode
+.zed
+node_modules
+
+# Docs / build tooling not needed at runtime
+Dockerfile
+.dockerignore
+Makefile
+REFACTOR_PLAN.md
