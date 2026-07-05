@@ -7,6 +7,8 @@ upload route.
 import logging
 from typing import Any
 
+import markdown as markdown_lib
+from markupsafe import Markup
 from ravyn import Request, Template, get
 
 from app.db import search
@@ -18,14 +20,15 @@ logger = logging.getLogger(__name__)
 ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
 DEFAULT_ITEMS_PER_PAGE = 20
 
+_MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
 
-def truncate_text(text: str | None, max_length: int = 300) -> str:
-    """Truncate text to max_length characters with ellipsis."""
+
+def render_markdown(text: str | None) -> Markup:
+    """Render decision markdown to HTML for display in the logbook cards."""
     if not text:
-        return ""
-    if len(text) <= max_length:
-        return text
-    return text[:max_length].rsplit(" ", 1)[0] + "..."
+        return Markup("")
+    # A fresh conversion per call keeps this safe under Ravyn's threadpool.
+    return Markup(markdown_lib.markdown(text, extensions=_MD_EXTENSIONS))
 
 
 def matches_search(decision: Decision, search_text: str, search_type: str) -> bool:
@@ -95,7 +98,9 @@ def logbook_context(
         cards.append(
             {
                 "decision": decision,
-                "truncated": truncate_text(decision.text, 300),
+                "text_html": render_markdown(decision.text),
+                "context_html": render_markdown(decision.context),
+                "objections_html": render_markdown(decision.objections),
                 "link": (d_page.url if d_page else "") or decision.external_link,
             }
         )

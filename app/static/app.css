@@ -262,9 +262,33 @@ mark {
   padding: 1.1rem 1.25rem;
 }
 
+.decision-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .decision-card h4 {
   margin-bottom: 0.5rem;
   font-size: 1.05rem;
+}
+
+.decision-open {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--pico-primary);
+}
+
+.decision-open:hover {
+  color: var(--pico-primary-hover);
+}
+
+.decision-open:focus-visible {
+  outline: 2px solid var(--pico-primary-focus);
+  outline-offset: 2px;
 }
 
 .decision-card .meta {
@@ -276,12 +300,8 @@ mark {
   margin-bottom: 0.6rem;
 }
 
-.decision-card .excerpt {
-  margin-bottom: 0.6rem;
-}
-
 .decision-card details {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 }
 
 .decision-card details summary {
@@ -289,8 +309,25 @@ mark {
   color: var(--pico-primary);
 }
 
-.decision-card .card-actions {
+.decision-card .markdown-body {
+  margin: 0.5rem 0;
+}
+
+.decision-card .markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.decision-card .markdown-body > :last-child {
   margin-bottom: 0;
+}
+
+.decision-card .markdown-body :is(ul, ol) {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.decision-card details h5 {
+  margin: 0.75rem 0 0.25rem;
   font-size: 0.9rem;
 }
 

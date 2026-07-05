@@ -42,31 +42,29 @@
     <div class="decision-list">
       {% for card in cards %}
         <article class="decision-card">
-          <h4>{{ card.decision.title or _("No Title") }}</h4>
+          <div class="decision-head">
+            <h4>{{ card.decision.title or _("No Title") }}</h4>
+            {% if card.link %}
+              <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
+            {% endif %}
+          </div>
           <p class="meta">
             {% if card.decision.date %}<span>📅 {{ card.decision.date }}</span>{% endif %}
             {% if card.decision.group_name %}<span>👥 {{ card.decision.group_name }}</span>{% endif %}
             {% if card.decision.valid_until %}<span>⏰ {{ _("Valid until") }}: {{ card.decision.valid_until }}</span>{% endif %}
           </p>
-          {% if card.truncated %}<p class="excerpt">{{ card.truncated }}</p>{% endif %}
           <details>
             <summary>{{ _("View Details") }}</summary>
-            <p><strong>{{ _("Date") }}:</strong> {{ card.decision.date }}</p>
-            <p><strong>{{ _("Group") }}:</strong> {{ card.decision.group_name or "-" }}</p>
-            <p><strong>{{ _("Valid Until") }}:</strong> {{ card.decision.valid_until or "-" }}</p>
-            {% if card.decision.context %}
-              <p><strong>{{ _("Context") }}:</strong> {{ card.decision.context }}</p>
+            <div class="markdown-body">{{ card.text_html if card.text_html else _("No text available") }}</div>
+            {% if card.context_html %}
+              <h5>{{ _("Context") }}</h5>
+              <div class="markdown-body">{{ card.context_html }}</div>
             {% endif %}
-            <h5>{{ _("Text") }}</h5>
-            <p style="white-space: pre-wrap">{{ card.decision.text or _("No text available") }}</p>
-            {% if card.decision.objections %}
+            {% if card.objections_html %}
               <h5>{{ _("Objections") }}</h5>
-              <p style="white-space: pre-wrap">{{ card.decision.objections }}</p>
+              <div class="markdown-body">{{ card.objections_html }}</div>
             {% endif %}
           </details>
-          {% if card.link %}
-            <p class="card-actions"><a href="{{ card.link }}" target="_blank" rel="noopener noreferrer">{{ _("Open protocol") }} ↗</a></p>
-          {% endif %}
         </article>
       {% endfor %}
     </div>

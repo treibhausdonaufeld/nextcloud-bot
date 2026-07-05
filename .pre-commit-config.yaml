@@ -49,6 +49,7 @@ repos:
             types-pytz,
             types-pyyaml,
             types-requests,
+            types-markdown,
             pandas-stubs,
             pydantic,
             pydantic-settings,
