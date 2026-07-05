@@ -7,7 +7,7 @@ all: update_po
 
 # Target to generate .pot file (python sources + Jinja2 templates, see babel.cfg)
 .pot:
-	@uv run pybabel extract -F babel.cfg --no-location -o $(LOCALES_DIR)/$(DOMAIN).pot .
+	@uv run pybabel extract -F babel.cfg --no-location -k _n:1,2 -o $(LOCALES_DIR)/$(DOMAIN).pot .
 
 # Target to update .po files in each language directory
 update_po: .pot

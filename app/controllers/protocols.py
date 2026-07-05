@@ -89,6 +89,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
             protocols = [
                 p for p in protocols if group_names.get(p.group_page_id) == group
             ]
+        protocols = sorted(protocols, key=lambda p: p.date, reverse=True)
     elif group:
         protocols = sorted(
             [p for p in all_protocols if group_names.get(p.group_page_id) == group],
@@ -102,13 +103,19 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
             reverse=True,
         )
 
-    rows = []
+    cards = []
     for protocol in protocols:
         page = CollectivePage.get_from_page_id_or_none(protocol.page_id)
-        rows.append(
+        cards.append(
             {
-                "date": protocol.date,
-                "title": page.title if page else "",
+                "date": protocol.date_obj.strftime("%Y-%m-%d")
+                if protocol.date_obj
+                else protocol.date,
+                "year": protocol.date_obj.year if protocol.date_obj else None,
+                "time": protocol.time,
+                "location_type": protocol.location_type,
+                "attendee_count": protocol.attendee_count,
+                "title": (page.title if page else "") or protocol.date,
                 "url": (page.url if page else "") or "",
                 "group": group_names.get(protocol.group_page_id, ""),
                 "moderated_by": display_users(user_list, protocol.moderated_by),
@@ -117,16 +124,47 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
             }
         )
 
+    year_groups = group_by_year(cards)
+
     member_data = member_statistics(group, all_protocols, group_names) if group else []
 
     return Template(
         name="protocols.html",
         context=template_context(
             request,
-            rows=rows,
+            year_groups=year_groups,
+            total=len(cards),
             group_options=group_options,
             selected_group=group,
             q=q,
             member_data=member_data,
         ),
     )
+
+
+def group_by_year(cards: list[dict]) -> list[dict]:
+    """Bucket protocol cards by year, newest year first, current year expanded.
+
+    ``cards`` is expected to already be ordered newest-first, so each year's
+    cards keep that order. Cards without a parseable year fall into an
+    "Undated" bucket rendered last.
+    """
+    current_year = datetime.now().year
+    buckets: dict[int | None, list[dict]] = {}
+    for card in cards:
+        buckets.setdefault(card["year"], []).append(card)
+
+    dated = sorted((y for y in buckets if y is not None), reverse=True)
+    ordered_years: list[int | None] = list(dated)
+    if None in buckets:
+        ordered_years.append(None)
+
+    return [
+        {
+            "year": year,
+            "protocols": buckets[year],
+            "count": len(buckets[year]),
+            "open": year == current_year,
+        }
+        for year in ordered_years
+    ]

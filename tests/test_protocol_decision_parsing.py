@@ -383,6 +383,94 @@ class TestProtocolValidTitle:
             assert not Protocol.valid_date(title), f"'{title}' should be invalid"
 
 
+class TestProtocolMeetingTime:
+    """Test suite for Protocol.extract_time() static method."""
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("Zeit: 18:00", "18:00"),
+            ("Beginn 19.30 Uhr", "19:30"),
+            ("um 20 Uhr", "20:00"),
+            ("Uhrzeit: 9:05", "09:05"),
+            ("Start 8h30", "08:30"),
+            ("no time here", ""),
+            ("Datum 2024-11-07", ""),
+        ],
+    )
+    def test_extract_time(self, text, expected):
+        assert Protocol.extract_time(text) == expected
+
+
+class TestProtocolLocationType:
+    """Test suite for Protocol.detect_location_type() static method."""
+
+    @pytest.mark.parametrize(
+        "lines,expected",
+        [
+            (["Ort: Online via Jitsi"], "online"),
+            (["Ort: Vereinsraum, vor ort"], "in_person"),
+            (["Ort: Präsenz und online"], "hybrid"),
+            (["Moderation: @alice"], ""),
+        ],
+    )
+    def test_detect_location_type(self, lines, expected, mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
+            assert Protocol.detect_location_type(lines) == expected
+
+
+class TestProtocolAttendeeCount:
+    """Test suite for the Protocol.attendee_count property."""
+
+    def test_counts_distinct_people(self, mock_protocol):
+        mock_protocol.moderated_by = ["alice"]
+        mock_protocol.protocol_by = ["bob"]
+        mock_protocol.participants = ["carol", "dave"]
+        assert mock_protocol.attendee_count == 4
+
+    def test_deduplicates_across_roles(self, mock_protocol):
+        # The moderator is also listed as a participant -> counted once.
+        mock_protocol.moderated_by = ["alice"]
+        mock_protocol.protocol_by = ["bob"]
+        mock_protocol.participants = ["alice", "bob"]
+        assert mock_protocol.attendee_count == 2
+
+    def test_empty(self, mock_protocol):
+        mock_protocol.moderated_by = []
+        mock_protocol.protocol_by = []
+        mock_protocol.participants = []
+        assert mock_protocol.attendee_count == 0
+
+
+class TestGroupByYear:
+    """Test suite for the protocols controller year-grouping helper."""
+
+    def test_groups_and_expands_current_year(self):
+        from app.controllers.protocols import group_by_year
+
+        current = datetime.now().year
+        cards = [
+            {"year": current, "n": 1},
+            {"year": current, "n": 2},
+            {"year": current - 1, "n": 3},
+            {"year": None, "n": 4},
+        ]
+        groups = group_by_year(cards)
+
+        # Newest dated year first, undated bucket last.
+        assert [g["year"] for g in groups] == [current, current - 1, None]
+        assert [g["count"] for g in groups] == [2, 1, 1]
+        # Only the current year is expanded by default.
+        assert [g["open"] for g in groups] == [True, False, False]
+        # Card order within a year is preserved.
+        assert [c["n"] for c in groups[0]["protocols"]] == [1, 2]
+
+    def test_empty(self):
+        from app.controllers.protocols import group_by_year
+
+        assert group_by_year([]) == []
+
+
 class TestProtocolDelete:
     """Test suite for Protocol.delete() method."""
 

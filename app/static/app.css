@@ -468,6 +468,158 @@ mark {
   font-size: 0.9rem;
 }
 
+/* ---------- Protocols: year groups + cards ---------- */
+
+.year-group {
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.year-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  background: var(--pico-card-background-color);
+}
+
+.year-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Disclosure caret that rotates when the year is expanded. */
+.year-summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  color: var(--pico-muted-color);
+  transition: transform 120ms ease;
+}
+
+.year-group[open] > .year-summary::before {
+  transform: rotate(90deg);
+}
+
+.year-label {
+  flex: 1 1 auto;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.year-count {
+  flex-shrink: 0;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--pico-secondary-focus);
+  color: var(--pico-muted-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.protocol-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.protocol-card {
+  margin-bottom: 0;
+  padding: 1rem 1.15rem;
+}
+
+.protocol-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.protocol-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.protocol-card h4 {
+  margin-bottom: 0;
+  font-size: 1.02rem;
+}
+
+.protocol-group {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+}
+
+.protocol-card .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  color: var(--pico-muted-color);
+  font-size: 0.82rem;
+  margin: 0.6rem 0 0;
+}
+
+.protocol-detail {
+  margin-bottom: 0;
+  margin-top: 0.5rem;
+}
+
+.protocol-detail summary {
+  font-size: 0.85rem;
+  color: var(--pico-primary);
+  list-style: none;
+  cursor: pointer;
+}
+
+.protocol-detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.protocol-detail[open] summary .toggle-more {
+  display: none;
+}
+
+.protocol-detail summary .toggle-less {
+  display: none;
+}
+
+.protocol-detail[open] summary .toggle-less {
+  display: inline;
+}
+
+.protocol-people {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.88rem;
+}
+
+.protocol-people dt {
+  color: var(--pico-muted-color);
+  font-weight: 600;
+}
+
+.protocol-people dd {
+  margin: 0;
+}
+
 /* ---------- Pagination ---------- */
 
 .pagination {

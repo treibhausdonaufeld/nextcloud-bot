@@ -97,6 +97,19 @@ async def _migrate_schema() -> None:
         )
         logger.info("Migrated decisions table: added context column")
 
+    protocol_columns = await _table_columns("protocols")
+    if "time" not in protocol_columns:
+        await database.execute(
+            "ALTER TABLE protocols ADD COLUMN time VARCHAR(32) NOT NULL DEFAULT ''"
+        )
+        logger.info("Migrated protocols table: added time column")
+    if "location_type" not in protocol_columns:
+        await database.execute(
+            "ALTER TABLE protocols ADD COLUMN location_type VARCHAR(32)"
+            " NOT NULL DEFAULT ''"
+        )
+        logger.info("Migrated protocols table: added location_type column")
+
     if "lemmas" in await _table_columns("search_index"):
         return
 

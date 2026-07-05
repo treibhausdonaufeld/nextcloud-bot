@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-05 21:27+0200\n"
+"POT-Creation-Date: 2026-07-05 20:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -292,14 +292,30 @@ msgstr ""
 msgid "Search protocols"
 msgstr ""
 
-msgid "Date"
+msgid "No matching pages found."
 msgstr ""
 
-msgid "Title"
+#, python-format
+msgid "%(total)s protocols"
 msgstr ""
 
-msgid "Group"
+msgid "Undated"
 msgstr ""
+
+msgid "Online"
+msgstr ""
+
+msgid "In person"
+msgstr ""
+
+msgid "Hybrid"
+msgstr ""
+
+#, python-format
+msgid "~%(n)s attendee"
+msgid_plural "~%(n)s attendees"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "Moderated by"
 msgstr ""
@@ -308,9 +324,6 @@ msgid "Protocol by"
 msgstr ""
 
 msgid "Participants"
-msgstr ""
-
-msgid "No matching pages found."
 msgstr ""
 
 msgid "Member Statistics for"
@@ -382,6 +395,12 @@ msgstr ""
 msgid "Source Documents"
 msgstr ""
 
+msgid "Title"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
 msgid "Content"
 msgstr ""
 
@@ -406,3 +425,4 @@ msgstr ""
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr ""
+

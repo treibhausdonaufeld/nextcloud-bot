@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Protocols") }}{% endblock %}
 {% block content %}
-  <h1>{{ _("Protocols") }}</h1>
+  <header class="page-head">
+    <h1>{{ _("Protocols") }}</h1>
+  </header>
 
   <form class="toolbar" method="get" action="/protocols">
     <div class="toolbar-search" role="search">
@@ -18,37 +20,64 @@
     </div>
   </form>
 
-  {% if rows %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ _("Date") }}</th>
-            <th>{{ _("Title") }}</th>
-            <th>{{ _("Group") }}</th>
-            <th>{{ _("Moderated by") }}</th>
-            <th>{{ _("Protocol by") }}</th>
-            <th>{{ _("Participants") }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in rows %}
-            <tr>
-              <td>{{ row.date }}</td>
-              <td>
-                {% if row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener noreferrer">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}
-              </td>
-              <td>{{ row.group }}</td>
-              <td>{{ row.moderated_by }}</td>
-              <td>{{ row.protocol_by }}</td>
-              <td>{{ row.participants }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  {% if not year_groups %}
+    <p class="empty-state">{{ _("No matching pages found.") }}</p>
   {% else %}
-    <p>{{ _("No matching pages found.") }}</p>
+    <p class="result-count">{{ _("%(total)s protocols") | format(total=total) }}</p>
+
+    {% for yg in year_groups %}
+      <details class="year-group" {% if yg.open %}open{% endif %}>
+        <summary class="year-summary">
+          <span class="year-label">{{ yg.year if yg.year else _("Undated") }}</span>
+          <span class="year-count">{{ yg.count }}</span>
+        </summary>
+        <div class="protocol-list">
+          {% for p in yg.protocols %}
+            <article class="protocol-card">
+              <div class="protocol-head">
+                <div class="protocol-title">
+                  <h4>
+                    {% if p.url %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.title }}</a>{% else %}{{ p.title }}{% endif %}
+                  </h4>
+                  {% if p.group %}<span class="protocol-group">{{ p.group }}</span>{% endif %}
+                </div>
+                {% if p.url %}
+                  <a class="decision-open" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
+                {% endif %}
+              </div>
+              <p class="meta">
+                <span>📅 {{ p.date }}</span>
+                {% if p.time %}<span>🕒 {{ p.time }}</span>{% endif %}
+                {% if p.location_type == "online" %}
+                  <span>🌐 {{ _("Online") }}</span>
+                {% elif p.location_type == "in_person" %}
+                  <span>📍 {{ _("In person") }}</span>
+                {% elif p.location_type == "hybrid" %}
+                  <span>🔀 {{ _("Hybrid") }}</span>
+                {% endif %}
+                <span>👥 {{ _n("~%(n)s attendee", "~%(n)s attendees", p.attendee_count) | format(n=p.attendee_count) }}</span>
+              </p>
+              <details class="protocol-detail">
+                <summary>
+                  <span class="toggle-more">{{ _("View Details") }}</span>
+                  <span class="toggle-less">{{ _("Show less") }}</span>
+                </summary>
+                <dl class="protocol-people">
+                  <dt>{{ _("Moderated by") }}</dt>
+                  <dd>{{ p.moderated_by if p.moderated_by else "—" }}</dd>
+                  <dt>{{ _("Protocol by") }}</dt>
+                  <dd>{{ p.protocol_by if p.protocol_by else "—" }}</dd>
+                  {% if p.participants %}
+                    <dt>{{ _("Participants") }}</dt>
+                    <dd>{{ p.participants }}</dd>
+                  {% endif %}
+                </dl>
+              </details>
+            </article>
+          {% endfor %}
+        </div>
+      </details>
+    {% endfor %}
   {% endif %}
 
   {% if selected_group and member_data %}

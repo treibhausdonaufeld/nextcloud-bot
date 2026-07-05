@@ -25,6 +25,10 @@ class Protocol(BaseDBModel):
     group_page_id: int | None = edgy.BigIntegerField(null=True, index=True)
 
     date: str = edgy.CharField(max_length=64, default="")
+    # time of day the meeting took place, e.g. "18:00" (empty if unknown)
+    time: str = edgy.CharField(max_length=32, default="")
+    # "online" | "in_person" | "hybrid" | "" (unknown)
+    location_type: str = edgy.CharField(max_length=32, default="")
     moderated_by: List[str] = edgy.JSONField(default=list)
     protocol_by: List[str] = edgy.JSONField(default=list)
     participants: List[str] = edgy.JSONField(default=list)
@@ -68,6 +72,48 @@ class Protocol(BaseDBModel):
         if not page:
             return None
         return page.file_path
+
+    @property
+    def attendee_count(self) -> int:
+        """Approximate number of people that attended the meeting."""
+        everyone = (
+            set(self.participants) | set(self.moderated_by) | set(self.protocol_by)
+        )
+        return len(everyone)
+
+    @staticmethod
+    def extract_time(text: str) -> str:
+        """Pull a ``HH:MM`` time out of a line, normalising the separator.
+
+        Accepts ``18:00``, ``18.00`` and ``18 Uhr`` style notations and returns
+        a zero-padded ``HH:MM`` string, or an empty string when none is found.
+        """
+        m = re.search(r"\b([01]?\d|2[0-3])[:.h]([0-5]\d)\b", text)
+        if m:
+            return f"{int(m.group(1)):02d}:{m.group(2)}"
+        # "18 Uhr" / "18h" without minutes
+        m = re.search(r"\b([01]?\d|2[0-3])\s*(?:uhr|h)\b", text, flags=re.IGNORECASE)
+        if m:
+            return f"{int(m.group(1)):02d}:00"
+        return ""
+
+    @staticmethod
+    def detect_location_type(header_lines: List[str]) -> str:
+        """Classify a meeting as online / in_person / hybrid from its header."""
+        blob = "\n".join(header_lines).lower()
+        online = any(
+            kw in blob for kw in bot_config.organisation.online_meeting_keywords
+        )
+        in_person = any(
+            kw in blob for kw in bot_config.organisation.in_person_meeting_keywords
+        )
+        if online and in_person:
+            return "hybrid"
+        if online:
+            return "online"
+        if in_person:
+            return "in_person"
+        return ""
 
     @classmethod
     def valid_date(cls, title: str) -> bool:
@@ -389,11 +435,15 @@ class Protocol(BaseDBModel):
         self.moderated_by = []
         self.protocol_by = []
         self.participants = []
+        self.time = ""
         attr = ""
+        header_lines: list[str] = []
 
         for line in lines:
             if line.strip() == "---" or line.strip().startswith("#"):
                 break  # stop at horizontal rule
+
+            header_lines.append(line)
 
             # get the first word on the line, ignoring any leading non-word chars
             m = first_word_regex.search(line)
@@ -408,6 +458,11 @@ class Protocol(BaseDBModel):
             elif first_word in bot_config.organisation.participant_person_keywords:
                 attr = "participants"
 
+            if first_word in bot_config.organisation.meeting_time_keywords:
+                found_time = self.extract_time(line)
+                if found_time:
+                    self.time = found_time
+
             users = re.findall(user_regex, line)
             if users and attr:
                 users_list = list(getattr(self, attr))
@@ -419,6 +474,8 @@ class Protocol(BaseDBModel):
                 + bot_config.organisation.participant_person_keywords
             ):
                 attr = ""
+
+        self.location_type = self.detect_location_type(header_lines)
 
         self.participants = sorted(
             set(self.participants) - set(self.moderated_by) - set(self.protocol_by)

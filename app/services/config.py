@@ -75,6 +75,47 @@ class OrganisationConfig(BaseModel):
         ]
     )
 
+    # keywords that introduce the meeting time in the protocol header
+    meeting_time_keywords: List[str] = Field(
+        default_factory=lambda: [
+            "zeit",
+            "uhrzeit",
+            "beginn",
+            "startzeit",
+            "time",
+            "wann",
+        ]
+    )
+    # keywords that introduce the meeting location in the protocol header
+    meeting_location_keywords: List[str] = Field(
+        default_factory=lambda: ["ort", "location", "wo", "raum", "treffpunkt"]
+    )
+    # words signalling an online meeting (matched anywhere in the header block)
+    online_meeting_keywords: List[str] = Field(
+        default_factory=lambda: [
+            "online",
+            "zoom",
+            "jitsi",
+            "bbb",
+            "bigbluebutton",
+            "video",
+            "digital",
+            "remote",
+            "meet",
+        ]
+    )
+    # words signalling an in-person meeting
+    in_person_meeting_keywords: List[str] = Field(
+        default_factory=lambda: [
+            "präsenz",
+            "vor ort",
+            "in person",
+            "persönlich",
+            "real",
+            "analog",
+        ]
+    )
+
     coordination_person_keywords: List[str] = Field(
         default_factory=lambda: [
             "koordination",
