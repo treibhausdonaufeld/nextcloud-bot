@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from lib.nextcloud import calendar_notifier
+from app.services import calendar_notifier
 
 
 class DummyChannel:

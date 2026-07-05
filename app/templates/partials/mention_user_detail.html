@@ -1,0 +1,26 @@
+<article>
+  <h3>{{ _("Mention Details for") }} <strong>{{ displayname }}</strong></h3>
+  <p>{{ _("Total pages mentioning user: {count}").format(count=pages | length) }}</p>
+
+  {% for entry in pages %}
+    <details>
+      <summary>
+        {% if entry.subtype == "protocol" %}📋{% elif entry.subtype == "group" %}👥{% else %}📄{% endif %}
+        <strong>{{ entry.page.title }}</strong>
+        ({% if entry.subtype == "protocol" %}{{ _("Protocol") }}{% elif entry.subtype == "group" %}{{ _("Group Page") }}{% else %}{{ _("Page") }}{% endif %})
+        - {{ entry.page.formatted_timestamp or "" }}
+      </summary>
+      {% if entry.page.url %}
+        <p><a href="{{ entry.page.url }}" target="_blank" rel="noopener noreferrer">{{ _("Open page") }}</a></p>
+      {% endif %}
+      {% if entry.snippets %}
+        <p><strong>{{ _("Mentions") }}:</strong></p>
+        {% for snippet in entry.snippets %}
+          <p class="snippet">{{ snippet }}</p>
+        {% endfor %}
+      {% else %}
+        <p class="meta">{{ _("No snippet available") }}</p>
+      {% endif %}
+    </details>
+  {% endfor %}
+</article>

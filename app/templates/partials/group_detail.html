@@ -1,0 +1,32 @@
+<article>
+  <h3>{% if group.parent_group %}{{ group.parent_group }} ➡️ {% endif %}{{ group.name }}</h3>
+
+  {% if group.parent_group %}
+    <p><strong>{{ _("Parent Group") }}:</strong> {{ group.parent_group }}</p>
+  {% endif %}
+
+  {% if group.short_names %}
+    <p><strong>{{ _("Short Names") }}:</strong> {{ group.short_names | join(", ") }}</p>
+  {% endif %}
+
+  <ul>
+    {% if coordination_names %}
+      <li><strong>{{ _("Coordination") }}</strong> ({{ coordination_names | length }}): {{ coordination_names | join(", ") }}</li>
+    {% endif %}
+    {% if delegate_names %}
+      <li><strong>{{ _("Delegates") }}</strong> ({{ delegate_names | length }}): {{ delegate_names | join(", ") }}</li>
+    {% endif %}
+    {% if member_names %}
+      <li><strong>{{ _("Members") }}</strong> ({{ member_names | length }}): {{ member_names | join(", ") }}</li>
+    {% endif %}
+  </ul>
+
+  {% if subgroups %}
+    <h4>{{ _("Subgroups") }}</h4>
+    <ul>
+      {% for subgroup in subgroups %}
+        <li>{{ subgroup.name }} ({{ subgroup.all_members | length }})</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</article>

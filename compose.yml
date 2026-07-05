@@ -1,117 +1,18 @@
 ---
-x-common-settings: &common-settings
-  build: .
-  env_file:
-    - .env
-
 services:
-  datafetcher:
-    <<: *common-settings
-    command: /bin/sh -c "python3 runner.py --loop"
-
-  analytics:
-    <<: *common-settings
+  bot:
+    build: .
+    env_file:
+      - .env
     ports:
-      - '127.0.0.1:8501:8501'
+      - '127.0.0.1:8000:8000'
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8501/_stcore/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
       interval: 30s
       timeout: 10s
       retries: 5
-
-  couchdb:
-    image: couchdb
-    restart: always
-    ports:
-      - '127.0.0.1:5984:5984'
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=password
     volumes:
-      - couch-data:/opt/couchdb/data
-
-  chromadb:
-    image: chromadb/chroma:latest
-    restart: always
-    # bind to localhost only for safety
-    ports:
-      - '127.0.0.1:8800:8000'
-    environment:
-      - CHROMA_SERVER_HOST=0.0.0.0
-      - CHROMA_SERVER_HTTP_PORT=8000
-      - CHROMA_DB_IMPL=duckdb+parquet
-      - CHROMA_PERSIST_DIRECTORY=/data
-      - ANONYMIZED_TELEMETRY=False
-    volumes:
-      - chroma-data:/data
-
-  imaginary:
-    image: h2non/imaginary:latest
-    restart: always
-    ports:
-      - '127.0.0.1:9001:9000'
-
-  # embedding-server:
-  #   image: ${EMBEDDING_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.8} #default image with CPU support
-  #   command: --model-id ${ST_MODEL:-BAAI/bge-small-en-v1.5} --revision ${ST_MODEL_REVISION:-main} #configure model and model revision paramters
-  #   ports:
-  #     - '127.0.0.1:8001:80'
-  #   platform: linux/amd64 #right now the images are only available for linux
-  #   volumes:
-  #     - hfmodels:/data #by default we create a volume for the models.
-
-  # chromadb-server:
-  #   image: server
-  #   build:
-  #     context: ${PWD}
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ${PWD}/:/chroma
-  #     # Be aware that indexed data are located in "/chroma/chroma/"
-  #     # Default configuration for persist_directory in chromadb/config.py
-  #   command: uvicorn chromadb.app:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-config chromadb/log_config.yml --timeout-keep-alive 30
-  #   environment:
-  #     - IS_PERSISTENT=TRUE
-  #     - CHROMA_SERVER_AUTHN_PROVIDER=${CHROMA_SERVER_AUTHN_PROVIDER}
-  #     - CHROMA_SERVER_AUTHN_CREDENTIALS_FILE=${CHROMA_SERVER_AUTHN_CREDENTIALS_FILE}
-  #     - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
-  #     - PERSIST_DIRECTORY=${PERSIST_DIRECTORY:-/chroma/chroma}
-  #     - CHROMA_OTEL_EXPORTER_ENDPOINT=${CHROMA_OTEL_EXPORTER_ENDPOINT}
-  #     - CHROMA_OTEL_EXPORTER_HEADERS=${CHROMA_OTEL_EXPORTER_HEADERS}
-  #     - CHROMA_OTEL_SERVICE_NAME=${CHROMA_OTEL_SERVICE_NAME}
-  #     - CHROMA_OTEL_GRANULARITY=${CHROMA_OTEL_GRANULARITY}
-  #     - CHROMA_SERVER_NOFILE=${CHROMA_SERVER_NOFILE}
-  #   ports:
-  #     - 8000:8000
-  #   networks:
-  #     - net
-
-  # bankproxy:
-  #   image: ghcr.io/bankproxy/bankproxy:latest
-  #   ports:
-  #     - "127.0.0.1:3000:3000"
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     - BASE_URL=http://localhost:3000
-  #     - ADMIN_AUTHORIZE_URL=http://localhost:3000/admin
-  #     - ADMIN_JWT_SECRET=EPWMYFTVJoAT1EnJnLhh4ichLpjQ1iNVvxs12tSdMaVkeDA1
-  #     - DATABASE_URL=postgresql://postgres:kuUepyDtN94Z0upAor8YurLE@postgres:5432/bankproxy
-
-  # postgres:
-  #   image: docker.io/pgvector/pgvector:pg17
-  #   volumes:
-  #     - db-data:/var/lib/postgresql/data
-  #   environment:
-  #     POSTGRES_PASSWORD: "kuUepyDtN94Z0upAor8YurLE"
-  #     POSTGRES_DB: "bankproxy"
-  #   healthcheck:
-  #     test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
+      - bot-data:/data
 
 volumes:
-  chroma-data: {}
-  couch-data: {}
-  hfmodels: {}
+  bot-data: {}

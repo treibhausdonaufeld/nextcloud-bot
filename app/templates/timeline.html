@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Timeline") }}{% endblock %}
+{% block content %}
+  <h1>{{ _("Timeline") }}</h1>
+
+  {% if not sections %}
+    <p>
+      {{ _("No timeline data found. Please create and populate the '%s' page in Nextcloud Collectives.") | format(timeline_page_name) }}
+    </p>
+  {% else %}
+    <div class="tab-buttons" role="group">
+      {% for section in sections %}
+        <button class="outline tab-btn {% if loop.first %}contrast{% endif %}" data-tab="tab-{{ loop.index }}">
+          {{ section.header }}
+        </button>
+      {% endfor %}
+    </div>
+
+    {% for section in sections %}
+      <div id="tab-{{ loop.index }}" class="tab-panel" {% if not loop.first %}hidden{% endif %}>
+        {% if section.figure %}
+          <div id="chart-{{ loop.index }}"></div>
+        {% else %}
+          <p>{{ _('No events to display for "%s"') | format(section.header) }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <script src="/static/plotly.min.js"></script>
+    <script id="figures-data" type="application/json">{{ figures_json | safe }}</script>
+    <script>
+      const figures = JSON.parse(document.getElementById('figures-data').textContent);
+      figures.forEach((f, i) => {
+        if (f.figure) {
+          Plotly.newPlot('chart-' + (i + 1), f.figure.data, f.figure.layout, { responsive: true });
+        }
+      });
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-panel').forEach((p) => (p.hidden = true));
+          document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('contrast'));
+          document.getElementById(btn.dataset.tab).hidden = false;
+          btn.classList.add('contrast');
+          window.dispatchEvent(new Event('resize'));
+        });
+      });
+    </script>
+  {% endif %}
+{% endblock %}

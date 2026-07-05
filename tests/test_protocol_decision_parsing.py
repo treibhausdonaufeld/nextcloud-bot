@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from lib.nextcloud.config import OrganisationConfig
-from lib.nextcloud.models.base import CouchDBModel
-from lib.nextcloud.models.decision import Decision
-from lib.nextcloud.models.protocol import Protocol
+from app.services.config import OrganisationConfig
+from app.models.base import BaseDBModel
+from app.models.decision import Decision
+from app.models.protocol import Protocol
 
 
 @pytest.fixture
@@ -23,18 +23,18 @@ def mock_bot_config():
 @pytest.fixture
 def mock_protocol(mock_bot_config):
     """Create a mock Protocol instance for testing."""
-    with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+    with patch("app.models.protocol.bot_config", mock_bot_config):
         # Mock Group.get to avoid database lookups
-        with patch("lib.nextcloud.models.protocol.Group") as MockGroup:
+        with patch("app.models.protocol.Group") as MockGroup:
             mock_group_instance = Mock()
             mock_group_instance.name = "Test Group"
-            mock_group_instance.id = "group_123"
-            MockGroup.get.return_value = mock_group_instance
+            mock_group_instance.page_id = 123
+            MockGroup.fetch_one.return_value = mock_group_instance
 
             protocol = Protocol(
                 page_id=12345,
                 date="2024-11-07 Meeting",
-                group_id="group_123",
+                group_page_id=123,
             )
             yield protocol
 
@@ -73,7 +73,7 @@ class TestProtocolDecisionExtraction:
 
     def test_extract_single_decision(self, mock_protocol, mock_page, mock_bot_config):
         """Test extracting a single decision from protocol content."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_page.content = """
 # Test Protocol
 
@@ -84,8 +84,8 @@ This is the decision text.
 """
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
-                with patch.object(Decision, "get_all", return_value=[]):
-                    with patch.object(Decision, "save"):
+                with patch.object(Decision, "fetch", return_value=[]):
+                    with patch.object(Decision, "store"):
                         mock_protocol.extract_decisions()
                         # Decision extraction completed successfully
 
@@ -93,7 +93,7 @@ This is the decision text.
         self, mock_protocol, mock_page, mock_bot_config
     ):
         """Test extracting multiple decisions from protocol content."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_page.content = """
 # Test Protocol
 
@@ -111,8 +111,8 @@ Text for second decision.
 """
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
-                with patch.object(Decision, "get_all", return_value=[]):
-                    with patch.object(Decision, "save"):
+                with patch.object(Decision, "fetch", return_value=[]):
+                    with patch.object(Decision, "store"):
                         mock_protocol.extract_decisions()
                         # Multiple decisions extracted successfully
 
@@ -120,7 +120,7 @@ Text for second decision.
         self, mock_protocol, mock_page, mock_bot_config
     ):
         """Test that decisions are not extracted from future protocols."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             # Set date to future
             future_date = datetime.now().date()
             future_date = future_date.replace(year=future_date.year + 1)
@@ -138,7 +138,7 @@ Text for second decision.
                 def track_save(self):
                     decision_saved.append(True)
 
-                with patch.object(Decision, "save", track_save):
+                with patch.object(Decision, "store", track_save):
                     mock_protocol.extract_decisions()
 
                     # Verify no decisions were saved
@@ -148,7 +148,7 @@ Text for second decision.
         self, mock_protocol, mock_page, mock_bot_config
     ):
         """Test that existing decisions are deleted before extracting new ones."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_page.content = """
 ::: success
 **Decision:** New decision
@@ -161,26 +161,26 @@ Text for second decision.
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
                 with patch.object(
-                    Decision, "get_all", return_value=[mock_decision1, mock_decision2]
+                    Decision, "fetch", return_value=[mock_decision1, mock_decision2]
                 ):
-                    with patch.object(Decision, "save"):
+                    with patch.object(Decision, "store"):
                         mock_protocol.extract_decisions()
 
                         # Verify existing decisions were deleted
-                        mock_decision1.delete.assert_called_once()
-                        mock_decision2.delete.assert_called_once()
+                        mock_decision1.remove.assert_called_once()
+                        mock_decision2.remove.assert_called_once()
 
     def test_no_content_returns_early(self, mock_protocol, mock_page, mock_bot_config):
         """Test that extract_decisions returns early if page has no content."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_page.content = None
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
-                with patch.object(Decision, "get_all") as mock_get_all:
+                with patch.object(Decision, "fetch") as mock_fetch:
                     mock_protocol.extract_decisions()
 
                     # Verify get_all was not called (early return)
-                    mock_get_all.assert_not_called()
+                    mock_fetch.assert_not_called()
 
 
 class TestProtocolSaveDecision:
@@ -189,7 +189,7 @@ class TestProtocolSaveDecision:
     @pytest.fixture
     def mock_decision_class(self, mock_decision_instance):
         """Fixture to patch Decision class with a mock instance."""
-        with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
+        with patch("app.models.protocol.Decision") as MockDecision:
             MockDecision.return_value = mock_decision_instance
             yield MockDecision
 
@@ -201,7 +201,7 @@ class TestProtocolSaveDecision:
         mock_decision_instance,
     ):
         """Test saving a basic decision with title and text."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = """
 **Entscheidung:** Approve the budget
 We will approve the budget for next year.
@@ -210,7 +210,7 @@ We will approve the budget for next year.
 
             # Verify Decision was created and saved
             mock_decision_class.assert_called_once()
-            mock_decision_instance.save.assert_called_once()
+            mock_decision_instance.store.assert_called_once()
 
     @pytest.mark.parametrize(
         "input_block,expected_title",
@@ -230,7 +230,7 @@ We will approve the budget for next year.
         expected_title,
     ):
         """Test that decision title keywords are removed from title."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_protocol.save_decision(input_block)
 
             # Check the title passed to Decision constructor
@@ -245,7 +245,7 @@ We will approve the budget for next year.
         mock_decision_instance,
     ):
         """Test extracting 'valid until' information from decision."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = """
 **Entscheidung:** Temporary decision
 This is a temporary decision.
@@ -264,7 +264,7 @@ Gültig bis: 2025-12-31
         mock_decision_instance,
     ):
         """Test extracting objections from decision."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = """
 **Decision:** Decision with objections
 This has objections.
@@ -285,7 +285,7 @@ Einwände: John disagrees with this decision
         mock_decision_instance,
     ):
         """Test that metadata lines are removed from decision text."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = """
 **Decision:** Test decision
 This is the decision text.
@@ -306,7 +306,7 @@ Einwände: Some objections
         self, mock_protocol, mock_bot_config, mock_decision_class
     ):
         """Test that first line of text is used as title if no title line found."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = """
 This is decision text without a title line.
 More text here.
@@ -321,7 +321,7 @@ More text here.
         self, mock_protocol, mock_bot_config, mock_decision_class
     ):
         """Test decision with markdown formatting in title."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = "**Decision:** _Approve_ the **budget**"
             mock_protocol.save_decision(block)
 
@@ -333,7 +333,7 @@ More text here.
         self, mock_protocol, mock_bot_config, mock_decision_class
     ):
         """Test that empty or whitespace-only blocks return without creating decision."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             # Empty string
             mock_protocol.save_decision("")
             mock_decision_class.assert_not_called()
@@ -345,17 +345,13 @@ More text here.
     def test_decision_includes_group_info(
         self, mock_protocol, mock_bot_config, mock_decision_class
     ):
-        """Test that saved decision includes group_id and group_name."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        """Test that saved decision includes the group_name."""
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = "**Decision:** Test decision"
             mock_protocol.save_decision(block)
 
             # Verify group information was passed
             call_kwargs = mock_decision_class.call_args[1]
-            assert call_kwargs["group_id"] == mock_protocol.group_id
-            # Verify group information was passed
-            call_kwargs = mock_decision_class.call_args[1]
-            assert call_kwargs["group_id"] == mock_protocol.group_id
             assert call_kwargs["group_name"] == "Test Group"
 
 
@@ -392,30 +388,26 @@ class TestProtocolDelete:
 
     def test_delete_protocol_and_decisions(self, mock_protocol, mock_bot_config):
         """Test that deleting protocol also deletes associated decisions."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             # Mock existing decisions
             mock_decision1 = Mock()
             mock_decision2 = Mock()
 
             with patch.object(
-                Decision, "get_all", return_value=[mock_decision1, mock_decision2]
+                Decision, "fetch", return_value=[mock_decision1, mock_decision2]
             ):
-                # Mock the base class delete method
-                with patch.object(CouchDBModel, "delete"):
-                    mock_protocol.delete()
+                mock_protocol.before_remove()
 
-                    # Verify decisions were deleted
-                    mock_decision1.delete.assert_called_once()
-                    mock_decision2.delete.assert_called_once()
+                # Verify decisions were deleted
+                mock_decision1.remove.assert_called_once()
+                mock_decision2.remove.assert_called_once()
 
     def test_delete_with_no_decisions(self, mock_protocol, mock_bot_config):
         """Test that delete works when protocol has no associated decisions."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
-            with patch.object(Decision, "get_all", return_value=[]):
-                # Mock the base class delete method
-                with patch.object(CouchDBModel, "delete"):
-                    # Should not raise an error
-                    mock_protocol.delete()
+        with patch("app.models.protocol.bot_config", mock_bot_config):
+            with patch.object(Decision, "fetch", return_value=[]):
+                # Should not raise an error
+                mock_protocol.before_remove()
 
 
 class TestProtocolDecisionKeywordVariations:
@@ -424,7 +416,7 @@ class TestProtocolDecisionKeywordVariations:
     @pytest.fixture
     def mock_decision_class(self, mock_decision_instance):
         """Fixture to patch Decision class with a mock instance."""
-        with patch("lib.nextcloud.models.protocol.Decision") as MockDecision:
+        with patch("app.models.protocol.Decision") as MockDecision:
             MockDecision.return_value = mock_decision_instance
             yield MockDecision
 
@@ -447,7 +439,7 @@ class TestProtocolDecisionKeywordVariations:
         expected_title,
     ):
         """Test that various decision keywords are recognized and removed."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = f"**{keyword}** Buy new equipment"
             mock_protocol.save_decision(block)
 
@@ -472,7 +464,7 @@ class TestProtocolDecisionKeywordVariations:
         expected_date,
     ):
         """Test that various 'valid until' keywords are recognized."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             block = f"""
 **Decision:** Test decision
 {keyword} {expected_date}
@@ -498,9 +490,9 @@ class TestProtocolDecisionKeywordVariations:
         expected_objection,
     ):
         """Test that various objection keywords are recognized."""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             objection_text = expected_objection if expected_objection else ""
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             objection_text = expected_objection if expected_objection else ""
             block = f"""
 **Decision:** Test decision
@@ -548,18 +540,18 @@ class TestProtocolNotificationDateConstraints:
         test_date = datetime.now().date() - timedelta(days=days_offset)
         date_str = test_date.strftime("%Y-%m-%d")
 
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             mock_page.title = f"{date_str} Test Group"
             mock_page.content = protocol_page_content
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
-                with patch.object(Decision, "get_all", return_value=[]):
-                    with patch("lib.nextcloud.models.protocol.Group") as MockGroup:
+                with patch.object(Decision, "fetch", return_value=[]):
+                    with patch("app.models.protocol.Group") as MockGroup:
                         MockGroup.get_for_page.return_value = mock_group
                         MockGroup.get.return_value = mock_group
 
                         with patch.object(Protocol, "notify_updated") as mock_notify:
-                            with patch.object(CouchDBModel, "save"):
+                            with patch.object(BaseDBModel, "store"):
                                 mock_protocol.summary_posted = False
                                 mock_protocol.update_from_page()
 
@@ -612,7 +604,7 @@ class TestProtocolNotificationDateConstraints:
         # Use datetime.timestamp() to avoid importing time in this test file
         now_ts = datetime.now().timestamp()
 
-        with patch("lib.nextcloud.models.protocol.bot_config", mock_bot_config):
+        with patch("app.models.protocol.bot_config", mock_bot_config):
             # Ensure a known cooldown value
             mock_bot_config.organisation.protocol_cooldown_minutes = 60
 
@@ -620,17 +612,16 @@ class TestProtocolNotificationDateConstraints:
             mock_page.title = f"{datetime.now().date().strftime('%Y-%m-%d')} Test Group"
             mock_page.content = protocol_page_content
             mock_page.timestamp = now_ts
-            mock_page.ocs = Mock()
-            mock_page.ocs.timestamp = now_ts
+            mock_page.timestamp = now_ts
 
             with patch.object(Protocol, "page", property(lambda self: mock_page)):
-                with patch.object(Decision, "get_all", return_value=[]):
-                    with patch("lib.nextcloud.models.protocol.Group") as MockGroup:
+                with patch.object(Decision, "fetch", return_value=[]):
+                    with patch("app.models.protocol.Group") as MockGroup:
                         MockGroup.get_for_page.return_value = mock_group
                         MockGroup.get.return_value = mock_group
 
                         with patch.object(Protocol, "notify_updated") as mock_notify:
-                            with patch.object(CouchDBModel, "save"):
+                            with patch.object(BaseDBModel, "store"):
                                 # First update: timestamp is recent -> should be skipped due to cooldown
                                 mock_protocol.update_from_page()
                                 mock_notify.assert_not_called()
@@ -645,7 +636,7 @@ class TestProtocolNotificationDateConstraints:
                                     - 1
                                 )
                                 mock_page.timestamp = old_ts
-                                mock_page.ocs.timestamp = old_ts
+                                mock_page.timestamp = old_ts
 
                                 mock_protocol.update_from_page()
                                 mock_notify.assert_called_once()

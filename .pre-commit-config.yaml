@@ -1,4 +1,4 @@
-exclude: '^docs/|/migrations/|devcontainer.json'
+exclude: '^docs/|/migrations/|devcontainer.json|^app/static/.*\.min\.(js|css)$'
 default_stages: [pre-commit]
 minimum_pre_commit_version: '3.2.0'
 
@@ -26,13 +26,8 @@ repos:
     hooks:
       - id: prettier
         args: ['--tab-width', '2', '--single-quote']
-        exclude: 'backend/bubble/.*/templates/|frontend/src/services/django/'
-
-  - repo: https://github.com/adamchainz/django-upgrade
-    rev: '1.29.1'
-    hooks:
-      - id: django-upgrade
-        args: ['--target-version', '5.0']
+        # app/static contains vendored minified assets; templates are Jinja2
+        exclude: 'app/static/|app/templates/'
 
   # Run the Ruff linter.
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -44,12 +39,6 @@ repos:
       # Formatter
       - id: ruff-format
 
-  - repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.36.4
-    hooks:
-      # - id: djlint-reformat-django
-      - id: djlint-django
-
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
     hooks:
@@ -57,11 +46,12 @@ repos:
         name: mypy (type check)
         additional_dependencies:
           [
-            types-authlib,
             types-pytz,
             types-pyyaml,
             types-requests,
             pandas-stubs,
+            pydantic,
+            pydantic-settings,
           ]
         args: [--config-file, mypy.ini, --disable-error-code=import-not-found]
 
