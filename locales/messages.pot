@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-05 21:06+0200\n"
+"POT-Creation-Date: 2026-07-05 21:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,24 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
+
+msgid "Functions"
+msgstr ""
+
+#, python-format
+msgid ""
+"No function data found. Please create and populate the '%s' page in "
+"Nextcloud Collectives."
+msgstr ""
+
+msgid "Milestones"
+msgstr ""
+
+#, python-format
+msgid ""
+"No milestone data found. Please create and populate the '%s' page in "
+"Nextcloud Collectives."
+msgstr ""
 
 msgid "No person listed for moderations"
 msgstr ""
@@ -90,9 +108,6 @@ msgid "Home"
 msgstr ""
 
 msgid "Groups"
-msgstr ""
-
-msgid "Timeline"
 msgstr ""
 
 msgid "Protocols"
@@ -308,12 +323,6 @@ msgid "Wrote Protocol"
 msgstr ""
 
 msgid "Attended"
-msgstr ""
-
-#, python-format
-msgid ""
-"No timeline data found. Please create and populate the '%s' page in "
-"Nextcloud Collectives."
 msgstr ""
 
 #, python-format

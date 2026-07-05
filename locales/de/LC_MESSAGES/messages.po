@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-05 21:06+0200\n"
+"POT-Creation-Date: 2026-07-05 21:13+0200\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -13,6 +13,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
+
+msgid "Functions"
+msgstr "Funktionen"
+
+#, python-format
+msgid ""
+"No function data found. Please create and populate the '%s' page in "
+"Nextcloud Collectives."
+msgstr ""
+"Keine Funktionsdaten gefunden. Bitte erstelle und befülle die Seite '%s' in "
+"Nextcloud Collectives."
+
+msgid "Milestones"
+msgstr "Meilensteine"
+
+#, python-format
+msgid ""
+"No milestone data found. Please create and populate the '%s' page in "
+"Nextcloud Collectives."
+msgstr ""
+"Keine Meilensteindaten gefunden. Bitte erstelle und befülle die Seite '%s' "
+"in Nextcloud Collectives."
 
 msgid "No person listed for moderations"
 msgstr "Keine Person für Moderationen aufgeführt"
@@ -102,9 +124,6 @@ msgstr "Startseite"
 
 msgid "Groups"
 msgstr "Gruppen"
-
-msgid "Timeline"
-msgstr "Zeitstrahl"
 
 msgid "Protocols"
 msgstr "Protokolle"
@@ -324,14 +343,6 @@ msgid "Attended"
 msgstr "Teilgenommen"
 
 #, python-format
-msgid ""
-"No timeline data found. Please create and populate the '%s' page in "
-"Nextcloud Collectives."
-msgstr ""
-"Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' in "
-"Nextcloud Collectives."
-
-#, python-format
 msgid "No events to display for \"%s\""
 msgstr "Keine Ereignisse für \"%s\" vorhanden"
 
@@ -409,6 +420,17 @@ msgstr "Seiten, die den Benutzer erwähnen"
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr "Erwähnungen insgesamt: {count}"
+
+#~ msgid "Timeline"
+#~ msgstr "Zeitstrahl"
+
+#, python-format
+#~ msgid ""
+#~ "No timeline data found. Please create and populate the '%s' page in "
+#~ "Nextcloud Collectives."
+#~ msgstr ""
+#~ "Keine Zeitstrahl-Daten gefunden. Bitte erstelle und fülle die Seite '%s' "
+#~ "in Nextcloud Collectives."
 
 #~ msgid "Valid Until"
 #~ msgstr "Gültig bis"

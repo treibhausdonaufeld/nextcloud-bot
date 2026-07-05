@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+  <h1>{{ page_title }}</h1>
+
+  {% if not sections %}
+    <p>{{ empty_message }}</p>
+  {% else %}
+    {% for section in sections %}
+      <section class="chart-section">
+        {% if sections | length > 1 %}
+          <h2>{{ section.header }}</h2>
+        {% endif %}
+        {% if section.figure %}
+          <div id="chart-{{ loop.index }}"></div>
+        {% else %}
+          <p>{{ _('No events to display for "%s"') | format(section.header) }}</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+
+    <script src="/static/plotly.min.js"></script>
+    <script id="figures-data" type="application/json">{{ figures_json | safe }}</script>
+    <script>
+      const figures = JSON.parse(document.getElementById('figures-data').textContent);
+      figures.forEach((f, i) => {
+        if (f.figure) {
+          Plotly.newPlot('chart-' + (i + 1), f.figure.data, f.figure.layout, { responsive: true });
+        }
+      });
+    </script>
+  {% endif %}
+{% endblock %}

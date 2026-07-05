@@ -20,7 +20,7 @@ from app.controllers.mentions import (
     mentions_page,
 )
 from app.controllers.protocols import protocols_page
-from app.controllers.timeline import timeline_page
+from app.controllers.timeline import functions_page, milestones_page
 from app.db import init_db
 from app.settings import available_languages, set_language, settings, setup_locale
 from app.worker import worker_loop
@@ -84,7 +84,8 @@ app = Ravyn(
         Gateway(handler=groups_page),
         Gateway(handler=groups_graph),
         Gateway(handler=group_detail),
-        Gateway(handler=timeline_page),
+        Gateway(handler=functions_page),
+        Gateway(handler=milestones_page),
         Gateway(handler=protocols_page),
         Gateway(handler=logbook_page),
         Gateway(handler=mentions_page),

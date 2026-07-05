@@ -1,4 +1,10 @@
-"""Timeline: renders markdown tables from a Collectives page as Plotly charts."""
+"""Renders markdown tables from a Collectives page as Plotly charts.
+
+The single Collectives page (``timeline_page_name``) holds two kinds of
+sections: those with an *End* column become Gantt-style bars ("functions",
+served at ``/functions``) and those without become point-event scatters
+("milestones", served at ``/milestones``).
+"""
 
 import json
 import logging
@@ -8,7 +14,7 @@ from ravyn import Request, Template, get
 
 from app.i18n import template_context
 from app.models import CollectivePage
-from app.settings import settings
+from app.settings import _, settings
 
 logger = logging.getLogger(__name__)
 
@@ -195,15 +201,29 @@ def build_timeline_figure(
         )
 
     layout: dict = {
-        "title": {"text": header},
+        # No chart title: the page heading already names the section, and the
+        # top strip is given over to the horizontal legend below.
         "height": max(400, len(df) * 25 + 100),
         "barmode": "overlay",
-        "legend": {"title": {"text": "Group"}},
+        # Default to the pan/move tool rather than zoom-to-rectangle.
+        "dragmode": "pan",
+        # Horizontal legend above the plot so it doesn't eat horizontal space.
+        "legend": {
+            "title": {"text": "Group"},
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "left",
+            "x": 0,
+        },
+        "margin": {"t": 40},
         "yaxis": {
             "title": "",
             "categoryorder": "array",
             "categoryarray": y_order,
             "autorange": "reversed",
+            # Grow the left margin to fit the full row labels instead of clipping.
+            "automargin": True,
         },
         "xaxis": {"type": "date", "rangeslider": {"visible": True}},
     }
@@ -273,20 +293,31 @@ def build_milestone_figure(df: pd.DataFrame, header: str) -> dict:
     return {"data": [trace], "layout": layout}
 
 
-def build_section_figures(md_text: str) -> list[dict]:
-    """One Plotly figure (as dict) per markdown section."""
+def build_section_figures(md_text: str, kind: str | None = None) -> list[dict]:
+    """One Plotly figure (as dict) per markdown section.
+
+    ``kind`` filters the result: ``"function"`` keeps only sections with an End
+    column (Gantt bars), ``"milestone"`` keeps only point-event sections
+    (scatter), and ``None`` keeps every section. Empty sections cannot be
+    classified, so they only surface in the unfiltered view.
+    """
     sections = parse_markdown_tables(md_text)
     figures: list[dict] = []
     for header, rows in sections.items():
         if not rows:
-            figures.append({"header": header, "figure": None})
+            if kind is None:
+                figures.append({"header": header, "figure": None, "kind": None})
             continue
 
         has_end_column = "End" in rows[0].keys()
+        section_kind = "function" if has_end_column else "milestone"
+        if kind is not None and section_kind != kind:
+            continue
+
         df, group_order = _build_dataframe(rows, header, has_end_column)
 
         if df.empty:
-            figures.append({"header": header, "figure": None})
+            figures.append({"header": header, "figure": None, "kind": section_kind})
             continue
 
         if has_end_column:
@@ -295,12 +326,14 @@ def build_section_figures(md_text: str) -> list[dict]:
         else:
             figure = build_milestone_figure(df, header)
 
-        figures.append({"header": header, "figure": figure})
+        figures.append({"header": header, "figure": figure, "kind": section_kind})
     return figures
 
 
-@get("/timeline")
-def timeline_page(request: Request) -> Template:
+def _sections_context(
+    request: Request, kind: str, page_title: str, empty_message: str
+) -> dict:
+    """Shared context for the /functions and /milestones pages."""
     context = template_context(request)
 
     try:
@@ -309,8 +342,11 @@ def timeline_page(request: Request) -> Template:
     except ValueError:
         md_text = ""
 
-    context["timeline_page_name"] = settings.nextcloud.timeline_page_name
-    context["sections"] = build_section_figures(md_text) if md_text.strip() else []
+    context["page_title"] = page_title
+    context["empty_message"] = empty_message
+    context["sections"] = (
+        build_section_figures(md_text, kind=kind) if md_text.strip() else []
+    )
     # escape <, > and & so page-provided titles cannot break out of the
     # <script type="application/json"> block (XSS via "</script>")
     context["figures_json"] = (
@@ -319,4 +355,34 @@ def timeline_page(request: Request) -> Template:
         .replace("<", "\\u003c")
         .replace(">", "\\u003e")
     )
-    return Template(name="timeline.html", context=context)
+    return context
+
+
+@get("/functions")
+def functions_page(request: Request) -> Template:
+    context = _sections_context(
+        request,
+        kind="function",
+        page_title=_("Functions"),
+        empty_message=_(
+            "No function data found. Please create and populate the '%s' page "
+            "in Nextcloud Collectives."
+        )
+        % settings.nextcloud.timeline_page_name,
+    )
+    return Template(name="sections.html", context=context)
+
+
+@get("/milestones")
+def milestones_page(request: Request) -> Template:
+    context = _sections_context(
+        request,
+        kind="milestone",
+        page_title=_("Milestones"),
+        empty_message=_(
+            "No milestone data found. Please create and populate the '%s' page "
+            "in Nextcloud Collectives."
+        )
+        % settings.nextcloud.timeline_page_name,
+    )
+    return Template(name="sections.html", context=context)
