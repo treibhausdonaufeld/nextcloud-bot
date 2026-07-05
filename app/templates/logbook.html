@@ -43,7 +43,12 @@
       {% for card in cards %}
         <article class="decision-card">
           <div class="decision-head">
-            <h4>{{ card.decision.title or _("No Title") }}</h4>
+            <div class="decision-title">
+              <h4>{{ card.decision.title or _("No Title") }}</h4>
+              {% if card.has_objections %}
+                <span class="decision-badge decision-badge-objections">⚠️ {{ _("Objections") }}</span>
+              {% endif %}
+            </div>
             {% if card.link %}
               <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
             {% endif %}
@@ -53,18 +58,28 @@
             {% if card.decision.group_name %}<span>👥 {{ card.decision.group_name }}</span>{% endif %}
             {% if card.decision.valid_until %}<span>⏰ {{ _("Valid until") }}: {{ card.decision.valid_until }}</span>{% endif %}
           </p>
-          <details>
-            <summary>{{ _("View Details") }}</summary>
+          {% if card.has_more %}
+            <details>
+              <summary>
+                <div class="markdown-body decision-preview">{{ card.preview_html if card.preview_html else _("No text available") }}</div>
+                <span class="decision-toggle">
+                  <span class="toggle-more">{{ _("View Details") }}</span>
+                  <span class="toggle-less">{{ _("Show less") }}</span>
+                </span>
+              </summary>
+              <div class="markdown-body">{{ card.text_html if card.text_html else _("No text available") }}</div>
+              {% if card.context_html %}
+                <h5>{{ _("Context") }}</h5>
+                <div class="markdown-body">{{ card.context_html }}</div>
+              {% endif %}
+              {% if card.objections_html %}
+                <h5>{{ _("Objections") }}</h5>
+                <div class="markdown-body">{{ card.objections_html }}</div>
+              {% endif %}
+            </details>
+          {% else %}
             <div class="markdown-body">{{ card.text_html if card.text_html else _("No text available") }}</div>
-            {% if card.context_html %}
-              <h5>{{ _("Context") }}</h5>
-              <div class="markdown-body">{{ card.context_html }}</div>
-            {% endif %}
-            {% if card.objections_html %}
-              <h5>{{ _("Objections") }}</h5>
-              <div class="markdown-body">{{ card.objections_html }}</div>
-            {% endif %}
-          </details>
+          {% endif %}
         </article>
       {% endfor %}
     </div>

@@ -300,6 +300,35 @@ mark {
   margin-bottom: 0.6rem;
 }
 
+.decision-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.decision-badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.35rem;
+  white-space: nowrap;
+}
+
+.decision-badge-objections {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+@media (prefers-color-scheme: dark) {
+  .decision-badge-objections {
+    color: #fde68a;
+    background: rgba(146, 64, 14, 0.35);
+  }
+}
+
 .decision-card details {
   margin-bottom: 0;
 }
@@ -307,6 +336,41 @@ mark {
 .decision-card details summary {
   font-size: 0.9rem;
   color: var(--pico-primary);
+  list-style: none;
+  cursor: pointer;
+}
+
+.decision-card details summary::-webkit-details-marker {
+  display: none;
+}
+
+.decision-preview {
+  color: var(--pico-color);
+}
+
+/* The preview stands in for the full text while collapsed; hide it once the
+   full text is revealed below to avoid showing the opening lines twice. */
+.decision-card details[open] summary .decision-preview {
+  display: none;
+}
+
+.decision-toggle {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--pico-primary);
+}
+
+.decision-toggle .toggle-less {
+  display: none;
+}
+
+.decision-card details[open] summary .decision-toggle .toggle-more {
+  display: none;
+}
+
+.decision-card details[open] summary .decision-toggle .toggle-less {
+  display: inline;
 }
 
 .decision-card .markdown-body {

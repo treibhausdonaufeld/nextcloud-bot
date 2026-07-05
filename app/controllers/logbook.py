@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
 DEFAULT_ITEMS_PER_PAGE = 20
+PREVIEW_MAX_CHARS = 500
 
 _MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
 
@@ -29,6 +30,19 @@ def render_markdown(text: str | None) -> Markup:
         return Markup("")
     # A fresh conversion per call keeps this safe under Ravyn's threadpool.
     return Markup(markdown_lib.markdown(text, extensions=_MD_EXTENSIONS))
+
+
+def make_preview(text: str | None, limit: int = PREVIEW_MAX_CHARS) -> tuple[str, bool]:
+    """Return a preview of at most ``limit`` chars and whether it was truncated.
+
+    Truncation happens on a word boundary so the preview stays readable; the
+    caller renders the full text behind an expand toggle.
+    """
+    stripped = (text or "").strip()
+    if len(stripped) <= limit:
+        return stripped, False
+    truncated = stripped[:limit].rsplit(" ", 1)[0].rstrip()
+    return truncated + "…", True
 
 
 def matches_search(decision: Decision, search_text: str, search_type: str) -> bool:
@@ -95,12 +109,18 @@ def logbook_context(
     cards: list[dict[str, Any]] = []
     for decision in decisions[start_idx:end_idx]:
         d_page = decision.page
+        preview_text, is_truncated = make_preview(decision.text)
+        has_objections = bool((decision.objections or "").strip())
+        has_more = is_truncated or bool(decision.context) or has_objections
         cards.append(
             {
                 "decision": decision,
+                "preview_html": render_markdown(preview_text),
                 "text_html": render_markdown(decision.text),
                 "context_html": render_markdown(decision.context),
                 "objections_html": render_markdown(decision.objections),
+                "has_more": has_more,
+                "has_objections": has_objections,
                 "link": (d_page.url if d_page else "") or decision.external_link,
             }
         )

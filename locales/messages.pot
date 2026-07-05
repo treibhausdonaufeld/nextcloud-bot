@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-05 16:07+0000\n"
+"POT-Creation-Date: 2026-07-05 21:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,28 +197,19 @@ msgstr ""
 msgid "No Title"
 msgstr ""
 
-msgid "View Details"
-msgstr ""
-
-msgid "Date"
-msgstr ""
-
-msgid "Group"
-msgstr ""
-
-msgid "Valid Until"
-msgstr ""
-
-msgid "Context"
-msgstr ""
-
-msgid "Text"
+msgid "Open protocol"
 msgstr ""
 
 msgid "No text available"
 msgstr ""
 
-msgid "Open protocol"
+msgid "View Details"
+msgstr ""
+
+msgid "Show less"
+msgstr ""
+
+msgid "Context"
 msgstr ""
 
 msgid "Pagination"
@@ -283,7 +274,13 @@ msgstr ""
 msgid "Search protocols"
 msgstr ""
 
+msgid "Date"
+msgstr ""
+
 msgid "Title"
+msgstr ""
+
+msgid "Group"
 msgstr ""
 
 msgid "Moderated by"
