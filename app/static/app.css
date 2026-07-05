@@ -31,6 +31,13 @@ body {
   overflow-y: auto;
 }
 
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .sidebar-brand {
   padding: 0 0.5rem;
   font-size: 0.8rem;
@@ -38,6 +45,31 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--pico-muted-color);
+}
+
+/* The collapsible region holds the nav + language switcher. On desktop it
+   fills the sidebar so the language select can sit at the bottom. */
+.sidebar-collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Hamburger button — hidden on desktop, shown in the mobile top bar. */
+.nav-toggle {
+  display: none;
+  width: auto;
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: transparent;
+  color: var(--pico-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  cursor: pointer;
 }
 
 .main-nav ul {
@@ -109,27 +141,68 @@ body {
     flex-direction: column;
   }
 
+  /* The sidebar reserves no layout space when closed: the brand is dropped,
+     the toggle floats, and the nav opens as an overlay drawer. So the content
+     gets the full viewport height. */
   .sidebar {
     position: static;
+    /* In the column layout, flex-basis is height — reset it so the (empty,
+       when closed) sidebar reserves no vertical space. */
+    flex: 0 0 auto;
     height: auto;
     width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
+    padding: 0;
+    gap: 0;
+    background: transparent;
     border-right: none;
+    border-bottom: none;
+    overflow: visible;
+  }
+
+  .sidebar-brand {
+    display: none;
+  }
+
+  /* Floating hamburger, always reachable, over the content's top-right. */
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 30;
+    background: var(--pico-card-background-color);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Drawer overlay: hidden until opened, then covers the top of the screen. */
+  .sidebar-collapsible {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    gap: 0.75rem;
+    padding: 3.25rem 1rem 1rem;
+    max-height: 100vh;
+    overflow-y: auto;
+    background: var(--pico-card-background-color);
     border-bottom: 1px solid var(--pico-muted-border-color);
-    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar.nav-open .sidebar-collapsible {
+    display: flex;
   }
 
   .main-nav ul {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
   }
 
   .sidebar-lang {
     margin-top: 0;
-    margin-left: auto;
   }
 
   .app-content > .container-fluid {

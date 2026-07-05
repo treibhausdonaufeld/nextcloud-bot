@@ -3,21 +3,19 @@
 {% block content %}
   <h1>{{ _("Protocols") }}</h1>
 
-  <form class="filter-form" method="get" action="/protocols">
-    <label>
-      {{ _("Filter by group") }}
-      <select name="group" onchange="this.form.submit()">
-        <option value=""></option>
+  <form class="toolbar" method="get" action="/protocols">
+    <div class="toolbar-search" role="search">
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Search protocols') }}" />
+      <button type="submit">{{ _("Search") }}</button>
+    </div>
+    <div class="toolbar-filters">
+      <select name="group" aria-label="{{ _('Filter by group') }}" onchange="this.form.submit()">
+        <option value="">{{ _("All groups") }}</option>
         {% for g in group_options %}
           <option value="{{ g }}" {% if g == selected_group %}selected{% endif %}>{{ g }}</option>
         {% endfor %}
       </select>
-    </label>
-    <label>
-      {{ _("Search protocols") }}
-      <input type="search" name="q" value="{{ q }}" />
-    </label>
-    <button type="submit">{{ _("Search") }}</button>
+    </div>
   </form>
 
   {% if rows %}

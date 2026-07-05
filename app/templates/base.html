@@ -10,31 +10,76 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="sidebar-brand">{{ settings.name }}</div>
-        <nav class="main-nav">
-          <ul>
-            <li><a href="/" {% if current_path == '/' %}aria-current="page"{% endif %}><span class="icon">🏠</span> {{ _("Home") }}</a></li>
-            <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}><span class="icon">⭕</span> {{ _("Groups") }}</a></li>
-            <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon">⌛</span> {{ _("Functions") }}</a></li>
-            <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon">🚩</span> {{ _("Milestones") }}</a></li>
-            <li><a href="/protocols" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}><span class="icon">📝</span> {{ _("Protocols") }}</a></li>
-            <li><a href="/logbook" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}><span class="icon">✅</span> {{ _("Logbook") }}</a></li>
-            <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon">📣</span> {{ _("Mentions") }}</a></li>
-          </ul>
-        </nav>
-        <form class="sidebar-lang" action="/lang" method="get">
-          <input type="hidden" name="next" value="{{ current_path }}" />
-          <select name="code" aria-label="{{ _('Language') }}" onchange="this.form.submit()">
-            {% for code, name in available_languages.items() %}
-              <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ name }}</option>
-            {% endfor %}
-          </select>
-        </form>
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-brand">{{ settings.name }}</div>
+          <button
+            type="button"
+            class="nav-toggle"
+            aria-label="{{ _('Toggle navigation') }}"
+            aria-controls="sidebar-collapsible"
+            aria-expanded="false"
+          >
+            <span class="nav-toggle-icon" aria-hidden="true">☰</span>
+          </button>
+        </div>
+        <div class="sidebar-collapsible" id="sidebar-collapsible">
+          <nav class="main-nav">
+            <ul>
+              <li><a href="/" {% if current_path == '/' %}aria-current="page"{% endif %}><span class="icon">🏠</span> {{ _("Home") }}</a></li>
+              <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}><span class="icon">⭕</span> {{ _("Groups") }}</a></li>
+              <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon">⌛</span> {{ _("Functions") }}</a></li>
+              <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon">🚩</span> {{ _("Milestones") }}</a></li>
+              <li><a href="/protocols" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}><span class="icon">📝</span> {{ _("Protocols") }}</a></li>
+              <li><a href="/logbook" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}><span class="icon">✅</span> {{ _("Logbook") }}</a></li>
+              <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon">📣</span> {{ _("Mentions") }}</a></li>
+            </ul>
+          </nav>
+          <form class="sidebar-lang" action="/lang" method="get">
+            <input type="hidden" name="next" value="{{ current_path }}" />
+            <select name="code" aria-label="{{ _('Language') }}" onchange="this.form.submit()">
+              {% for code, name in available_languages.items() %}
+                <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
       </aside>
       <div class="app-content">
         <main class="container-fluid">{% block content %}{% endblock %}</main>
       </div>
     </div>
+    <script>
+      (function () {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = sidebar && sidebar.querySelector('.nav-toggle');
+        if (!sidebar || !toggle) return;
+
+        function close() {
+          sidebar.classList.remove('nav-open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function () {
+          const open = sidebar.classList.toggle('nav-open');
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        // Collapse the menu once the user picks a destination.
+        sidebar.querySelectorAll('.main-nav a').forEach(function (link) {
+          link.addEventListener('click', close);
+        });
+
+        // Dismiss the open drawer via outside tap or the Escape key.
+        document.addEventListener('click', function (e) {
+          if (sidebar.classList.contains('nav-open') && !sidebar.contains(e.target)) {
+            close();
+          }
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') close();
+        });
+      })();
+    </script>
   </body>
 </html>
