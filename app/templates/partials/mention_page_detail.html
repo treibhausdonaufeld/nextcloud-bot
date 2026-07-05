@@ -1,4 +1,6 @@
 <article>
+  <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
+     onclick="event.preventDefault(); this.closest('dialog').close();">✕</a>
   {% if page %}
     <h3>{{ page.title }}</h3>
     {% if page.url %}

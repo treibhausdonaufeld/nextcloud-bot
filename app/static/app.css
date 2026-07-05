@@ -360,6 +360,28 @@ mark {
   color: var(--pico-muted-color);
 }
 
+#detail-dialog article {
+  position: relative;
+  width: 100%;
+  max-width: 42rem;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.detail-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--pico-muted-color);
+}
+
+.detail-close:hover {
+  color: var(--pico-color);
+}
+
 .htmx-indicator {
   opacity: 0;
   transition: opacity 200ms ease-in;
