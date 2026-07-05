@@ -382,6 +382,12 @@ mark {
   color: var(--pico-color);
 }
 
+.detail-close:focus-visible {
+  color: var(--pico-color);
+  outline: 2px solid var(--pico-primary-focus);
+  outline-offset: 2px;
+}
+
 .htmx-indicator {
   opacity: 0;
   transition: opacity 200ms ease-in;

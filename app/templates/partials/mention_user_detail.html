@@ -1,6 +1,6 @@
 <article>
   <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
-     onclick="event.preventDefault(); this.closest('dialog').close();">✕</a>
+     onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>{{ _("Mention Details for") }} <strong>{{ displayname }}</strong></h3>
   <p>{{ _("Total pages mentioning user: {count}").format(count=pages | length) }}</p>
 

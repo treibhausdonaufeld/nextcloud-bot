@@ -676,4 +676,3 @@ msgstr "Erwähnungen insgesamt: {count}"
 
 #~ msgid "Open"
 #~ msgstr "Öffnen"
-
