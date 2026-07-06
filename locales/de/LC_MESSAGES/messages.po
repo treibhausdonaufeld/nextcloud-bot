@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-06 12:50+0200\n"
+"POT-Creation-Date: 2026-07-06 19:12+0200\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -38,6 +38,12 @@ msgid ""
 msgstr ""
 "Keine Meilensteindaten gefunden. Bitte erstelle und befülle die Seite '%s' "
 "in Nextcloud Collectives."
+
+msgid "Agenda:"
+msgstr ""
+
+msgid "Decisions:"
+msgstr "Beschlüsse:"
 
 msgid "No person listed for moderations"
 msgstr "Keine Person für Moderationen aufgeführt"
@@ -342,6 +348,9 @@ msgstr "Protokoll von"
 
 msgid "Participants"
 msgstr "Teilnehmende"
+
+msgid "Show more"
+msgstr "Mehr anzeigen"
 
 msgid "Member Statistics for"
 msgstr "Mitgliederstatistik für"
