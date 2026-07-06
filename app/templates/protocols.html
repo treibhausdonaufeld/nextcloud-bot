@@ -58,22 +58,28 @@
                 {% endif %}
                 <span>👥 {{ _n("~%(n)s attendee", "~%(n)s attendees", p.attendee_count) | format(n=p.attendee_count) }}</span>
               </p>
-              <details class="protocol-detail">
-                <summary>
-                  <span class="toggle-more">{{ _("View Details") }}</span>
-                  <span class="toggle-less">{{ _("Show less") }}</span>
-                </summary>
-                <dl class="protocol-people">
-                  <dt>{{ _("Moderated by") }}</dt>
-                  <dd>{{ p.moderated_by if p.moderated_by else "—" }}</dd>
-                  <dt>{{ _("Protocol by") }}</dt>
-                  <dd>{{ p.protocol_by if p.protocol_by else "—" }}</dd>
-                  {% if p.participants %}
+              {% if p.moderated_by or p.protocol_by %}
+                <p class="protocol-roles">
+                  {% if p.moderated_by %}
+                    <span class="role-badge" title="{{ _('Moderated by') }}">🎤 {{ p.moderated_by }}</span>
+                  {% endif %}
+                  {% if p.protocol_by %}
+                    <span class="role-badge" title="{{ _('Protocol by') }}">✍️ {{ p.protocol_by }}</span>
+                  {% endif %}
+                </p>
+              {% endif %}
+              {% if p.participants %}
+                <details class="protocol-detail">
+                  <summary>
+                    <span class="toggle-more">{{ _("View Details") }}</span>
+                    <span class="toggle-less">{{ _("Show less") }}</span>
+                  </summary>
+                  <dl class="protocol-people">
                     <dt>{{ _("Participants") }}</dt>
                     <dd>{{ p.participants }}</dd>
-                  {% endif %}
-                </dl>
-              </details>
+                  </dl>
+                </details>
+              {% endif %}
             </article>
           {% endfor %}
         </div>

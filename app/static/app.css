@@ -603,6 +603,25 @@ mark {
   margin: 0.6rem 0 0;
 }
 
+.protocol-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 0.28rem 0.55rem;
+  border-radius: 1rem;
+  background: var(--pico-secondary-focus);
+  color: var(--pico-color);
+}
+
 .protocol-detail {
   margin-bottom: 0;
   margin-top: 0.5rem;
