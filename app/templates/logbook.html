@@ -44,14 +44,17 @@
         <article class="decision-card">
           <div class="decision-head">
             <div class="decision-title">
-              <h4>{{ card.decision.title or _("No Title") }}</h4>
+              <h4>
+                {% if card.link %}
+                  <a href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">{{ card.decision.title or _("No Title") }}</a>
+                {% else %}
+                  {{ card.decision.title or _("No Title") }}
+                {% endif %}
+              </h4>
               {% if card.has_objections %}
                 <span class="decision-badge decision-badge-objections">⚠️ {{ _("Objections") }}</span>
               {% endif %}
             </div>
-            {% if card.link %}
-              <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
-            {% endif %}
           </div>
           <p class="meta">
             {% if card.decision.date %}<span>📅 {{ card.decision.date }}</span>{% endif %}
