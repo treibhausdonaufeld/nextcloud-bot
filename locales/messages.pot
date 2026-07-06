@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-05 20:53+0000\n"
+"POT-Creation-Date: 2026-07-06 12:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,9 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
+
+msgid "No Title"
+msgstr ""
 
 msgid "Functions"
 msgstr ""
@@ -210,9 +213,6 @@ msgid "%(total)s decisions"
 msgstr ""
 
 msgid "showing"
-msgstr ""
-
-msgid "No Title"
 msgstr ""
 
 msgid "Open protocol"
