@@ -109,6 +109,11 @@ async def _migrate_schema() -> None:
             " NOT NULL DEFAULT ''"
         )
         logger.info("Migrated protocols table: added location_type column")
+    if "preview" not in protocol_columns:
+        await database.execute(
+            "ALTER TABLE protocols ADD COLUMN preview VARCHAR(512) NOT NULL DEFAULT ''"
+        )
+        logger.info("Migrated protocols table: added preview column")
 
     if "lemmas" in await _table_columns("search_index"):
         return

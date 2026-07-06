@@ -706,6 +706,7 @@ class TestProtocolNotificationDateConstraints:
                     with patch("app.models.protocol.Group") as MockGroup:
                         MockGroup.get_for_page.return_value = mock_group
                         MockGroup.get.return_value = mock_group
+                        MockGroup.fetch_one.return_value = mock_group
 
                         with patch.object(Protocol, "notify_updated") as mock_notify:
                             with patch.object(BaseDBModel, "store"):
@@ -776,6 +777,7 @@ class TestProtocolNotificationDateConstraints:
                     with patch("app.models.protocol.Group") as MockGroup:
                         MockGroup.get_for_page.return_value = mock_group
                         MockGroup.get.return_value = mock_group
+                        MockGroup.fetch_one.return_value = mock_group
 
                         with patch.object(Protocol, "notify_updated") as mock_notify:
                             with patch.object(BaseDBModel, "store"):

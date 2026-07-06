@@ -15,6 +15,7 @@ from app.models.user import NCUserList
 from app.services.config import bot_config
 from app.services.rocketchat import send_message
 from app.settings import _, user_regex
+from app.textnorm import strip_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,10 @@ class Protocol(BaseDBModel):
     moderated_by: List[str] = edgy.JSONField(default=list)
     protocol_by: List[str] = edgy.JSONField(default=list)
     participants: List[str] = edgy.JSONField(default=list)
+
+    # Preview text listing all agenda headings and all decisions of the
+    # protocol. Computed in update_from_page(); no LLM, no external services.
+    preview: str = edgy.TextField(default="")
 
     natural_key_fields = ("page_id",)
 
@@ -80,6 +85,63 @@ class Protocol(BaseDBModel):
             set(self.participants) | set(self.moderated_by) | set(self.protocol_by)
         )
         return len(everyone)
+
+    def compute_preview(self) -> str:
+        """Build a preview text listing all agenda headings and all decisions.
+
+        The date/group/attendee lead is intentionally omitted — that
+        information is already shown on the protocol card. The preview
+        contains every markdown heading found in the body (the agenda items)
+        and every decision title, formatted as a bulleted list. No LLM, no
+        external services — stdlib + the existing ``strip_markdown`` only.
+        Returns "" when nothing usable is available.
+        """
+        parts: list[str] = []
+
+        headings = self._body_headings()
+        if headings:
+            lines = "\n".join(f"- {h}" for h in headings)
+            parts.append(f"{_('Agenda:')}\n{lines}")
+
+        decisions = Decision.fetch(page_id=self.page_id, limit=1000)
+        titles = [d.title for d in decisions if d.title]
+        if titles:
+            lines = "\n".join(f"- {t}" for t in titles)
+            parts.append(f"{_('Decisions:')}\n{lines}")
+
+        return "\n\n".join(parts)
+
+    def _body_headings(self) -> list[str]:
+        """Return all markdown heading texts from the protocol body.
+
+        The header block (metadata before the first ``---`` rule or heading)
+        is skipped; every ``#``-prefixed line in the remaining body is
+        collected, with markdown formatting stripped from the heading text.
+        """
+        page = self.page
+        if not page or not page.content:
+            return []
+
+        lines = page.content.splitlines()
+        # Skip the header block: everything before the first --- or # heading
+        # (matching update_from_page's header detection).
+        start: int | None = None
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped == "---" or stripped.startswith("#"):
+                start = i
+                break
+        if start is None:
+            return []
+
+        headings: list[str] = []
+        for line in lines[start:]:
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                heading = strip_markdown(stripped.lstrip("#").strip())
+                if heading:
+                    headings.append(heading)
+        return headings
 
     @staticmethod
     def extract_time(text: str) -> str:
@@ -497,6 +559,7 @@ class Protocol(BaseDBModel):
         )
         try:
             decisions = self.extract_decisions()
+            self.preview = self.compute_preview()
 
             # Only notify if protocol is recent
             if self.date_obj:

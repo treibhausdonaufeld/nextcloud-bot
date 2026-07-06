@@ -36,6 +36,9 @@ services:
       MAILINGLIST__SMTP_PASSWORD: 'secretpassword'
 
       DATABASE_URL: 'sqlite+aiosqlite:////data/nextcloud_bot.db'
+      # Overrides the avatar folder from the bot-config page; must match the
+      # bind mount below.
+      AVATAR_FOLDER: '/tmp/avatare'
     volumes:
       - /mnt/thd-data/nc-bot/data:/data
       - /mnt/thd-data/nc-bot/avatare:/tmp/avatare

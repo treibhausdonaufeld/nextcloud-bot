@@ -138,6 +138,12 @@ class Settings(BaseSettings):
     # SQLite database location (async driver required by Edgy/databasez)
     database_url: str = "sqlite+aiosqlite:///data/nextcloud_bot.db"
 
+    # Optional override for the avatar storage folder. When set (env var
+    # AVATAR_FOLDER) this takes precedence over the bot-config page's
+    # avatare.avatar_folder value, since the path is an infrastructure
+    # concern (it must match the container's volume mount).
+    avatar_folder: Optional[str] = None
+
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
     rocketchat: RocketchatSettings = RocketchatSettings()

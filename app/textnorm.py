@@ -24,6 +24,35 @@ TOKEN_RE = re.compile(r"\w[\w-]*")
 
 LANGS = ("de", "en")
 
+# Markdown inline/block formatting stripped when turning content into plain
+# text for previews. Order matters: link/image alt text is kept, the other
+# constructs keep their inner content.
+_MD_FORMATTING_RE = re.compile(
+    r"\[([^\]]+)\]\([^)]+\)"  # [text](url) -> text
+    r"|~~(.+?)~~"  # ~~strikethrough~~ -> content
+    r"|`([^`]+)`"  # `inline code` -> content
+    r"|\*\*(.+?)\*\*"  # **bold** -> content
+    r"|__(.+?)__"  # __bold__ -> content
+    r"|\*(.+?)\*"  # *italic* -> content
+    r"|_(.+?)_"  # _italic_ -> content
+    r"|^#{1,6}\s*",  # heading markers -> remove
+    re.MULTILINE,
+)
+
+
+def strip_markdown(text: str) -> str:
+    """Remove markdown formatting characters from plain text for display."""
+    if not text:
+        return ""
+    result = _MD_FORMATTING_RE.sub(
+        lambda m: next(g for g in m.groups() if g is not None)
+        if any(g is not None for g in m.groups())
+        else "",
+        text,
+    )
+    return result.strip()
+
+
 # only try to split reasonably long, purely alphabetic words into parts that
 # are proper words themselves (avoids junk like "Budget" -> "Bud"/"Get")
 MIN_COMPOUND_LENGTH = 8

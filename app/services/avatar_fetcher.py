@@ -33,7 +33,11 @@ class AvatarFetcher:
 
     @cached_property
     def base_folder(self) -> Path:
-        base_folder = Path(self.config.avatar_folder)
+        # The env-based settings.avatar_folder (AVATAR_FOLDER) overrides the
+        # bot-config page value, since the path is tied to the container's
+        # volume mount and should not depend on Nextcloud content.
+        folder = settings.avatar_folder or self.config.avatar_folder
+        base_folder = Path(folder)
         if not base_folder.exists():
             base_folder.mkdir(parents=True)
 

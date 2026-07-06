@@ -6,7 +6,6 @@ upload route.
 
 import hashlib
 import logging
-import re
 from typing import Any
 
 import markdown as markdown_lib
@@ -17,6 +16,7 @@ from app.db import search
 from app.i18n import template_context
 from app.models import Decision, Group
 from app.settings import _
+from app.textnorm import strip_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -25,31 +25,6 @@ DEFAULT_ITEMS_PER_PAGE = 20
 PREVIEW_MAX_CHARS = 500
 
 _MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
-
-_MD_FORMATTING_RE = re.compile(
-    r"\[([^\]]+)\]\([^)]+\)"  # [text](url) -> text
-    r"|~~(.+?)~~"  # ~~strikethrough~~ -> content
-    r"|`([^`]+)`"  # `inline code` -> content
-    r"|\*\*(.+?)\*\*"  # **bold** -> content
-    r"|__(.+?)__"  # __bold__ -> content
-    r"|\*(.+?)\*"  # *italic* -> content
-    r"|_(.+?)_"  # _italic_ -> content
-    r"|^#{1,6}\s*",  # heading markers -> remove
-    re.MULTILINE,
-)
-
-
-def strip_markdown(text: str) -> str:
-    """Remove markdown formatting characters from plain text for display."""
-    if not text:
-        return ""
-    result = _MD_FORMATTING_RE.sub(
-        lambda m: next(g for g in m.groups() if g is not None)
-        if any(g is not None for g in m.groups())
-        else "",
-        text,
-    )
-    return result.strip()
 
 
 def group_hue(name: str) -> int | None:

@@ -69,15 +69,18 @@
                 </p>
               {% endif %}
               {% if p.participants %}
+                <dl class="protocol-people">
+                  <dt>{{ _("Participants") }}</dt>
+                  <dd>{{ p.participants }}</dd>
+                </dl>
+              {% endif %}
+              {% if p.preview %}
                 <details class="protocol-detail">
                   <summary>
-                    <span class="toggle-more">{{ _("View Details") }}</span>
+                    <span class="toggle-more">{{ _("Show more") }}</span>
                     <span class="toggle-less">{{ _("Show less") }}</span>
                   </summary>
-                  <dl class="protocol-people">
-                    <dt>{{ _("Participants") }}</dt>
-                    <dd>{{ p.participants }}</dd>
-                  </dl>
+                  <p class="protocol-preview">{{ p.preview }}</p>
                 </details>
               {% endif %}
             </article>

@@ -149,6 +149,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
                 "moderated_by": display_users(user_list, protocol.moderated_by),
                 "protocol_by": display_users(user_list, protocol.protocol_by),
                 "participants": display_users(user_list, protocol.participants),
+                "preview": protocol.preview,
             }
         )
 
