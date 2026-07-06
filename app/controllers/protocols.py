@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+from datetime import date as date_type
 from datetime import datetime
 
 from ravyn import Request, Template, get
@@ -25,6 +26,17 @@ def display_users(user_list: NCUserList, user_ids: list[str]) -> str:
 
 def group_name_map() -> dict[int | None, str]:
     return {g.page_id: g.name for g in Group.all_cached()}
+
+
+def protocol_sort_key(protocol: Protocol) -> date_type:
+    """Chronological sort key for a protocol.
+
+    Uses the parsed ``date_obj`` (which tolerates trailing text after the
+    ``YYYY-MM-DD`` prefix) rather than the raw ``date`` string, so ordering
+    stays correct regardless of what follows the date. Protocols without a
+    parseable date sort last (oldest).
+    """
+    return protocol.date_obj or date_type.min
 
 
 def group_hue(name: str) -> int | None:
@@ -91,8 +103,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
         {group_names.get(p.group_page_id, "") for p in all_protocols} - {""}
     )
 
-    # filter out protocols in the future
-    now_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().date()
 
     if q.strip():
         # full-text search over protocol pages, then map hits back to protocols
@@ -103,17 +114,18 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
             protocols = [
                 p for p in protocols if group_names.get(p.group_page_id) == group
             ]
-        protocols = sorted(protocols, key=lambda p: p.date, reverse=True)
+        protocols = sorted(protocols, key=protocol_sort_key, reverse=True)
     elif group:
         protocols = sorted(
             [p for p in all_protocols if group_names.get(p.group_page_id) == group],
-            key=lambda p: p.date,
+            key=protocol_sort_key,
             reverse=True,
         )
     else:
+        # filter out protocols in the future
         protocols = sorted(
-            [p for p in all_protocols if p.date <= now_str],
-            key=lambda p: p.date,
+            [p for p in all_protocols if not p.date_obj or p.date_obj <= today],
+            key=protocol_sort_key,
             reverse=True,
         )
 

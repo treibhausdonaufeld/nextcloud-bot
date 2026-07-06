@@ -418,6 +418,22 @@ class TestProtocolLocationType:
         with patch("app.models.protocol.bot_config", mock_bot_config):
             assert Protocol.detect_location_type(lines) == expected
 
+    def test_location_line_takes_precedence(self, mock_bot_config):
+        # An unrelated header line mentioning "online" must not flip an
+        # in-person meeting to hybrid: the "Ort:" line wins.
+        lines = [
+            "Wir haben online eine Umfrage besprochen",
+            "Ort: Vereinsraum, vor Ort",
+        ]
+        with patch("app.models.protocol.bot_config", mock_bot_config):
+            assert Protocol.detect_location_type(lines) == "in_person"
+
+    def test_falls_back_to_full_header(self, mock_bot_config):
+        # No location keyword line -> scan the whole header.
+        lines = ["Das Treffen fand online statt"]
+        with patch("app.models.protocol.bot_config", mock_bot_config):
+            assert Protocol.detect_location_type(lines) == "online"
+
 
 class TestProtocolAttendeeCount:
     """Test suite for the Protocol.attendee_count property."""
@@ -469,6 +485,28 @@ class TestGroupByYear:
         from app.controllers.protocols import group_by_year
 
         assert group_by_year([]) == []
+
+
+class TestProtocolSortKey:
+    """Test suite for the chronological sort key helper."""
+
+    def test_uses_date_prefix_ignoring_trailing_text(self):
+        from datetime import date
+
+        from app.controllers.protocols import protocol_sort_key
+
+        p = Mock()
+        p.date_obj = date(2024, 11, 7)
+        assert protocol_sort_key(p) == date(2024, 11, 7)
+
+    def test_missing_date_sorts_last(self):
+        from datetime import date
+
+        from app.controllers.protocols import protocol_sort_key
+
+        p = Mock()
+        p.date_obj = None
+        assert protocol_sort_key(p) == date.min
 
 
 class TestGroupHue:

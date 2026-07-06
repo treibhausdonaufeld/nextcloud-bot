@@ -99,8 +99,23 @@ class Protocol(BaseDBModel):
 
     @staticmethod
     def detect_location_type(header_lines: List[str]) -> str:
-        """Classify a meeting as online / in_person / hybrid from its header."""
-        blob = "\n".join(header_lines).lower()
+        """Classify a meeting as online / in_person / hybrid from its header.
+
+        Prefers lines introduced by a location keyword (e.g. ``Ort: ...``) so
+        the online/in-person hints are read from the location field rather than
+        unrelated header text. Falls back to scanning the whole header block
+        when no such line is present.
+        """
+        location_kws = bot_config.organisation.meeting_location_keywords
+        first_word_regex = re.compile(r"\b(\w[\w-]*)\b")
+        location_lines = [
+            line
+            for line in header_lines
+            if (m := first_word_regex.search(line))
+            and m.group(1).lower() in location_kws
+        ]
+
+        blob = "\n".join(location_lines or header_lines).lower()
         online = any(
             kw in blob for kw in bot_config.organisation.online_meeting_keywords
         )
