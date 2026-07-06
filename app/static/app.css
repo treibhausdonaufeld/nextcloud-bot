@@ -536,6 +536,21 @@ mark {
   padding: 1rem 1.15rem;
 }
 
+/* Each card is tinted from a hue derived from its group name (--group-hue),
+   so every group gets a stable, distinct colour. Lightness/saturation are
+   fixed here per theme to keep text readable regardless of the hue. */
+.protocol-card-colored {
+  border-left: 4px solid hsl(var(--group-hue) 55% 50%);
+  background: hsl(var(--group-hue) 60% 98%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .protocol-card-colored {
+    border-left-color: hsl(var(--group-hue) 45% 55%);
+    background: hsl(var(--group-hue) 30% 13%);
+  }
+}
+
 .protocol-head {
   display: flex;
   align-items: flex-start;
@@ -564,6 +579,19 @@ mark {
   border-radius: 1rem;
   background: var(--pico-primary-background);
   color: var(--pico-primary-inverse);
+}
+
+/* Match the group pill to the card's group hue. */
+.protocol-card-colored .protocol-group {
+  background: hsl(var(--group-hue) 55% 88%);
+  color: hsl(var(--group-hue) 65% 25%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .protocol-card-colored .protocol-group {
+    background: hsl(var(--group-hue) 35% 25%);
+    color: hsl(var(--group-hue) 70% 82%);
+  }
 }
 
 .protocol-card .meta {

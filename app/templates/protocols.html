@@ -33,7 +33,8 @@
         </summary>
         <div class="protocol-list">
           {% for p in yg.protocols %}
-            <article class="protocol-card">
+            <article class="protocol-card {% if p.hue is not none %}protocol-card-colored{% endif %}"
+              {% if p.hue is not none %}style="--group-hue: {{ p.hue }}"{% endif %}>
               <div class="protocol-head">
                 <div class="protocol-title">
                   <h4>

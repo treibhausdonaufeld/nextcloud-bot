@@ -471,6 +471,37 @@ class TestGroupByYear:
         assert group_by_year([]) == []
 
 
+class TestGroupHue:
+    """Test suite for the group-name -> card colour helper."""
+
+    def test_empty_name_has_no_hue(self):
+        from app.controllers.protocols import group_hue
+
+        assert group_hue("") is None
+
+    def test_hue_in_range(self):
+        from app.controllers.protocols import group_hue
+
+        for name in ["AG Garten", "UG IT", "Koordinationskreis", "Wir Alle"]:
+            hue = group_hue(name)
+            assert hue is not None
+            assert 0 <= hue < 360
+
+    def test_hue_is_deterministic(self):
+        from app.controllers.protocols import group_hue
+
+        # Same input must always map to the same colour (stable across runs).
+        assert group_hue("AG Garten") == group_hue("AG Garten")
+
+    def test_distinct_names_usually_differ(self):
+        from app.controllers.protocols import group_hue
+
+        names = ["AG Garten", "UG IT", "AG Konzept", "AG Recht", "Wir Alle"]
+        hues = {group_hue(n) for n in names}
+        # Not a guarantee, but these fixed names should not all collide.
+        assert len(hues) >= 4
+
+
 class TestProtocolDelete:
     """Test suite for Protocol.delete() method."""
 

@@ -1,5 +1,6 @@
-"""Protocols: table with group filter, full-text search and member statistics."""
+"""Protocols: card view grouped by year, with group filter and search."""
 
+import hashlib
 import logging
 from datetime import datetime
 
@@ -24,6 +25,19 @@ def display_users(user_list: NCUserList, user_ids: list[str]) -> str:
 
 def group_name_map() -> dict[int | None, str]:
     return {g.page_id: g.name for g in Group.all_cached()}
+
+
+def group_hue(name: str) -> int | None:
+    """Map a group name to a stable hue (0-359) for card coloring.
+
+    Uses an MD5 digest of the name so the colour is deterministic across
+    processes (Python's built-in ``hash()`` is salted per interpreter run).
+    Returns ``None`` for empty names so ungrouped cards stay neutral.
+    """
+    if not name:
+        return None
+    digest = hashlib.md5(name.encode("utf-8")).digest()
+    return int.from_bytes(digest[:2], "big") % 360
 
 
 def member_statistics(
@@ -106,6 +120,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
     cards = []
     for protocol in protocols:
         page = CollectivePage.get_from_page_id_or_none(protocol.page_id)
+        card_group = group_names.get(protocol.group_page_id, "")
         cards.append(
             {
                 "date": protocol.date_obj.strftime("%Y-%m-%d")
@@ -117,7 +132,8 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
                 "attendee_count": protocol.attendee_count,
                 "title": (page.title if page else "") or protocol.date,
                 "url": (page.url if page else "") or "",
-                "group": group_names.get(protocol.group_page_id, ""),
+                "group": card_group,
+                "hue": group_hue(card_group),
                 "moderated_by": display_users(user_list, protocol.moderated_by),
                 "protocol_by": display_users(user_list, protocol.protocol_by),
                 "participants": display_users(user_list, protocol.participants),
