@@ -17,6 +17,17 @@
       <input type="checkbox" name="with_subgroups" value="true" {% if with_subgroups %}checked{% endif %} onchange="this.form.submit()" />
       {{ _("With Subgroups") }}
     </label>
+    <input type="hidden" name="solver" value="{{ solver }}" />
+    <input type="hidden" name="height" value="{{ height }}" />
+  </form>
+
+  <form class="filter-form" method="get" action="/groups">
+    <input type="hidden" name="submitted" value="1" />
+    <input type="hidden" name="hierarchical" value="{% if hierarchical %}true{% endif %}" />
+    <input type="hidden" name="with_members" value="{% if with_members %}true{% endif %}" />
+    <input type="hidden" name="with_subgroups" value="{% if with_subgroups %}true{% endif %}" />
+    <input type="hidden" name="solver" value="{{ solver }}" />
+    <input type="hidden" name="height" value="{{ height }}" />
     <label>
       {{ _("Limit to Top Group") }}
       <select name="limit_group" onchange="this.form.submit()">
@@ -35,6 +46,17 @@
         {% endfor %}
       </select>
     </label>
+  </form>
+
+  <div id="graph" style="height: {{ height }}px"></div>
+
+  <form class="filter-form" method="get" action="/groups">
+    <input type="hidden" name="submitted" value="1" />
+    <input type="hidden" name="hierarchical" value="{% if hierarchical %}true{% endif %}" />
+    <input type="hidden" name="with_members" value="{% if with_members %}true{% endif %}" />
+    <input type="hidden" name="with_subgroups" value="{% if with_subgroups %}true{% endif %}" />
+    <input type="hidden" name="limit_group" value="{{ limit_group }}" />
+    <input type="hidden" name="limit_user" value="{{ limit_user }}" />
     <label>
       {{ _("Solver") }}
       <select name="solver" onchange="this.form.submit()">
@@ -48,8 +70,6 @@
       <input type="number" name="height" value="{{ height }}" min="300" max="1200" step="100" onchange="this.form.submit()" style="width: 6rem" />
     </label>
   </form>
-
-  <div id="graph" style="height: {{ height }}px"></div>
 
   <div id="detail">
     {% if limit_user %}
