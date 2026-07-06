@@ -402,6 +402,45 @@ mark {
   }
 }
 
+/* Colored decision cards — same concept as .protocol-card-colored.
+   Each card gets a left border + light background tinted by its group's hue. */
+.decision-card-colored {
+  border-left: 4px solid hsl(var(--group-hue) 55% 50%);
+  background: hsl(var(--group-hue) 60% 98%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .decision-card-colored {
+    border-left-color: hsl(var(--group-hue) 45% 55%);
+    background: hsl(var(--group-hue) 30% 13%);
+  }
+}
+
+/* Group badge matching the protocol page's .protocol-group */
+.decision-group {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+}
+
+/* When the card is colored by group hue, match the group badge to it. */
+.decision-card-colored .decision-group {
+  background: hsl(var(--group-hue) 55% 88%);
+  color: hsl(var(--group-hue) 65% 25%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .decision-card-colored .decision-group {
+    background: hsl(var(--group-hue) 35% 25%);
+    color: hsl(var(--group-hue) 70% 82%);
+  }
+}
+
 .decision-card details {
   margin-bottom: 0;
 }

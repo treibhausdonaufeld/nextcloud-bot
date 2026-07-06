@@ -41,7 +41,7 @@
 
     <div class="decision-list">
       {% for card in cards %}
-        <article class="decision-card">
+        <article class="decision-card{% if card.group_hue is not none %} decision-card-colored{% endif %}" {% if card.group_hue is not none %}style="--group-hue: {{ card.group_hue }}"{% endif %}>
           <div class="decision-head">
             <div class="decision-title">
               <h4>
@@ -51,14 +51,19 @@
                   {{ card.decision.title or _("No Title") }}
                 {% endif %}
               </h4>
+              {% if card.decision.group_name %}
+                <span class="decision-group">{{ card.decision.group_name }}</span>
+              {% endif %}
               {% if card.has_objections %}
                 <span class="decision-badge decision-badge-objections">⚠️ {{ _("Objections") }}</span>
               {% endif %}
             </div>
+            {% if card.link %}
+              <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
+            {% endif %}
           </div>
           <p class="meta">
             {% if card.decision.date %}<span>📅 {{ card.decision.date }}</span>{% endif %}
-            {% if card.decision.group_name %}<span>👥 {{ card.decision.group_name }}</span>{% endif %}
             {% if card.decision.valid_until %}<span>⏰ {{ _("Valid until") }}: {{ card.decision.valid_until }}</span>{% endif %}
           </p>
           {% if card.has_more %}

@@ -4,6 +4,7 @@ XLSX import is intentionally CLI-only (`cli.py import-xlsx`); there is no web
 upload route.
 """
 
+import hashlib
 import logging
 from typing import Any
 
@@ -22,6 +23,19 @@ DEFAULT_ITEMS_PER_PAGE = 20
 PREVIEW_MAX_CHARS = 500
 
 _MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
+
+
+def group_hue(name: str) -> int | None:
+    """Map a group name to a stable hue (0-359) for card coloring.
+
+    Uses an MD5 digest of the name so the colour is deterministic across
+    processes (Python's built-in ``hash()`` is salted per interpreter run).
+    Returns ``None`` for empty names so ungrouped cards stay neutral.
+    """
+    if not name:
+        return None
+    digest = hashlib.md5(name.encode("utf-8")).digest()
+    return int.from_bytes(digest[:2], "big") % 360
 
 
 def render_markdown(text: str | None) -> Markup:
@@ -122,6 +136,7 @@ def logbook_context(
                 "has_more": has_more,
                 "has_objections": has_objections,
                 "link": (d_page.url if d_page else "") or decision.external_link,
+                "group_hue": group_hue(decision.group_name),
             }
         )
 
