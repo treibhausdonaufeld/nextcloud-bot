@@ -152,6 +152,12 @@ msgstr "Erwähnungen"
 msgid "Language"
 msgstr "Sprache"
 
+msgid "Bottom navigation"
+msgstr "Untere Navigation"
+
+msgid "Others"
+msgstr "Weitere"
+
 #, python-brace-format
 msgid "{common_name} Dashboard"
 msgstr "{common_name} Übersicht"
