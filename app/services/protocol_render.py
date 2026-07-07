@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import html
 import re
+from pathlib import PurePosixPath
 from urllib.parse import quote
 
 import markdown as markdown_lib
 import nh3
 from markupsafe import Markup
 
-from app.services.protocol_media import ATTACHMENT_LINK_RE, media_name
+from app.services.protocol_media import media_name
 
 # "md_in_html" (part of "extra") lets the callout <div> wrappers keep
 # markdown-processed content via the markdown="1" attribute.
@@ -25,12 +26,35 @@ _MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
 # Page content comes from the Nextcloud wiki and may contain raw HTML —
 # sanitize the rendered output so embedded scripts cannot execute in the
 # viewer. The nh3 defaults cover the markdown output; `class` is additionally
-# allowed for the callout divs and mention spans.
+# allowed for the callout divs and mention spans, `target`/`download` for
+# the attachment links (nh3 adds rel="noopener noreferrer" itself).
 _ALLOWED_ATTRIBUTES = {k: set(v) for k, v in nh3.ALLOWED_ATTRIBUTES.items()}
 for _tag in ("div", "span", "a", "img", "code", "pre"):
     _ALLOWED_ATTRIBUTES.setdefault(_tag, set()).add("class")
-_ALLOWED_ATTRIBUTES["a"] |= {"title"}
+_ALLOWED_ATTRIBUTES["a"] |= {"title", "target", "download"}
 _ALLOWED_ATTRIBUTES["img"] |= {"title"}
+
+# Extensions rendered inline as images; everything else becomes a download
+# link. SVG is safe here: the media route's CSP blocks scripts, and scripts
+# never run inside <img> anyway.
+_IMAGE_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".bmp",
+    ".avif",
+}
+
+# A full markdown link/image whose target points into an attachments folder:
+# optional leading "!", the link text, then the attachment path (optionally
+# "./"-prefixed, angle-bracketed or followed by a title).
+_ATTACHMENT_MD_RE = re.compile(
+    r"(!?)\[([^\]]*)\]"
+    r"\(\s*<?((?:\./)?\.attachments\.\d+/[^)\s<>]+)>?(?:\s+\"[^\"]*\")?\s*\)"
+)
 
 _CALLOUT_RE = re.compile(
     r"^:::[ \t]*(\w+)[ \t]*\r?\n(.*?)^:::[ \t]*$",
@@ -42,18 +66,36 @@ _BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
 def rewrite_media_urls(content: str, page_id: int) -> str:
-    """Point attachment links at the app's own media route.
+    """Turn attachment references into inline images or download links.
 
-    The stored media name keeps the attachment folder id
-    ("<folder-id>/<filename>"), so same-named files from different
-    attachment folders cannot collide.
+    Image attachments (by file extension) are shown inline and wrapped in a
+    link that opens the full-size file in a new tab — regardless of whether
+    the markdown used image or plain link syntax. All other attachments
+    (PDFs, documents, ...) become download links served by the app.
+
+    The served name keeps the attachment folder id ("<folder-id>/<filename>"),
+    so same-named files from different attachment folders cannot collide.
     """
 
     def replace(match: re.Match) -> str:
-        name = media_name(match.group(1))
-        return f"(/protocols/{page_id}/media/{quote(name, safe='/')})"
+        text = match.group(2).strip()
+        name = media_name(match.group(3))
+        url = f"/protocols/{page_id}/media/{quote(name, safe='/')}"
+        filename = name.split("/", 1)[-1]
 
-    return ATTACHMENT_LINK_RE.sub(replace, content)
+        if PurePosixPath(filename).suffix.lower() in _IMAGE_EXTENSIONS:
+            alt = html.escape(text or filename)
+            return (
+                f'<a href="{url}" target="_blank"><img src="{url}" alt="{alt}" /></a>'
+            )
+
+        label = html.escape(text or filename)
+        return (
+            f'<a class="attachment-download" href="{url}"'
+            f' download="{html.escape(filename)}">📎 {label}</a>'
+        )
+
+    return _ATTACHMENT_MD_RE.sub(replace, content)
 
 
 def _replace_callouts(content: str) -> str:

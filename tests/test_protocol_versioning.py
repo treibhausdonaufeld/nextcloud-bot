@@ -216,12 +216,34 @@ class TestMediaStorage:
 
 
 class TestRenderer:
-    def test_media_urls_are_rewritten_to_local_route(self):
+    def test_image_attachments_render_inline_with_fullsize_link(self):
         md = "![Foto](.attachments.123/G%C3%A4rten%20plan.png)"
         rewritten = rewrite_media_urls(md, 42)
         # the attachment folder id stays part of the served name so
         # same-named files from different folders cannot collide
-        assert rewritten == "![Foto](/protocols/42/media/123/G%C3%A4rten%20plan.png)"
+        url = "/protocols/42/media/123/G%C3%A4rten%20plan.png"
+        assert f'<img src="{url}" alt="Foto" />' in rewritten
+        assert f'<a href="{url}" target="_blank">' in rewritten
+
+    def test_image_links_also_render_inline(self):
+        # images referenced with plain link syntax still show inline
+        md = "[Foto](.attachments.123/plan.jpg)"
+        rewritten = rewrite_media_urls(md, 42)
+        assert '<img src="/protocols/42/media/123/plan.jpg"' in rewritten
+
+    def test_documents_become_download_links(self):
+        md = "![Einladung](.attachments.123/einladung.pdf)"
+        rewritten = rewrite_media_urls(md, 42)
+        assert (
+            '<a class="attachment-download"'
+            ' href="/protocols/42/media/123/einladung.pdf"'
+            ' download="einladung.pdf">📎 Einladung</a>' == rewritten
+        )
+
+    def test_download_label_falls_back_to_filename(self):
+        md = "[](.attachments.123/notes.docx)"
+        rewritten = rewrite_media_urls(md, 42)
+        assert "📎 notes.docx" in rewritten
 
     def test_render_full_protocol(self):
         content = (
