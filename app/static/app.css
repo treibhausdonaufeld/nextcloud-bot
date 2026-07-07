@@ -1062,6 +1062,15 @@ mark {
 }
 
 @media (max-width: 640px) {
+  /* Top-align the card: 100vh is the *large* viewport on phones (URL bar
+     hidden), while the fixed <dialog> only spans the *visible* viewport.
+     Pico's align-items: center would push the overflow — and the close
+     button in the top chrome — above the screen. Anchored to the top, any
+     excess height falls off the bottom instead. */
+  #protocol-dialog {
+    align-items: flex-start;
+  }
+
   /* near-fullscreen on phones: no wasted letterboxing, edge-to-edge card.
      <dialog> defaults to width: fit-content, so a percentage max-width
      can't clamp it once oversized content (e.g. a wide inline image) is
@@ -1069,8 +1078,12 @@ mark {
   #protocol-dialog article {
     width: 100vw;
     max-width: 100vw;
+    /* dvh tracks the actually visible viewport; vh is the fallback for
+       browsers without dvh support. */
     max-height: 100vh;
     height: 100vh;
+    max-height: 100dvh;
+    height: 100dvh;
     margin: 0;
     border-radius: 0;
   }
