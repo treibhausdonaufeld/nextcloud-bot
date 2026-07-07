@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-06 19:12+0200\n"
+"POT-Creation-Date: 2026-07-07 11:15+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,6 +18,9 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "No Title"
+msgstr ""
+
+msgid "unknown"
 msgstr ""
 
 msgid "Functions"
@@ -295,6 +298,12 @@ msgstr ""
 msgid "Distinct Protocols"
 msgstr ""
 
+msgid "Protocol"
+msgstr ""
+
+msgid "Back to protocols"
+msgstr ""
+
 msgid "Search protocols"
 msgstr ""
 
@@ -318,8 +327,14 @@ msgid "Hybrid"
 msgstr ""
 
 #, python-format
-msgid "~%(n)s attendee"
-msgid_plural "~%(n)s attendees"
+msgid "%(n)s attendee"
+msgid_plural "%(n)s attendees"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%(n)s decision"
+msgid_plural "%(n)s decisions"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -348,6 +363,15 @@ msgid "Wrote Protocol"
 msgstr ""
 
 msgid "Attended"
+msgstr ""
+
+msgid "decision"
+msgstr ""
+
+msgid "decisions"
+msgstr ""
+
+msgid "Untitled"
 msgstr ""
 
 #, python-format
@@ -389,9 +413,6 @@ msgstr ""
 msgid "Total pages mentioning user: {count}"
 msgstr ""
 
-msgid "Protocol"
-msgstr ""
-
 msgid "Group Page"
 msgstr ""
 
@@ -399,6 +420,41 @@ msgid "Page"
 msgstr ""
 
 msgid "No snippet available"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "latest"
+msgstr ""
+
+msgid "Permalink"
+msgstr ""
+
+msgid "Open in Nextcloud"
+msgstr ""
+
+msgid "You are viewing an older version of this protocol."
+msgstr ""
+
+msgid "Show latest"
+msgstr ""
+
+msgid "Version history"
+msgstr ""
+
+msgid "Changes compared to the previous version"
+msgstr ""
+
+msgid "Show raw markdown"
+msgstr ""
+
+msgid ""
+"To restore this version, copy the markdown and paste it into the page in "
+"Nextcloud."
+msgstr ""
+
+msgid "Copy markdown"
 msgstr ""
 
 msgid "Source Documents"

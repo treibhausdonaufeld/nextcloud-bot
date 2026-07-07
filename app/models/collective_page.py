@@ -154,15 +154,19 @@ class CollectivePage(BaseDBModel):
             remove_from_search_index("page", str(self.page_id))
 
     def before_remove(self) -> None:
-        """Cascade to protocol, decisions, mentions and the search index."""
+        """Cascade to protocol, decisions, versions, media, mentions, index."""
         from app.models.decision import Decision
         from app.models.mention import Mention
         from app.models.protocol import Protocol
+        from app.models.protocol_media import ProtocolMedia
+        from app.models.protocol_version import ProtocolVersion
 
         for protocol in Protocol.fetch(page_id=self.page_id):
             # Protocol.before_remove deletes its decisions
             protocol.remove()
         for decision in Decision.fetch(page_id=self.page_id):
             decision.remove()
+        ProtocolVersion.remove_for_page(self.page_id)
+        ProtocolMedia.remove_for_page(self.page_id)
         Mention.rebuild_for_page(self.page_id, "")
         remove_from_search_index("page", str(self.page_id))

@@ -659,6 +659,87 @@ mark {
   margin: 0.6rem 0 0;
 }
 
+.decision-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--pico-primary);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+
+.decision-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  max-width: 400px;
+  z-index: 1000;
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: var(--pico-color);
+  white-space: normal;
+}
+
+.decision-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--pico-muted-border-color);
+}
+
+.decision-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--pico-card-background-color);
+}
+
+.decision-tooltip h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--pico-primary);
+}
+
+.decision-tooltip ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+}
+
+.decision-tooltip li {
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.decision-tooltip li:last-child {
+  margin-bottom: 0;
+}
+
+.decision-tooltip .decision-title {
+  font-weight: 600;
+}
+
+.decision-tooltip .decision-text {
+  color: var(--pico-muted-color);
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+
 .protocol-roles {
   display: flex;
   flex-wrap: wrap;
@@ -809,14 +890,21 @@ mark {
   position: absolute;
   top: 0.75rem;
   right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
   font-size: 1.25rem;
   line-height: 1;
   text-decoration: none;
   color: var(--pico-muted-color);
+  border-radius: 50%;
 }
 
 .detail-close:hover {
   color: var(--pico-color);
+  background: var(--pico-card-sectioning-background-color, rgba(128, 128, 128, 0.12));
 }
 
 .detail-close:focus-visible {
@@ -833,4 +921,304 @@ mark {
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
   opacity: 1;
+}
+
+/* --- Protocol viewer popup ------------------------------------------------ */
+
+/* The close button lives in a non-scrolling chrome bar and the content in
+   its own scrollable area, so it stays reachable no matter how far the
+   protocol content (or the version history below it) is scrolled. */
+#protocol-dialog article {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 64rem;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+.protocol-view-chrome {
+  flex: 0 0 auto;
+  position: relative;
+  min-height: 2.75rem;
+}
+
+.protocol-view-scroll {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 var(--pico-block-spacing-horizontal, 1.5rem)
+    var(--pico-block-spacing-vertical, 1.5rem);
+}
+
+@media (max-width: 640px) {
+  /* near-fullscreen on phones: no wasted letterboxing, edge-to-edge card.
+     <dialog> defaults to width: fit-content, so a percentage max-width
+     can't clamp it once oversized content (e.g. a wide inline image) is
+     inside — use a viewport unit instead, which clamps regardless. */
+  #protocol-dialog article {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100vh;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+.protocol-page {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.protocol-page-back {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.protocol-view-head .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--pico-muted-color);
+  margin-bottom: 0.5rem;
+}
+
+.protocol-view-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.protocol-view-layout .protocol-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.protocol-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--pico-border-radius);
+}
+
+.protocol-content table {
+  display: block;
+  overflow-x: auto;
+}
+
+.version-panel {
+  flex: 0 0 15rem;
+  border-left: 1px solid var(--pico-muted-border-color);
+  padding-left: 1rem;
+  font-size: 0.875rem;
+}
+
+.version-panel h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.version-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.version-list li {
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 0.25rem;
+}
+
+.version-list li.version-selected {
+  background: var(--pico-card-sectioning-background-color, var(--pico-muted-border-color));
+  outline: 1px solid var(--pico-muted-border-color);
+}
+
+.version-list small {
+  display: block;
+  color: var(--pico-muted-color);
+  line-height: 1.4;
+}
+
+.version-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e0a800;
+  border-radius: var(--pico-border-radius);
+  background: rgba(255, 193, 7, 0.12);
+}
+
+.version-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.flash {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 1rem;
+}
+
+.flash-error {
+  border: 1px solid #c0392b;
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.flash-notice {
+  border: 1px solid #2fa24e;
+  background: rgba(47, 162, 78, 0.12);
+}
+
+.mention {
+  display: inline-block;
+  padding: 0 0.35rem;
+  border-radius: 0.75rem;
+  background: var(--pico-primary-focus, rgba(2, 154, 232, 0.2));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.callout {
+  border-left: 4px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 0.5rem 0.75rem;
+  margin: 0.75rem 0;
+  background: var(--pico-card-sectioning-background-color, rgba(128, 128, 128, 0.08));
+}
+
+.callout > :last-child {
+  margin-bottom: 0;
+}
+
+.callout-success {
+  border-left-color: #2fa24e;
+  background: rgba(47, 162, 78, 0.1);
+}
+
+.callout-warn,
+.callout-warning {
+  border-left-color: #e0a800;
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.callout-info {
+  border-left-color: #33c1ff;
+  background: rgba(51, 193, 255, 0.1);
+}
+
+.callout-error,
+.callout-danger {
+  border-left-color: #c0392b;
+  background: rgba(192, 57, 43, 0.1);
+}
+
+.version-diff,
+.raw-markdown {
+  margin-top: 1.5rem;
+}
+
+.raw-markdown .copy-markdown {
+  margin: 0 0 0.5rem;
+  padding: 0.25rem 0.75rem;
+  width: auto;
+  font-size: 0.875rem;
+}
+
+.raw-markdown-text {
+  max-height: 24rem;
+  overflow: auto;
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.version-diff pre.diff {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.diff span {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diff-add {
+  background: rgba(47, 162, 78, 0.18);
+}
+
+.diff-del {
+  background: rgba(192, 57, 43, 0.18);
+}
+
+.diff-hunk {
+  color: var(--pico-muted-color);
+  font-weight: 600;
+}
+
+.diff-file {
+  color: var(--pico-muted-color);
+}
+
+@media (max-width: 768px) {
+  .protocol-view-layout {
+    flex-direction: column;
+    /* In column layout the cross-axis is width; the row layout's
+       align-items: flex-start would otherwise let children shrink-wrap to
+       their content, so a wide inline image blows out the viewport. Stretch
+       makes .protocol-content fill the available width like .version-panel
+       already does via its explicit width: 100%. */
+    align-items: stretch;
+  }
+
+  .version-panel {
+    border-left: none;
+    border-top: 1px solid var(--pico-muted-border-color);
+    padding-left: 0;
+    padding-top: 0.75rem;
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  /* protocol markdown can nest headings deeply; pico's default sizes are
+     tuned for article prose and dominate a narrow screen otherwise */
+  .protocol-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .protocol-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .protocol-content h3 {
+    font-size: 1.1rem;
+  }
+}
+
+.attachment-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-card-sectioning-background-color, rgba(128, 128, 128, 0.08));
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.attachment-download:hover {
+  border-color: var(--pico-primary);
 }

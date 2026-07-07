@@ -40,6 +40,12 @@ def parse_protocols(page: CollectivePage) -> None:
             page.subtype = PageSubtype.PROTOCOL
             page.store()
 
+        # Backfill version history and media for pages stored before the
+        # versioning feature existed (both calls are idempotent).
+        from app.services.collectives_loader import snapshot_protocol_page
+
+        snapshot_protocol_page(page)
+
         protocol = Protocol.fetch_one(page_id=page.page_id) or Protocol(
             page_id=page.page_id, date=""
         )

@@ -1,0 +1,9 @@
+<article class="protocol-view">
+  <div class="protocol-view-chrome">
+    <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
+       onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
+  </div>
+  <div class="protocol-view-scroll">
+    {% include "partials/protocol_view_body.html" %}
+  </div>
+</article>

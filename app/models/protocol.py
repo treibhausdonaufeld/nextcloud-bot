@@ -402,8 +402,12 @@ class Protocol(BaseDBModel):
                 )
             )
 
-        user = NCUserList().get_user_by_uid(username or "")
+        user_list = NCUserList()
+        user = user_list.get_user_by_uid(username or "")
         displayname = user.displayname if user else username
+        # Rocket.Chat knows users by their authentik username, not the
+        # Nextcloud uid — address the DM accordingly.
+        chat_handle = user_list.chat_username(username) if username else username
 
         if corrections:
             message = _(
@@ -430,10 +434,24 @@ class Protocol(BaseDBModel):
         message += "\n---\n\n"
         message += _("Date: ") + self.date + "\n"
         if page and page.last_user_id:
-            message += _("Last update by: ") + page.last_user_id + "\n"
-        message += _("Moderated by: ") + ", ".join(self.moderated_by) + "\n"
-        message += _("Protocol by: ") + ", ".join(self.protocol_by) + "\n"
-        message += _("Participants: ") + ", ".join(self.participants) + "\n"
+            message += (
+                _("Last update by: ") + user_list.display_name(page.last_user_id) + "\n"
+            )
+        message += (
+            _("Moderated by: ")
+            + ", ".join(user_list.display_names(self.moderated_by))
+            + "\n"
+        )
+        message += (
+            _("Protocol by: ")
+            + ", ".join(user_list.display_names(self.protocol_by))
+            + "\n"
+        )
+        message += (
+            _("Participants: ")
+            + ", ".join(user_list.display_names(self.participants))
+            + "\n"
+        )
         if decisions:
             message += _("Decisions made:\n")
             for decision in decisions:
@@ -448,13 +466,13 @@ class Protocol(BaseDBModel):
                     )
                 message += "\n"
 
-        send_message(text=message, channel=f"@{username}")
+        send_message(text=message, channel=f"@{chat_handle}")
 
         if not corrections:
             text = _("Please manually a post in the channel #{protocols}").format(
                 protocols=bot_config.organisation.protocol_channel_name
             )
-            send_message(text=text, channel=f"@{username}")
+            send_message(text=text, channel=f"@{chat_handle}")
 
     def update_from_page(self) -> None:
         """

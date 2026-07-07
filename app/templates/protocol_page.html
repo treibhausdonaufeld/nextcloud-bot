@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title if page else _("Protocol") }}{% endblock %}
+{% block content %}
+  <a href="/protocols" class="protocol-page-back">← {{ _("Back to protocols") }}</a>
+  <div class="protocol-page">
+    <div id="protocol-detail">
+      {% include "partials/protocol_view_body.html" %}
+    </div>
+  </div>
+{% endblock %}

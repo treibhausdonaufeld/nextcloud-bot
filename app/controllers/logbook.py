@@ -138,6 +138,10 @@ def logbook_context(
                 "objections_html": render_markdown(decision.objections),
                 "has_more": has_more,
                 "has_objections": has_objections,
+                # Protocols known to the bot database open in the in-app
+                # viewer; only unmatched decisions (e.g. XLSX imports) fall
+                # back to their original external link.
+                "page_id": d_page.page_id if d_page else None,
                 "link": (d_page.url if d_page else "") or decision.external_link,
                 "group_hue": group_hue(decision.group_name),
             }

@@ -51,6 +51,9 @@ class NCUser(BaseDBModel):
     groups: List[str] = edgy.JSONField(default=list)
     language: str | None = edgy.CharField(max_length=16, null=True)
     last_login: int | None = edgy.BigIntegerField(null=True)
+    # authentik username (e.g. "fabian.helm"); the Nextcloud username above
+    # is the authentik uuid, but Rocket.Chat knows users by this name
+    authentik_username: str = edgy.CharField(max_length=255, default="")
 
     natural_key_fields = ("username",)
 
@@ -69,6 +72,11 @@ class NCUser(BaseDBModel):
     def mention(self) -> str:
         return f"mention://user/{self.username}"
 
+    @property
+    def chat_username(self) -> str:
+        """Rocket.Chat handle: the authentik username when known."""
+        return self.authentik_username or self.username
+
     def apply_ocs(self, ocs: OCSUser) -> None:
         self.email = ocs.email or ""
         self.displayname = ocs.displayname or ""
@@ -82,6 +90,7 @@ class NCUserList:
     """Load list of Nextcloud users"""
 
     USER_LIST_URL = "/ocs/v2.php/cloud/users/details"
+    AUTHENTIK_USERS_URL = "/api/v3/core/users/"
 
     # Class-level cache shared across all instances
     _cached_users: Dict[str, NCUser] | None = None
@@ -106,6 +115,24 @@ class NCUserList:
     def get_user_by_uid(self, uid: str) -> NCUser | None:
         """Get a user by their uid."""
         return self.users.get(uid, None)
+
+    def display_name(self, username: str) -> str:
+        """Full display name of a user, falling back to the raw username."""
+        user = self.users.get(username)
+        return (user.displayname if user else "") or username
+
+    def display_names(self, usernames: List[str]) -> List[str]:
+        """Full display names for a list of usernames (order preserved)."""
+        return [self.display_name(username) for username in usernames]
+
+    def chat_username(self, username: str) -> str:
+        """Rocket.Chat handle for a Nextcloud username (authentik uuid).
+
+        Falls back to the given username when the user or their authentik
+        username is unknown.
+        """
+        user = self.users.get(username)
+        return user.chat_username if user else username
 
     def update_from_nextcloud(self):
         response = requests.get(
@@ -149,6 +176,63 @@ class NCUserList:
 
         # Refresh cache after updating from Nextcloud
         self.load_users()
+
+        # Enrich with authentik usernames (used as the Rocket.Chat handle)
+        self.update_from_authentik()
+
+    def update_from_authentik(self) -> None:
+        """Store each user's authentik username.
+
+        The Nextcloud username is the authentik uuid; chat DMs must be
+        addressed to the authentik username (e.g. "fabian.helm") instead.
+        Fetches the authentik user list in bulk and updates changed rows.
+        """
+        if not settings.auth.authentik_base_url or not settings.auth.authentik_token:
+            logger.debug("authentik not configured, skipping username sync")
+            return
+
+        base = str(settings.auth.authentik_base_url).rstrip("/")
+        headers = {
+            "Authorization": f"Bearer {settings.auth.authentik_token}",
+            "Accept": "application/json",
+        }
+
+        uuid_to_username: Dict[str, str] = {}
+        page = 1
+        while True:
+            try:
+                response = requests.get(
+                    base + self.AUTHENTIK_USERS_URL,
+                    headers=headers,
+                    params={"page": page, "page_size": 500},
+                    timeout=90,
+                )
+                response.raise_for_status()
+            except Exception as e:
+                logger.warning("Failed to fetch authentik users (page %d): %s", page, e)
+                return
+
+            data = response.json()
+            for result in data.get("results", []):
+                uuid = result.get("uuid")
+                username = result.get("username")
+                if uuid and username:
+                    uuid_to_username[uuid] = username
+
+            next_page = data.get("pagination", {}).get("next") or 0
+            if next_page <= page:
+                break
+            page = next_page
+
+        updated = 0
+        for user in self.users.values():
+            authentik_username = uuid_to_username.get(user.username, "")
+            if authentik_username and authentik_username != user.authentik_username:
+                user.authentik_username = authentik_username
+                user.store()
+                updated += 1
+        if updated:
+            logger.info("Updated authentik usernames for %d users", updated)
 
     def mails_for_groups(self, group_names: List[str]) -> Set[str]:
         """
