@@ -45,7 +45,12 @@
           <div class="decision-head">
             <div class="decision-title">
               <h4>
-                {% if card.link %}
+                {% if card.page_id %}
+                  <a href="#protocol-detail"
+                     hx-get="/protocols/{{ card.page_id }}/view"
+                     hx-target="#protocol-detail"
+                     aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">{{ card.display_title }}</a>
+                {% elif card.link %}
                   <a href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">{{ card.display_title }}</a>
                 {% else %}
                   {{ card.display_title }}
@@ -58,7 +63,12 @@
                 <span class="decision-badge decision-badge-objections">⚠️ {{ _("Objections") }}</span>
               {% endif %}
             </div>
-            {% if card.link %}
+            {% if card.page_id %}
+              <a class="decision-open" href="#protocol-detail"
+                 hx-get="/protocols/{{ card.page_id }}/view"
+                 hx-target="#protocol-detail"
+                 aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">🗗</a>
+            {% elif card.link %}
               <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
             {% endif %}
           </div>
@@ -91,6 +101,8 @@
         </article>
       {% endfor %}
     </div>
+
+    {% include "partials/protocol_dialog.html" %}
 
     {% if total_pages > 1 %}
       {% set base_query = "group=" ~ (selected_group | urlencode) ~ "&q=" ~ (q | urlencode) ~ "&search_type=" ~ search_type ~ "&per_page=" ~ per_page %}

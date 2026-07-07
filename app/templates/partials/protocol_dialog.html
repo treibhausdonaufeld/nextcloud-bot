@@ -1,0 +1,25 @@
+<dialog id="protocol-dialog">
+  <div id="protocol-detail"></div>
+</dialog>
+
+<script>
+  (function () {
+    const dialog = document.getElementById('protocol-dialog');
+    // Fall back to inline detail rendering where <dialog> is unsupported:
+    // such browsers render the dialog's contents inline, so we simply
+    // skip the modal wiring instead of throwing on showModal().
+    const supportsModal = dialog && typeof dialog.showModal === 'function';
+    // Open the overlay once the protocol partial has been swapped in.
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+      if (e.target.id === 'protocol-detail' && supportsModal && !dialog.open) {
+        dialog.showModal();
+      }
+    });
+    // Close when clicking the backdrop (outside the article card).
+    if (supportsModal) {
+      dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+      });
+    }
+  })();
+</script>
