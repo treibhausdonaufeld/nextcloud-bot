@@ -13,7 +13,7 @@ from app.models.decision import Decision
 from app.models.group import Group
 from app.models.user import NCUserList
 from app.services.config import bot_config
-from app.services.rocketchat import send_message
+from app.services.notify import send_message
 from app.settings import _, user_regex
 from app.textnorm import strip_markdown
 

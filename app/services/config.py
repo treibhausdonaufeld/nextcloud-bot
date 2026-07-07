@@ -192,6 +192,32 @@ class MailerConfig(BaseModel):
         return [email.lower() for email in v]
 
 
+class NotifierConfig(BaseModel):
+    """Configuration for generic notifications sent via Apprise.
+
+    Logical channel names (the same names used elsewhere, e.g. deck/calendar
+    channel mappings) are mapped to one or more Apprise service URLs. When a
+    channel has no Apprise targets configured, notifications fall back to the
+    legacy Rocket.Chat incoming webhook (``settings.rocketchat``).
+    """
+
+    enabled: bool = True
+
+    # Title/source name shown by services that support it (defaults to the
+    # bot name from settings when left empty).
+    title: str = ""
+
+    # Override the target channel for all notifications (debugging aid,
+    # mirrors settings.rocketchat.channel_overwrite).
+    channel_overwrite: str = ""
+
+    # Apprise URLs applied to every notification, regardless of channel.
+    default_urls: List[str] = Field(default_factory=list)
+
+    # Map a logical channel name to a list of Apprise service URLs.
+    channels: Dict[str, List[str]] = Field(default_factory=dict)
+
+
 class BotConfig(BaseModel):
     # time to sleep between runs in minutes
     sleep_minutes: int = 30
@@ -205,6 +231,7 @@ class BotConfig(BaseModel):
     deck_reminder: DeckReminderConfig = DeckReminderConfig()
     calendar_notifier: CalendarNotifierConfig = CalendarNotifierConfig()
     mailer: MailerConfig = MailerConfig()
+    notifier: NotifierConfig = NotifierConfig()
 
     data: Dict = {}
 

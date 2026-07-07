@@ -7,7 +7,7 @@ import requests
 
 from app.models.kv import get_state, set_state
 from app.services.config import DeckChannelMappingItem, DeckReminderConfig
-from app.services.rocketchat import send_message
+from app.services.notify import send_message
 from app.settings import NextcloudSettings, settings
 
 logger = logging.getLogger(__name__)
