@@ -61,7 +61,7 @@ _CALLOUT_RE = re.compile(
     flags=re.DOTALL | re.MULTILINE,
 )
 
-_MENTION_LINK_RE = re.compile(r"\[([^\]]*)\]\(mention://user/([A-Za-z0-9_.-]+)\)")
+_MENTION_LINK_RE = re.compile(r"@?\[([^\]]*)\]\(mention://user/([A-Za-z0-9_.-]+)\)")
 _BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
@@ -120,6 +120,7 @@ def _replace_mentions(content: str, user_names: dict[str, str] | None = None) ->
     def bare_replace(match: re.Match) -> str:
         username = match.group(1)
         text = names.get(username, username)
+        text = text.lstrip("@").strip() or username
         return f'<span class="mention">@{html.escape(text)}</span>'
 
     content = _MENTION_LINK_RE.sub(link_replace, content)
