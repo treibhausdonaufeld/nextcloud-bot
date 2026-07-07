@@ -402,7 +402,8 @@ class Protocol(BaseDBModel):
                 )
             )
 
-        user = NCUserList().get_user_by_uid(username or "")
+        user_list = NCUserList()
+        user = user_list.get_user_by_uid(username or "")
         displayname = user.displayname if user else username
 
         if corrections:
@@ -430,10 +431,24 @@ class Protocol(BaseDBModel):
         message += "\n---\n\n"
         message += _("Date: ") + self.date + "\n"
         if page and page.last_user_id:
-            message += _("Last update by: ") + page.last_user_id + "\n"
-        message += _("Moderated by: ") + ", ".join(self.moderated_by) + "\n"
-        message += _("Protocol by: ") + ", ".join(self.protocol_by) + "\n"
-        message += _("Participants: ") + ", ".join(self.participants) + "\n"
+            message += (
+                _("Last update by: ") + user_list.display_name(page.last_user_id) + "\n"
+            )
+        message += (
+            _("Moderated by: ")
+            + ", ".join(user_list.display_names(self.moderated_by))
+            + "\n"
+        )
+        message += (
+            _("Protocol by: ")
+            + ", ".join(user_list.display_names(self.protocol_by))
+            + "\n"
+        )
+        message += (
+            _("Participants: ")
+            + ", ".join(user_list.display_names(self.participants))
+            + "\n"
+        )
         if decisions:
             message += _("Decisions made:\n")
             for decision in decisions:

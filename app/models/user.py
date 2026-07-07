@@ -107,6 +107,15 @@ class NCUserList:
         """Get a user by their uid."""
         return self.users.get(uid, None)
 
+    def display_name(self, username: str) -> str:
+        """Full display name of a user, falling back to the raw username."""
+        user = self.users.get(username)
+        return (user.displayname if user else "") or username
+
+    def display_names(self, usernames: List[str]) -> List[str]:
+        """Full display names for a list of usernames (order preserved)."""
+        return [self.display_name(username) for username in usernames]
+
     def update_from_nextcloud(self):
         response = requests.get(
             f"{settings.nextcloud.base_url}{self.USER_LIST_URL}",
