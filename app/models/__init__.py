@@ -4,6 +4,8 @@ from app.models.group import Group
 from app.models.kv import KVState, get_state, set_state
 from app.models.mention import Mention
 from app.models.protocol import Protocol
+from app.models.protocol_media import ProtocolMedia
+from app.models.protocol_version import ProtocolVersion
 from app.models.user import NCUser, NCUserList, OCSUser
 
 __all__ = [
@@ -17,6 +19,8 @@ __all__ = [
     "set_state",
     "Mention",
     "Protocol",
+    "ProtocolMedia",
+    "ProtocolVersion",
     "NCUser",
     "NCUserList",
     "OCSUser",

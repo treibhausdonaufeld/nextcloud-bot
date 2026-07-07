@@ -38,13 +38,16 @@
               <div class="protocol-head">
                 <div class="protocol-title">
                   <h4>
-                    {% if p.url %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.title }}</a>{% else %}{{ p.title }}{% endif %}
+                    <a href="#protocol-detail"
+                       hx-get="/protocols/{{ p.page_id }}/view"
+                       hx-target="#protocol-detail">{{ p.title }}</a>
                   </h4>
                   {% if p.group %}<span class="protocol-group">{{ p.group }}</span>{% endif %}
                 </div>
-                {% if p.url %}
-                  <a class="decision-open" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
-                {% endif %}
+                <a class="decision-open" href="#protocol-detail"
+                   hx-get="/protocols/{{ p.page_id }}/view"
+                   hx-target="#protocol-detail"
+                   aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">🗗</a>
               </div>
               <p class="meta">
                 <span>📅 {{ p.date }}</span>
@@ -89,6 +92,32 @@
       </details>
     {% endfor %}
   {% endif %}
+
+  <dialog id="protocol-dialog">
+    <div id="protocol-detail"></div>
+  </dialog>
+
+  <script>
+    (function () {
+      const dialog = document.getElementById('protocol-dialog');
+      // Fall back to inline detail rendering where <dialog> is unsupported:
+      // such browsers render the dialog's contents inline, so we simply
+      // skip the modal wiring instead of throwing on showModal().
+      const supportsModal = dialog && typeof dialog.showModal === 'function';
+      // Open the overlay once the protocol partial has been swapped in.
+      document.body.addEventListener('htmx:afterSwap', function (e) {
+        if (e.target.id === 'protocol-detail' && supportsModal && !dialog.open) {
+          dialog.showModal();
+        }
+      });
+      // Close when clicking the backdrop (outside the article card).
+      if (supportsModal) {
+        dialog.addEventListener('click', function (e) {
+          if (e.target === dialog) dialog.close();
+        });
+      }
+    })();
+  </script>
 
   {% if selected_group and member_data %}
     <h3>{{ _("Member Statistics for") }} {{ selected_group }}</h3>

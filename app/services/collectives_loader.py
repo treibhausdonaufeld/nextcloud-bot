@@ -12,7 +12,8 @@ from typing import List, Set
 
 import requests
 
-from app.models.collective_page import CollectivePage, OCSCollectivePage
+from app.models.collective_page import CollectivePage, OCSCollectivePage, PageSubtype
+from app.models.protocol_version import ProtocolVersion
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -143,6 +144,66 @@ def fetch_page_markdown(page: OCSCollectivePage) -> str:
     return resp.text
 
 
+def is_protocol_page_safe(page: CollectivePage) -> bool:
+    """Check whether a page is a protocol page without requiring the config.
+
+    `Protocol.is_protocol_page` needs the bot config from Nextcloud; when it
+    is unavailable, fall back to the subtype stored by the parser.
+    """
+    if page.subtype == PageSubtype.PROTOCOL:
+        return True
+    try:
+        from app.models.protocol import Protocol
+
+        return Protocol.is_protocol_page(page)
+    except Exception:
+        return False
+
+
+def snapshot_protocol_page(page: CollectivePage) -> None:
+    """Record a protocol version and copy its embedded media.
+
+    Both operations are idempotent; failures must never break the sync.
+    """
+    from app.services.protocol_media import sync_page_media
+
+    try:
+        ProtocolVersion.record(page)
+        sync_page_media(page)
+    except Exception:
+        logger.exception("Failed to snapshot protocol page %s", page.page_id)
+
+
+def save_page_markdown(page: CollectivePage, content: str) -> None:
+    """Write markdown content of a collectives page back via WebDAV.
+
+    Used to restore an earlier protocol version: Nextcloud stays the source
+    of truth, so a revert must be written there (a local-only change would be
+    overwritten by the next sync).
+    """
+    base = settings.nextcloud.base_url
+    if not base:
+        raise RuntimeError("settings.nextcloud.base_url is not configured")
+
+    base_str = str(base).rstrip("/")
+    filepath = "/".join(
+        (page.collective_path or "", page.file_path or "", page.file_name or "")
+    )
+    url = base_str + PAGE_CONTENT_URL.format(
+        username=settings.nextcloud.admin_username, filepath=filepath
+    )
+
+    logger.info("Writing markdown content for page %s to %s", page.page_id, url)
+    resp = requests.put(
+        url,
+        auth=_build_auth(),
+        data=content.encode("utf-8"),
+        headers={"Content-Type": "text/markdown"},
+        timeout=90,
+    )
+    resp.raise_for_status()
+
+
 def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     """Upsert the given pages into the database. Returns the stored pages."""
     stored = []
@@ -160,6 +221,8 @@ def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
             doc.apply_ocs(page)
             doc.content = fetch_page_markdown(page)
             doc.store()
+            if is_protocol_page_safe(doc):
+                snapshot_protocol_page(doc)
             stored.append(doc)
             logger.info("Stored collectives page: %s, %s", doc.title, doc.page_id)
         except Exception as e:

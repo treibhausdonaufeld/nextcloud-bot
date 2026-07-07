@@ -70,6 +70,10 @@ Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page
 
 `app/services/collectives_loader.py` fetches page metadata via the Nextcloud OCS Collectives API and raw markdown via WebDAV (admin Basic auth), upserting `CollectivePage` rows. `collectives_parser.py` classifies pages by title/path into group/protocol subtypes; the models' `update_from_page()` methods do the actual keyword-driven markdown parsing. Protocols extract decisions from `::: success ... :::` blocks into `Decision` rows (deleting a protocol/page cascades to its decisions). User mentions everywhere use `user_regex` from `app/settings.py` (`mention://user/<name>`).
 
+### Protocol versioning & media
+
+Protocol pages are versioned self-contained in the bot database: on every content change during sync, `ProtocolVersion.record()` stores a full markdown snapshot, a unified diff to the previous version and the editing user (Nextcloud `lastUserId`); `app/services/protocol_media.py` copies referenced `.attachments.<id>/` files into `ProtocolMedia` blobs. Both are hooked into `store_pages` and (for backfill) `parse_protocols` and are idempotent. The protocols page opens an in-app popup (`app/controllers/protocol_view.py`, `partials/protocol_view.html`) that renders the markdown (`app/services/protocol_render.py`: `::: x :::` callouts, `mention://` links, media links rewritten to `/protocols/{page_id}/media/{name}`), lists the version history and can restore an older version — the restore writes the markdown back to Nextcloud via WebDAV (`save_page_markdown`), because a local-only revert would be overwritten by the next sync.
+
 ### i18n
 
 User-facing strings in Python must be wrapped with `_()` (or `_n()`) from `app.settings`; templates get `_`/`_n` passed in explicitly via `app/i18n.py::template_context` (the request language comes from the `lang` cookie or Accept-Language). The gettext catalog is stored in a ContextVar, so per-request switching is thread-safe; `locale.setlocale` is process-global and only set once at startup. After adding/changing strings run `make update_po`, translate in `locales/de/LC_MESSAGES/messages.po`, then `make compile`.

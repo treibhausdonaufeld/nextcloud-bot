@@ -19,6 +19,11 @@ from app.controllers.mentions import (
     mentions_graph,
     mentions_page,
 )
+from app.controllers.protocol_view import (
+    protocol_media,
+    protocol_restore,
+    protocol_view,
+)
 from app.controllers.protocols import protocols_page
 from app.controllers.timeline import functions_page, milestones_page
 from app.db import init_db
@@ -87,6 +92,9 @@ app = Ravyn(
         Gateway(handler=functions_page),
         Gateway(handler=milestones_page),
         Gateway(handler=protocols_page),
+        Gateway(handler=protocol_view),
+        Gateway(handler=protocol_restore),
+        Gateway(handler=protocol_media),
         Gateway(handler=logbook_page),
         Gateway(handler=mentions_page),
         Gateway(handler=mentions_graph),

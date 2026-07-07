@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-06 19:12+0200\n"
+"POT-Creation-Date: 2026-07-07 03:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,6 +18,23 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "No Title"
+msgstr ""
+
+msgid "unknown"
+msgstr ""
+
+msgid "Version not found."
+msgstr ""
+
+msgid "This is already the latest version."
+msgstr ""
+
+#, python-brace-format
+msgid "Could not write the restored version to Nextcloud: {error}"
+msgstr ""
+
+#, python-brace-format
+msgid "Version {version} was restored."
 msgstr ""
 
 msgid "Functions"
@@ -399,6 +416,40 @@ msgid "Page"
 msgstr ""
 
 msgid "No snippet available"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "latest"
+msgstr ""
+
+msgid "Open in Nextcloud"
+msgstr ""
+
+msgid "You are viewing an older version of this protocol."
+msgstr ""
+
+msgid "Show latest"
+msgstr ""
+
+#, python-format
+msgid ""
+"Restore version %(version)s? The protocol in Nextcloud will be "
+"overwritten with this version."
+msgstr ""
+
+msgid "Restore this version"
+msgstr ""
+
+msgid "Version history"
+msgstr ""
+
+#, python-format
+msgid "restored from version %(version)s"
+msgstr ""
+
+msgid "Changes compared to the previous version"
 msgstr ""
 
 msgid "Source Documents"

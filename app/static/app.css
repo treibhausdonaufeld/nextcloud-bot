@@ -834,3 +834,212 @@ mark {
 .htmx-request.htmx-indicator {
   opacity: 1;
 }
+
+/* --- Protocol viewer popup ------------------------------------------------ */
+
+#protocol-dialog article {
+  position: relative;
+  width: 100%;
+  max-width: 64rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.protocol-view-head .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--pico-muted-color);
+  margin-bottom: 0.5rem;
+}
+
+.protocol-view-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.protocol-view-layout .protocol-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.protocol-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--pico-border-radius);
+}
+
+.protocol-content table {
+  display: block;
+  overflow-x: auto;
+}
+
+.version-panel {
+  flex: 0 0 15rem;
+  border-left: 1px solid var(--pico-muted-border-color);
+  padding-left: 1rem;
+  font-size: 0.875rem;
+}
+
+.version-panel h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.version-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.version-list li {
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 0.25rem;
+}
+
+.version-list li.version-selected {
+  background: var(--pico-card-sectioning-background-color, var(--pico-muted-border-color));
+  outline: 1px solid var(--pico-muted-border-color);
+}
+
+.version-list small {
+  display: block;
+  color: var(--pico-muted-color);
+  line-height: 1.4;
+}
+
+.version-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e0a800;
+  border-radius: var(--pico-border-radius);
+  background: rgba(255, 193, 7, 0.12);
+}
+
+.version-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.version-banner .restore-button {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  width: auto;
+  font-size: 0.875rem;
+}
+
+.flash {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 1rem;
+}
+
+.flash-error {
+  border: 1px solid #c0392b;
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.flash-notice {
+  border: 1px solid #2fa24e;
+  background: rgba(47, 162, 78, 0.12);
+}
+
+.mention {
+  display: inline-block;
+  padding: 0 0.35rem;
+  border-radius: 0.75rem;
+  background: var(--pico-primary-focus, rgba(2, 154, 232, 0.2));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.callout {
+  border-left: 4px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 0.5rem 0.75rem;
+  margin: 0.75rem 0;
+  background: var(--pico-card-sectioning-background-color, rgba(128, 128, 128, 0.08));
+}
+
+.callout > :last-child {
+  margin-bottom: 0;
+}
+
+.callout-success {
+  border-left-color: #2fa24e;
+  background: rgba(47, 162, 78, 0.1);
+}
+
+.callout-warn,
+.callout-warning {
+  border-left-color: #e0a800;
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.callout-info {
+  border-left-color: #33c1ff;
+  background: rgba(51, 193, 255, 0.1);
+}
+
+.callout-error,
+.callout-danger {
+  border-left-color: #c0392b;
+  background: rgba(192, 57, 43, 0.1);
+}
+
+.version-diff {
+  margin-top: 1.5rem;
+}
+
+.version-diff pre.diff {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.diff span {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diff-add {
+  background: rgba(47, 162, 78, 0.18);
+}
+
+.diff-del {
+  background: rgba(192, 57, 43, 0.18);
+}
+
+.diff-hunk {
+  color: var(--pico-muted-color);
+  font-weight: 600;
+}
+
+.diff-file {
+  color: var(--pico-muted-color);
+}
+
+@media (max-width: 768px) {
+  .protocol-view-layout {
+    flex-direction: column;
+  }
+
+  .version-panel {
+    border-left: none;
+    border-top: 1px solid var(--pico-muted-border-color);
+    padding-left: 0;
+    padding-top: 0.75rem;
+    flex-basis: auto;
+    width: 100%;
+  }
+}

@@ -143,6 +143,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
                 "location_type": protocol.location_type,
                 "attendee_count": protocol.attendee_count,
                 "title": (page.title if page else "") or protocol.date,
+                "page_id": protocol.page_id,
                 "url": (page.url if page else "") or "",
                 "group": card_group,
                 "hue": group_hue(card_group),
