@@ -405,6 +405,9 @@ class Protocol(BaseDBModel):
         user_list = NCUserList()
         user = user_list.get_user_by_uid(username or "")
         displayname = user.displayname if user else username
+        # Rocket.Chat knows users by their authentik username, not the
+        # Nextcloud uid — address the DM accordingly.
+        chat_handle = user_list.chat_username(username) if username else username
 
         if corrections:
             message = _(
@@ -463,13 +466,13 @@ class Protocol(BaseDBModel):
                     )
                 message += "\n"
 
-        send_message(text=message, channel=f"@{username}")
+        send_message(text=message, channel=f"@{chat_handle}")
 
         if not corrections:
             text = _("Please manually a post in the channel #{protocols}").format(
                 protocols=bot_config.organisation.protocol_channel_name
             )
-            send_message(text=text, channel=f"@{username}")
+            send_message(text=text, channel=f"@{chat_handle}")
 
     def update_from_page(self) -> None:
         """

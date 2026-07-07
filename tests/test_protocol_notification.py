@@ -16,8 +16,13 @@ def mock_bot_config():
     return config
 
 
-def _user(username: str, displayname: str) -> NCUser:
-    return NCUser(username=username, displayname=displayname, enabled=True)
+def _user(username: str, displayname: str, authentik_username: str = "") -> NCUser:
+    return NCUser(
+        username=username,
+        displayname=displayname,
+        enabled=True,
+        authentik_username=authentik_username,
+    )
 
 
 class TestUserDisplayNames:
@@ -44,11 +49,59 @@ class TestUserDisplayNames:
         ]
 
 
+class TestChatUsernames:
+    def test_chat_username_prefers_authentik_username(self):
+        NCUserList._cached_users = {
+            "uid-1": _user("uid-1", "Fabian Helm", authentik_username="fabian.helm"),
+            "uid-2": _user("uid-2", "Anna Musterfrau"),
+        }
+        user_list = NCUserList()
+        assert user_list.chat_username("uid-1") == "fabian.helm"
+        # no authentik username known -> fall back to the Nextcloud uid
+        assert user_list.chat_username("uid-2") == "uid-2"
+        assert user_list.chat_username("uid-unknown") == "uid-unknown"
+
+    def test_update_from_authentik_stores_usernames(self):
+        NCUserList._cached_users = {
+            "uid-1": _user("uid-1", "Fabian Helm"),
+            "uid-2": _user("uid-2", "Anna Musterfrau"),
+        }
+        user_list = NCUserList()
+
+        response = Mock()
+        response.json.return_value = {
+            "pagination": {"next": 0},
+            "results": [
+                {"uuid": "uid-1", "username": "fabian.helm"},
+                {"uuid": "uid-other", "username": "someone.else"},
+            ],
+        }
+
+        from app.settings import settings
+
+        stored = []
+        with (
+            patch("app.models.user.requests.get", return_value=response),
+            patch.object(NCUser, "store", lambda self: stored.append(self.username)),
+            patch.object(
+                settings.auth, "authentik_base_url", "https://auth.example.com"
+            ),
+            patch.object(settings.auth, "authentik_token", "token"),
+        ):
+            user_list.update_from_authentik()
+
+        assert user_list.users["uid-1"].authentik_username == "fabian.helm"
+        assert user_list.users["uid-2"].authentik_username == ""
+        assert stored == ["uid-1"]
+
+
 class TestNotificationUsesDisplayNames:
     def test_notify_updated_sends_names_instead_of_ids(self, mock_bot_config):
         NCUserList._cached_users = {
             "uid-mod": _user("uid-mod", "Anna Musterfrau"),
-            "uid-prot": _user("uid-prot", "Bob Beispiel"),
+            "uid-prot": _user(
+                "uid-prot", "Bob Beispiel", authentik_username="bob.beispiel"
+            ),
             "uid-part": _user("uid-part", "Carla Chaos"),
             "uid-last": _user("uid-last", "Doris Dritte"),
         }
@@ -64,22 +117,25 @@ class TestNotificationUsesDisplayNames:
         page.last_user_id = "uid-last"
         page.url = "https://cloud.example.org/protocol"
 
-        messages = []
+        sent = []
         with (
             patch("app.models.protocol.bot_config", mock_bot_config),
             patch.object(Protocol, "page", property(lambda self: page)),
             patch.object(Protocol, "is_valid_protocol_title", return_value=True),
             patch(
                 "app.models.protocol.send_message",
-                side_effect=lambda text, channel: messages.append(text),
+                side_effect=lambda text, channel: sent.append((text, channel)),
             ),
         ):
             protocol.notify_updated([])
 
-        assert messages
-        message = messages[0]
+        assert sent
+        message, channel = sent[0]
         for name in ("Anna Musterfrau", "Bob Beispiel", "Carla Chaos", "Doris Dritte"):
             assert name in message
         # the raw user ids must not appear anywhere in the message text
         for uid in ("uid-mod", "uid-prot", "uid-part", "uid-last"):
             assert uid not in message
+        # the DM is addressed to the authentik username, not the uid
+        assert channel == "@bob.beispiel"
+        assert all(c == "@bob.beispiel" for _msg, c in sent)

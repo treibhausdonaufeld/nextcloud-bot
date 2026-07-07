@@ -6,6 +6,7 @@ from typing import Any, Generator
 import requests
 
 from app.models.kv import get_state, set_state
+from app.models.user import NCUserList
 from app.services.config import DeckChannelMappingItem, DeckReminderConfig
 from app.services.notify import send_message
 from app.settings import NextcloudSettings, settings
@@ -82,18 +83,23 @@ class DeckReminder:
 
         assigned_users = card.get("assignedUsers", [])
         if not assigned_users:
-            assignee_names = [card["owner"]["uid"]]  # fallback to owner
+            assignee_uids = [card["owner"]["uid"]]  # fallback to owner
         else:
-            assignee_names = [
+            assignee_uids = [
                 assignee["participant"]["uid"] for assignee in assigned_users
             ]
 
-        pronoun = "dir" if len(assignee_names) == 1 else "euch"
+        # Rocket.Chat knows users by their authentik username, not the
+        # Nextcloud uid
+        user_list = NCUserList()
+        assignee_handles = [user_list.chat_username(uid) for uid in assignee_uids]
+
+        pronoun = "dir" if len(assignee_handles) == 1 else "euch"
 
         card_url = f"{settings.nextcloud.base_url}/apps/deck/board/{board_id}/card/{card['id']}"
 
         message = (
-            f"Hallo, {', '.join([f'@{assignee}' for assignee in assignee_names])}! "
+            f"Hallo, {', '.join([f'@{assignee}' for assignee in assignee_handles])}! "
         )
         message += (
             f"Die Aufgabe [{card['title']}]({card_url}) ist {pronoun} zugewiesen und "
@@ -108,11 +114,11 @@ class DeckReminder:
 
         if days_overdue < 0:
             # send to each assigned user
-            for assignee_name in assignee_names:
-                send_message("@" + assignee_name, message)
+            for assignee_handle in assignee_handles:
+                send_message(text=message, channel="@" + assignee_handle)
         else:
             # send to channel
-            send_message(channel, message)
+            send_message(text=message, channel=channel)
 
     def get_due_cards(
         self,
