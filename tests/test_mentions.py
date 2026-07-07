@@ -8,7 +8,9 @@ from app.controllers.mentions import months_ago_epoch
 class TestMonthsAgoEpoch:
     def test_plain_subtraction(self):
         now = datetime(2026, 7, 7, 12, 30)
-        assert months_ago_epoch(12, now) == int(datetime(2025, 7, 7, 12, 30).timestamp())
+        assert months_ago_epoch(12, now) == int(
+            datetime(2025, 7, 7, 12, 30).timestamp()
+        )
 
     def test_year_rollover(self):
         now = datetime(2026, 3, 15)
