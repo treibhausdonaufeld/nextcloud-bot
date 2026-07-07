@@ -133,7 +133,8 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
     for protocol in protocols:
         page = CollectivePage.get_from_page_id_or_none(protocol.page_id)
         card_group = group_names.get(protocol.group_page_id, "")
-        decision_count = Decision.count(page_id=protocol.page_id)
+        decisions = Decision.fetch(page_id=protocol.page_id, limit=100)
+        decision_list = [{"title": d.title, "text": d.text} for d in decisions]
         cards.append(
             {
                 "date": protocol.date_obj.strftime("%Y-%m-%d")
@@ -143,7 +144,8 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
                 "time": protocol.time,
                 "location_type": protocol.location_type,
                 "attendee_count": protocol.attendee_count,
-                "decision_count": decision_count,
+                "decision_count": len(decisions),
+                "decisions": decision_list,
                 "title": (page.title if page else "") or protocol.date,
                 "page_id": protocol.page_id,
                 "url": (page.url if page else "") or "",

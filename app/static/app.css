@@ -665,6 +665,79 @@ mark {
   gap: 0.25rem;
   color: var(--pico-primary);
   font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+
+.decision-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  max-width: 400px;
+  z-index: 1000;
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: var(--pico-color);
+  white-space: normal;
+}
+
+.decision-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--pico-muted-border-color);
+}
+
+.decision-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--pico-card-background-color);
+}
+
+.decision-tooltip h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--pico-primary);
+}
+
+.decision-tooltip ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+}
+
+.decision-tooltip li {
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.decision-tooltip li:last-child {
+  margin-bottom: 0;
+}
+
+.decision-tooltip .decision-title {
+  font-weight: 600;
+}
+
+.decision-tooltip .decision-text {
+  color: var(--pico-muted-color);
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
 }
 
 .protocol-roles {

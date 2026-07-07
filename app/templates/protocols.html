@@ -63,7 +63,7 @@
                 {% endif %}
                 <span>👥 {{ _n("%(n)s attendee", "%(n)s attendees", p.attendee_count) | format(n=p.attendee_count) }}</span>
                 {% if p.decision_count > 0 %}
-                  <span class="decision-badge" title="{{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}">✅ {{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}</span>
+                  <span class="decision-badge" data-decisions='{{ p.decisions | tojson }}' title="{{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}">✅ {{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}</span>
                 {% endif %}
               </p>
               {% if p.moderated_by or p.protocol_by %}
@@ -125,4 +125,50 @@
       </table>
     </div>
   {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const badges = document.querySelectorAll('.decision-badge');
+      let currentTooltip = null;
+
+      badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function(e) {
+          if (currentTooltip) {
+            currentTooltip.remove();
+          }
+
+          const decisions = JSON.parse(this.dataset.decisions);
+          const tooltip = document.createElement('div');
+          tooltip.className = 'decision-tooltip';
+
+          let html = '<h5>' + decisions.length + ' ' + (decisions.length === 1 ? '{{ _("decision") }}' : '{{ _("decisions") }}') + '</h5><ul>';
+          decisions.forEach(d => {
+            html += '<li><div class="decision-title">' + escapeHtml(d.title || '{{ _("Untitled") }}') + '</div>';
+            if (d.text) {
+              html += '<div class="decision-text">' + escapeHtml(d.text.substring(0, 150)) + (d.text.length > 150 ? '...' : '') + '</div>';
+            }
+            html += '</li>';
+          });
+          html += '</ul>';
+          tooltip.innerHTML = html;
+
+          this.appendChild(tooltip);
+          currentTooltip = tooltip;
+        });
+
+        badge.addEventListener('mouseleave', function() {
+          if (currentTooltip) {
+            currentTooltip.remove();
+            currentTooltip = null;
+          }
+        });
+      });
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    });
+  </script>
 {% endblock %}
