@@ -8,7 +8,7 @@ from app.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
+def send_rocketchat_message(text: str, channel: str, emoji: str = ":robot:") -> None:
     """Send a message to Rocket.Chat via incoming webhook."""
 
     webhook_url = settings.rocketchat.hook_url
@@ -39,3 +39,9 @@ def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
         logger.warning(
             "Chat URL not configured, this is the message: %s", json.dumps(payload)
         )
+
+
+# Backwards-compatible alias. Generic notifications should go through
+# ``app.services.notify.send_message`` which dispatches via Apprise and falls
+# back to this Rocket.Chat webhook.
+send_message = send_rocketchat_message

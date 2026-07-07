@@ -76,8 +76,31 @@ distribution:
       groups:
         - Nicht-Mitglied
 
+# Generic notifications via Apprise (https://github.com/caronc/apprise).
+# Each logical channel name is mapped to one or more Apprise service URLs.
+# Channels without any Apprise target fall back to the Rocket.Chat webhook
+# configured via the ROCKETCHAT__HOOK_URL environment variable.
 notifier:
-  chat_url: https://cloud.rocket.chat/hooks/some-id/some-token
+  enabled: true
+
+  # optional source name shown by services that support it (defaults to the
+  # configured bot name)
+  # title: Nextcloud-Bot
+
+  # override the target channel for all notifications (debugging)
+  # channel_overwrite: mychannel-test
+
+  # Apprise URLs sent for every notification, regardless of channel
+  default_urls: []
+  #  - "mmost://user:token@mattermost.example.com"
+
+  # map a logical channel name to a list of Apprise service URLs
+  channels: {}
+  #  ug-it:
+  #    - "tgram://bottoken/ChatID"
+  #    - "matrixs://user:pass@matrix.example.com/#room"
+  #  "@someuser":
+  #    - "mailto://user:pass@example.com?to=someuser@example.com"
 
 calendar_notifier:
   caldav_url: https://example.nextcloud/remote.php/dav/calendars/user/personal/

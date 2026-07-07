@@ -10,7 +10,7 @@ import pytz
 
 from app.models.kv import get_state, set_state
 from app.services.config import CalendarNotifierConfig
-from app.services.rocketchat import send_message
+from app.services.notify import send_message
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
