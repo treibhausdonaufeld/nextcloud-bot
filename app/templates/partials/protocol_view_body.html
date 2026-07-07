@@ -1,0 +1,76 @@
+{% if not page %}
+  <p>{{ _("No matching pages found.") }}</p>
+{% else %}
+  <header class="protocol-view-head">
+    <h3>{{ page.title }}</h3>
+    <p class="meta">
+      {% if selected_version %}
+        <span>{{ _("Version") }} {{ selected_version }}{% if selected_is_latest %} ({{ _("latest") }}){% endif %}</span>
+        {% if selected_editor %}<span>✍️ {{ selected_editor }}</span>{% endif %}
+        {% if selected_timestamp %}<span>🕒 {{ selected_timestamp }}</span>{% endif %}
+      {% endif %}
+      <a href="/protocols/{{ page.page_id }}/view{% if selected_version %}?version={{ selected_version }}{% endif %}" class="permalink">🔗 {{ _("Permalink") }}</a>
+      {% if page.url %}
+        <a href="{{ page.url }}" target="_blank" rel="noopener noreferrer">{{ _("Open in Nextcloud") }} ↗</a>
+      {% endif %}
+    </p>
+  </header>
+
+  {% if not selected_is_latest %}
+    <div class="version-banner">
+      <span>{{ _("You are viewing an older version of this protocol.") }}</span>
+      <span class="version-banner-actions">
+        <a href="/protocols/{{ page.page_id }}/view" hx-get="/protocols/{{ page.page_id }}/view" hx-target="#protocol-detail" hx-push-url="true">{{ _("Show latest") }}</a>
+      </span>
+    </div>
+  {% endif %}
+
+  <div class="protocol-view-layout">
+    <div class="protocol-content markdown-body">
+      {{ content_html }}
+    </div>
+
+    {% if versions %}
+      <aside class="version-panel">
+        <h4>{{ _("Version history") }}</h4>
+        <ol class="version-list" reversed>
+          {% for v in versions %}
+            <li class="{% if v.is_selected %}version-selected{% endif %}">
+              <a href="/protocols/{{ page.page_id }}/view?version={{ v.version }}"
+                 hx-get="/protocols/{{ page.page_id }}/view?version={{ v.version }}"
+                 hx-target="#protocol-detail"
+                 hx-push-url="true">
+                {{ _("Version") }} {{ v.version }}{% if v.is_latest %} · {{ _("latest") }}{% endif %}
+              </a>
+              <small>
+                ✍️ {{ v.editor }}
+                {% if v.timestamp %}<br />🕒 {{ v.timestamp }}{% endif %}
+              </small>
+            </li>
+          {% endfor %}
+        </ol>
+      </aside>
+    {% endif %}
+  </div>
+
+  {% if diff_html %}
+    <details class="version-diff">
+      <summary>{{ _("Changes compared to the previous version") }}</summary>
+      {{ diff_html }}
+    </details>
+  {% endif %}
+
+  <details class="raw-markdown">
+    <summary>{{ _("Show raw markdown") }}</summary>
+    <p class="meta">{{ _("To restore this version, copy the markdown and paste it into the page in Nextcloud.") }}</p>
+    <button type="button" class="copy-markdown"
+            onclick="var pre = this.parentElement.querySelector('pre'); var btn = this;
+                     navigator.clipboard.writeText(pre.textContent).then(function () {
+                       var label = btn.textContent; btn.textContent = '✓';
+                       setTimeout(function () { btn.textContent = label; }, 1500);
+                     });">
+      {{ _("Copy markdown") }}
+    </button>
+    <pre class="raw-markdown-text">{{ raw_content }}</pre>
+  </details>
+{% endif %}

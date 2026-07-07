@@ -38,15 +38,17 @@
               <div class="protocol-head">
                 <div class="protocol-title">
                   <h4>
-                    <a href="#protocol-detail"
+                    <a href="/protocols/{{ p.page_id }}/view"
                        hx-get="/protocols/{{ p.page_id }}/view"
-                       hx-target="#protocol-detail">{{ p.title }}</a>
+                       hx-target="#protocol-detail"
+                       hx-push-url="true">{{ p.title }}</a>
                   </h4>
                   {% if p.group %}<span class="protocol-group">{{ p.group }}</span>{% endif %}
                 </div>
-                <a class="decision-open" href="#protocol-detail"
+                <a class="decision-open" href="/protocols/{{ p.page_id }}/view"
                    hx-get="/protocols/{{ p.page_id }}/view"
                    hx-target="#protocol-detail"
+                   hx-push-url="true"
                    aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">🗗</a>
               </div>
               <p class="meta">

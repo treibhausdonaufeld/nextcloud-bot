@@ -39,9 +39,19 @@ def _user_name_map(user_list: NCUserList) -> dict[str, str]:
         return {}
 
 
+def _is_htmx_request(request: Request) -> bool:
+    return request.headers.get("hx-request", "").lower() == "true"
+
+
 @get("/protocols/{page_id}/view")
 def protocol_view(request: Request, page_id: int, version: int = 0) -> Template:
-    """Protocol popup partial for the given (or latest) version."""
+    """Protocol view for the given (or latest) version.
+
+    Directly navigating to this URL (a shared link, a bookmark, a fresh
+    tab) renders a full standalone page — protocols are shareable by URL.
+    When the request comes from htmx (opened from the protocols list or
+    the logbook), only the popup partial is returned for the dialog swap.
+    """
     # activate the request language before any _() call (template_context
     # only runs at the end of the handler)
     activate(request)
@@ -91,8 +101,13 @@ def protocol_view(request: Request, page_id: int, version: int = 0) -> Template:
         for v in versions
     ]
 
+    template_name = (
+        "partials/protocol_view.html"
+        if _is_htmx_request(request)
+        else "protocol_page.html"
+    )
     return Template(
-        name="partials/protocol_view.html",
+        name=template_name,
         context=template_context(
             request,
             page=page,

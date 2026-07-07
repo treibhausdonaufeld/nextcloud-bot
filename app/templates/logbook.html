@@ -46,9 +46,10 @@
             <div class="decision-title">
               <h4>
                 {% if card.page_id %}
-                  <a href="#protocol-detail"
+                  <a href="/protocols/{{ card.page_id }}/view"
                      hx-get="/protocols/{{ card.page_id }}/view"
                      hx-target="#protocol-detail"
+                     hx-push-url="true"
                      aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">{{ card.display_title }}</a>
                 {% elif card.link %}
                   <a href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">{{ card.display_title }}</a>
@@ -64,9 +65,10 @@
               {% endif %}
             </div>
             {% if card.page_id %}
-              <a class="decision-open" href="#protocol-detail"
+              <a class="decision-open" href="/protocols/{{ card.page_id }}/view"
                  hx-get="/protocols/{{ card.page_id }}/view"
                  hx-target="#protocol-detail"
+                 hx-push-url="true"
                  aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">🗗</a>
             {% elif card.link %}
               <a class="decision-open" href="{{ card.link }}" target="_blank" rel="noopener noreferrer" aria-label="{{ _('Open protocol') }}" title="{{ _('Open protocol') }}">↗</a>
