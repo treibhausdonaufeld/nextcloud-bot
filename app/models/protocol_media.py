@@ -1,16 +1,24 @@
-"""Embedded media (attachments) of protocol pages, stored in the database.
+"""Embedded media (attachments) of protocol pages, stored on disk.
 
 Collectives stores page attachments in a ``.attachments.<file-id>/`` folder
-next to the markdown file. To keep protocol history self-contained, referenced
-attachments are copied into this table and served by the app itself.
+next to the markdown file. Referenced attachments are copied to the local
+media folder (``settings.media_folder``, env var MEDIA_FOLDER) and served by
+the app itself; this table holds the metadata and the file location.
+
+Files are laid out as ``YYYY/MM/DD/<page-id>/attachments/<folder-id>/<name>``
+(date = the protocol's original date), so old attachments can easily be
+pruned by date when disk space runs low. A pruned file simply 404s in the
+viewer; its metadata row keeps the sync from re-downloading it.
 """
 
 import logging
+from pathlib import Path
 from typing import Optional, Set
 
 import edgy
 
 from app.models.base import BaseDBModel
+from app.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +34,8 @@ class ProtocolMedia(BaseDBModel):
         max_length=128, default="application/octet-stream"
     )
     size: int = edgy.BigIntegerField(default=0)
-    data: bytes = edgy.BinaryField()
+    # storage location relative to settings.media_folder
+    file_path: str = edgy.CharField(max_length=1024, default="")
 
     natural_key_fields = ("page_id", "name")
 
@@ -36,17 +45,53 @@ class ProtocolMedia(BaseDBModel):
     def __str__(self) -> str:
         return f"ProtocolMedia(page_id={self.page_id}, name={self.name})"
 
+    @property
+    def absolute_path(self) -> Path:
+        return Path(settings.media_folder) / self.file_path
+
+    def write_file(self, data: bytes) -> None:
+        """Write the attachment bytes to disk (creating parent folders)."""
+        target = self.absolute_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        self.size = len(data)
+
+    def read_file(self) -> bytes | None:
+        """Read the attachment from disk; None when the file is gone
+        (e.g. manually pruned to free space)."""
+        try:
+            return self.absolute_path.read_bytes()
+        except OSError:
+            return None
+
+    def before_remove(self) -> None:
+        """Delete the file and clean up empty date/page folders."""
+        if not self.file_path:
+            return
+        path = self.absolute_path
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as e:
+            logger.warning("Could not delete media file %s: %s", path, e)
+            return
+
+        # best-effort: remove now-empty parent folders up to the media root
+        root = Path(settings.media_folder).resolve()
+        parent = path.parent.resolve()
+        while parent != root and root in parent.parents:
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+
     @classmethod
     def get_for_page(cls, page_id: int, name: str) -> Optional["ProtocolMedia"]:
         return cls.fetch_one(page_id=page_id, name=name)
 
     @classmethod
     def names_for_page(cls, page_id: int) -> Set[str]:
-        """Names of all stored attachments of a page.
-
-        Uses a name-only query so the (potentially large) data blobs are
-        not loaded just to check for existence.
-        """
+        """Names of all stored attachments of a page (name-only query)."""
         from app.db import fetch_all_sql
 
         rows = fetch_all_sql(

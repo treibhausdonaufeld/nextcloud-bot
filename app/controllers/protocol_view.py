@@ -105,8 +105,12 @@ def protocol_media(request: Request, page_id: int, folder: str, name: str) -> Re
     media = ProtocolMedia.get_for_page(page_id, f"{folder}/{name}")
     if media is None:
         return Response(content=b"Not found", status_code=404, media_type="text/plain")
+    data = media.read_file()
+    if data is None:
+        # the file was pruned from disk to free space
+        return Response(content=b"Not found", status_code=404, media_type="text/plain")
     return Response(
-        content=bytes(media.data),
+        content=data,
         media_type=media.content_type or "application/octet-stream",
         headers={
             "cache-control": "public, max-age=86400",

@@ -144,6 +144,11 @@ class Settings(BaseSettings):
     # concern (it must match the container's volume mount).
     avatar_folder: Optional[str] = None
 
+    # Folder for protocol attachments (env var MEDIA_FOLDER). Files are
+    # stored as YYYY/MM/DD/<page-id>/attachments/<folder-id>/<name> so old
+    # attachments can easily be pruned by date when space runs low.
+    media_folder: str = "/data/media"
+
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
     rocketchat: RocketchatSettings = RocketchatSettings()

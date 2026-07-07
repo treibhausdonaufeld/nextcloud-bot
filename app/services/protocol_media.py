@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import mimetypes
 import re
+from datetime import date, datetime
 from typing import List
 from urllib.parse import quote, unquote
 
@@ -41,6 +42,49 @@ def media_name(raw_path: str) -> str:
     if path.startswith("./"):
         path = path[2:]
     return path.removeprefix(".attachments.")
+
+
+def protocol_date(page: CollectivePage) -> date | None:
+    """Original date of a protocol, best effort.
+
+    Protocol pages are titled "YYYY-MM-DD Group", so the title is the most
+    reliable source and is available before the protocol is parsed. Falls
+    back to the parsed Protocol row, then to the page's modification
+    timestamp.
+    """
+    if page.title:
+        try:
+            return datetime.strptime(page.title.split(" ")[0], "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    from app.models.protocol import Protocol
+
+    protocol = Protocol.fetch_one(page_id=page.page_id)
+    if protocol is not None:
+        try:
+            if protocol.date_obj is not None:
+                return protocol.date_obj
+        except ValueError:
+            pass
+
+    if page.timestamp:
+        try:
+            return datetime.fromtimestamp(float(page.timestamp)).date()
+        except (TypeError, ValueError, OSError):
+            pass
+    return None
+
+
+def media_relative_path(page: CollectivePage, name: str) -> str:
+    """Storage path of an attachment relative to the media folder.
+
+    Layout: ``YYYY/MM/DD/<page-id>/attachments/<folder-id>/<filename>`` so
+    attachments can easily be pruned by protocol date when space runs low.
+    """
+    day = protocol_date(page)
+    prefix = day.strftime("%Y/%m/%d") if day else "undated"
+    return f"{prefix}/{page.page_id}/attachments/{name}"
 
 
 def extract_attachment_paths(content: str) -> List[str]:
@@ -89,10 +133,12 @@ def fetch_attachment(page: CollectivePage, relative_path: str) -> tuple[bytes, s
 
 
 def sync_page_media(page: CollectivePage) -> None:
-    """Copy all referenced attachments of a page into the database.
+    """Copy all referenced attachments of a page to the local media folder.
 
-    Already stored files are kept (attachment file names in Collectives are
-    stable), so media referenced only by older versions stays available.
+    Already known attachments are kept as-is (attachment file names in
+    Collectives are stable), so media referenced only by older versions
+    stays available — and files manually pruned from disk to free space are
+    not downloaded again.
     """
     paths = extract_attachment_paths(page.content or "")
     if not paths:
@@ -121,11 +167,25 @@ def sync_page_media(page: CollectivePage) -> None:
             name=name,
             path=path,
             content_type=content_type,
-            size=len(data),
-            data=data,
+            file_path=media_relative_path(page, name),
         )
+        try:
+            media.write_file(data)
+        except OSError as e:
+            logger.error(
+                "Failed to write attachment %s for page %s to %s: %s",
+                name,
+                page.page_id,
+                media.absolute_path,
+                e,
+            )
+            continue
         media.store()
         existing.add(name)
         logger.info(
-            "Stored attachment %s (%d bytes) for page %s", name, len(data), page.page_id
+            "Stored attachment %s (%d bytes) for page %s at %s",
+            name,
+            len(data),
+            page.page_id,
+            media.file_path,
         )

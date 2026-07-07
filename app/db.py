@@ -115,6 +115,16 @@ async def _migrate_schema() -> None:
         )
         logger.info("Migrated protocols table: added preview column")
 
+    # Early protocol_media versions stored attachment bytes as a database
+    # blob; media now lives on disk. Drop the old table (attachments are
+    # re-fetched from Nextcloud on the next sync) and recreate it with the
+    # current schema.
+    protocol_media_columns = await _table_columns("protocol_media")
+    if "data" in protocol_media_columns:
+        await database.execute("DROP TABLE protocol_media")
+        await registry.create_all()
+        logger.info("Migrated protocol_media table: attachments moved to disk")
+
     if "lemmas" in await _table_columns("search_index"):
         return
 

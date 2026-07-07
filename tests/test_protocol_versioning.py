@@ -6,9 +6,14 @@ from unittest.mock import patch
 
 from app.models.collective_page import CollectivePage, PageSubtype
 from app.models.protocol import Protocol
+from app.models.protocol_media import ProtocolMedia
 from app.models.protocol_version import ProtocolVersion
 from app.services.collectives_loader import delete_orphaned_pages
-from app.services.protocol_media import extract_attachment_paths
+from app.services.protocol_media import (
+    extract_attachment_paths,
+    media_relative_path,
+)
+from app.settings import settings
 from app.services.protocol_render import (
     render_diff_html,
     render_protocol_html,
@@ -164,6 +169,50 @@ class TestAttachmentExtraction:
     def test_no_attachments(self):
         assert extract_attachment_paths("# Nothing here\n") == []
         assert extract_attachment_paths("") == []
+
+
+class TestMediaStorage:
+    def test_relative_path_uses_protocol_title_date(self):
+        page = _make_page("x", title="2026-07-01 AG Garten")
+        rel = media_relative_path(page, "123/plan.png")
+        assert rel == "2026/07/01/42/attachments/123/plan.png"
+
+    def test_relative_path_falls_back_to_page_timestamp(self):
+        page = _make_page("x", title="Kein Datum", timestamp=1751900000)
+        from datetime import datetime
+
+        expected_prefix = datetime.fromtimestamp(1751900000).strftime("%Y/%m/%d")
+        with patch.object(Protocol, "fetch_one", return_value=None):
+            rel = media_relative_path(page, "123/plan.png")
+        assert rel == f"{expected_prefix}/42/attachments/123/plan.png"
+
+    def test_relative_path_undated_when_nothing_known(self):
+        page = _make_page("x", title="Kein Datum", timestamp=None)
+        with patch.object(Protocol, "fetch_one", return_value=None):
+            rel = media_relative_path(page, "123/plan.png")
+        assert rel == "undated/42/attachments/123/plan.png"
+
+    def test_write_read_delete_roundtrip(self, tmp_path):
+        with patch.object(settings, "media_folder", str(tmp_path)):
+            media = ProtocolMedia(page_id=42, name="123/plan.png")
+            media.file_path = "2026/07/01/42/attachments/123/plan.png"
+            media.write_file(b"abc")
+
+            assert media.size == 3
+            assert media.absolute_path.read_bytes() == b"abc"
+            assert media.read_file() == b"abc"
+
+            media.before_remove()
+            assert media.read_file() is None
+            # empty date folders are pruned, the media root itself stays
+            assert not (tmp_path / "2026").exists()
+            assert tmp_path.exists()
+
+    def test_read_file_of_pruned_file_returns_none(self, tmp_path):
+        with patch.object(settings, "media_folder", str(tmp_path)):
+            media = ProtocolMedia(page_id=42, name="123/plan.png")
+            media.file_path = "2026/07/01/42/attachments/123/plan.png"
+            assert media.read_file() is None
 
 
 class TestRenderer:

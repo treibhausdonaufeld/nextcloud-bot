@@ -39,6 +39,10 @@ services:
       # Overrides the avatar folder from the bot-config page; must match the
       # bind mount below.
       AVATAR_FOLDER: '/tmp/avatare'
+      # Protocol attachments, stored as YYYY/MM/DD/<page-id>/attachments/…
+      # so old ones can be pruned by date. Lives inside the /data mount, so
+      # it is persistent by default.
+      MEDIA_FOLDER: '/data/media'
     volumes:
       - /mnt/thd-data/nc-bot/data:/data
       - /mnt/thd-data/nc-bot/avatare:/tmp/avatare
