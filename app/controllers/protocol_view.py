@@ -13,6 +13,7 @@ from ravyn.responses import Response
 
 from app.i18n import activate, template_context
 from app.models import CollectivePage, NCUserList, ProtocolMedia, ProtocolVersion
+from app.services.protocol_media import sync_page_media
 from app.services.protocol_render import render_diff_html, render_protocol_html
 from app.settings import _
 
@@ -57,6 +58,16 @@ def protocol_view(request: Request, page_id: int, version: int = 0) -> Template:
                 versions = [recorded]
         except Exception:
             logger.exception("Failed to backfill version for page %s", page_id)
+
+    # Likewise backfill attachments: pages synced before the media feature
+    # existed only get their attachments during the next content change, so
+    # fetch anything still missing when the protocol is actually viewed.
+    # (Idempotent and cheap when everything is already stored.)
+    if page:
+        try:
+            sync_page_media(page)
+        except Exception:
+            logger.exception("Failed to backfill media for page %s", page_id)
 
     user_list = NCUserList()
     latest_no = versions[0].version if versions else None

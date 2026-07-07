@@ -144,6 +144,10 @@ def sync_page_media(page: CollectivePage) -> None:
     if not paths:
         return
 
+    if not settings.nextcloud.base_url:
+        logger.debug("Nextcloud not configured, skipping media sync")
+        return
+
     existing = ProtocolMedia.names_for_page(page.page_id)
 
     for raw_path in paths:

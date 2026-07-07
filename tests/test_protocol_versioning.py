@@ -12,6 +12,7 @@ from app.services.collectives_loader import delete_orphaned_pages
 from app.services.protocol_media import (
     extract_attachment_paths,
     media_relative_path,
+    sync_page_media,
 )
 from app.settings import settings
 from app.services.protocol_render import (
@@ -213,6 +214,15 @@ class TestMediaStorage:
             media = ProtocolMedia(page_id=42, name="123/plan.png")
             media.file_path = "2026/07/01/42/attachments/123/plan.png"
             assert media.read_file() is None
+
+    def test_sync_skips_without_nextcloud_config(self):
+        page = _make_page("![Foto](.attachments.123/plan.png)")
+        with (
+            patch.object(settings.nextcloud, "base_url", None),
+            patch("app.services.protocol_media.requests.get") as get,
+        ):
+            sync_page_media(page)
+        get.assert_not_called()
 
 
 class TestRenderer:
