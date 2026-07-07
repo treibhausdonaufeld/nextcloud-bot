@@ -1,120 +1,56 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Mentions") }}{% endblock %}
 {% block content %}
-  <h1>{{ _("Mentions") }}</h1>
+  <header class="page-head">
+    <h1>{{ _("Mentions") }}</h1>
+  </header>
 
-  {% if not table %}
-    <p>{{ _("No mentions found.") }}</p>
-  {% else %}
-    <div class="tab-buttons" role="group">
-      <a href="/mentions?view=table" role="button" class="outline {% if view == 'table' %}contrast{% endif %}">{{ _("Table View") }}</a>
-      <a href="/mentions?view=graph" role="button" class="outline {% if view == 'graph' %}contrast{% endif %}">{{ _("Graph View") }}</a>
+  <form class="toolbar" method="get" action="/mentions">
+    <div class="toolbar-filters">
+      <select name="months" aria-label="{{ _('Time range') }}" onchange="this.form.submit()">
+        {% for m in months_options %}
+          <option value="{{ m }}" {% if m == months %}selected{% endif %}>
+            {% if m == 0 %}{{ _("All data") }}{% else %}{{ _n("%(num)d month", "%(num)d months", m) | format(num=m) }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
     </div>
+  </form>
 
-    {% if view == "graph" %}
-      <h3>{{ _("Mention Network") }}</h3>
-      <p class="meta">{{ _("🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages (gold)") }}</p>
-
-      <form class="filter-form" method="get" action="/mentions">
-        <input type="hidden" name="view" value="graph" />
-        <label>
-          {{ _("Filter by User") }}
-          <select name="limit_user" onchange="this.form.submit()">
-            <option value="">{{ _("All Users") }}</option>
-            {% for u in users %}
-              <option value="{{ u.username }}" {% if u.username == limit_user %}selected{% endif %}>{{ u.displayname }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>
-          {{ _("Filter by Page Type") }}
-          <select name="page_type" onchange="this.form.submit()">
-            <option value="">{{ _("All Pages") }}</option>
-            <option value="protocol" {% if page_type == "protocol" %}selected{% endif %}>{{ _("Protocols Only") }}</option>
-            <option value="group" {% if page_type == "group" %}selected{% endif %}>{{ _("Group Pages Only") }}</option>
-          </select>
-        </label>
-        <label>
-          {{ _("Solver") }}
-          <select name="solver" onchange="this.form.submit()">
-            {% for s in ["repulsion", "forceAtlas2Based"] %}
-              <option value="{{ s }}" {% if s == solver %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>
-          {{ _("Graph Height") }}
-          <input type="number" name="height" value="{{ height }}" min="300" max="1200" step="100" onchange="this.form.submit()" style="width: 6rem" />
-        </label>
-      </form>
-
-      <div id="graph" style="height: {{ height }}px"></div>
-
-      <script src="/static/vis-network.min.js"></script>
-      <script>
-        const params = new URLSearchParams({
-          limit_user: '{{ limit_user }}',
-          page_type: '{{ page_type }}',
-        });
-        const fontColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? '#E0E0E0' : '#2C2C2C';
-
-        fetch('/mentions/graph.json?' + params.toString())
-          .then((r) => r.json())
-          .then((data) => {
-            data.nodes.forEach((n) => (n.font = { color: fontColor }));
-            const container = document.getElementById('graph');
-            const network = new vis.Network(
-              container,
-              { nodes: new vis.DataSet(data.nodes), edges: new vis.DataSet(data.edges) },
-              {
-                physics: { solver: '{{ solver }}', stabilization: { iterations: 200 } },
-                edges: { smooth: true, color: { opacity: 0.5 } },
-                interaction: { hover: true },
-              }
-            );
-            network.on('selectNode', (ev) => {
-              const nodeId = ev.nodes[0];
-              if (!nodeId) return;
-              if (nodeId.startsWith('user:')) {
-                htmx.ajax('GET', '/mentions/user/' + encodeURIComponent(nodeId.slice(5)), '#detail');
-              } else if (nodeId.startsWith('page:')) {
-                htmx.ajax('GET', '/mentions/page/' + nodeId.slice(5), '#detail');
-              }
-            });
-          });
-      </script>
-    {% else %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ _("User") }}</th>
-              <th>{{ _("Mentions") }}</th>
-              <th>{{ _("Distinct Pages") }}</th>
-              <th>{{ _("Distinct Protocols") }}</th>
-              <th>{{ _("Groups") }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in table %}
-              <tr {% if row.username == selected_user %}style="font-weight: bold"{% endif %}>
-                <td>
-                  <a
-                    href="#detail"
-                    hx-get="/mentions/user/{{ row.username | urlencode }}"
-                    hx-target="#detail"
-                  >{{ row.displayname }}</a>
-                </td>
-                <td>{{ row.mentions }}</td>
-                <td>{{ row.distinct_pages }}</td>
-                <td>{{ row.distinct_protocols }}</td>
-                <td>{{ row.groups }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
+  {% if not cards %}
+    <p class="empty-state">{{ _("No mentions found.") }}</p>
+  {% else %}
+    <div class="mention-cards">
+      {% for card in cards %}
+        <article class="mention-card{% if card.username == selected_user %} mention-card-selected{% endif %}">
+          <h4>
+            <a
+              href="#detail"
+              hx-get="/mentions/user/{{ card.username | urlencode }}"
+              hx-target="#detail"
+            >{{ card.displayname }}</a>
+          </h4>
+          <div class="mention-stats">
+            <span class="mention-stat" data-tooltip="{{ _('Total mentions') }}" aria-label="{{ _('Total mentions') }}">
+              <span aria-hidden="true">💬</span> {{ card.mentions }}
+            </span>
+            <span class="mention-stat" data-tooltip="{{ _('Distinct pages') }}" aria-label="{{ _('Distinct pages') }}">
+              <span aria-hidden="true">📄</span> {{ card.distinct_pages }}
+            </span>
+            <span class="mention-stat" data-tooltip="{{ _('Protocols / meetings') }}" aria-label="{{ _('Protocols / meetings') }}">
+              <span aria-hidden="true">📋</span> {{ card.distinct_protocols }}
+            </span>
+          </div>
+          {% if card.groups %}
+            <div class="mention-groups">
+              {% for g in card.groups %}
+                <span class="mention-group{% if g.hue is not none %} mention-group-colored{% endif %}" {% if g.hue is not none %}style="--group-hue: {{ g.hue }}"{% endif %}>{{ g.name }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
 
     <dialog id="detail-dialog">
       <div id="detail"></div>

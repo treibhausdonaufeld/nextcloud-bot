@@ -1,15 +1,35 @@
-"""Mentions: who is mentioned where — table, network graph and details."""
+"""Mentions: who is mentioned where — per-user cards and details."""
 
+import calendar
 import logging
 from collections import defaultdict
+from datetime import datetime
 
-from ravyn import JSONResponse, Request, Template, get
+from ravyn import Request, Template, get
 
+from app.controllers.logbook import group_hue
 from app.i18n import template_context
 from app.models import CollectivePage, Mention, NCUserList, PageSubtype
 from app.settings import user_regex
 
 logger = logging.getLogger(__name__)
+
+# Look-back durations offered by the filter dropdown; 0 means "all data".
+MONTHS_OPTIONS = [1, 6, 12, 24, 0]
+DEFAULT_MONTHS = 12
+
+
+def months_ago_epoch(months: int, now: datetime | None = None) -> int:
+    """Unix timestamp of `months` calendar months before `now`.
+
+    Clamps the day for shorter target months (e.g. May 31 - 1 month -> Apr 30).
+    """
+    now = now or datetime.now()
+    total = now.year * 12 + (now.month - 1) - months
+    year, month = divmod(total, 12)
+    month += 1
+    day = min(now.day, calendar.monthrange(year, month)[1])
+    return int(now.replace(year=year, month=month, day=day).timestamp())
 
 
 def extract_mention_snippets(
@@ -40,12 +60,17 @@ def page_subtype_map(page_ids: set[int]) -> dict[int, CollectivePage]:
     return {p.page_id: p for p in pages}
 
 
-def mention_table_data() -> list[dict]:
-    """Per-user mention statistics for all enabled users."""
+def mention_card_data(months: int) -> list[dict]:
+    """Per-user mention statistics for all enabled users.
+
+    `months` limits counting to pages modified within the last N calendar
+    months; 0 counts everything.
+    """
     user_list = NCUserList()
     enabled = {u.username: u for u in user_list.get_enabled_users()}
 
-    relations = Mention.all_user_page_relations()
+    since = months_ago_epoch(months) if months > 0 else None
+    relations = Mention.all_user_page_relations(since=since)
     pages = page_subtype_map({r["page_id"] for r in relations})
 
     per_user: dict[str, list[dict]] = defaultdict(list)
@@ -53,7 +78,7 @@ def mention_table_data() -> list[dict]:
         if r["username"] in enabled:
             per_user[r["username"]].append(r)
 
-    table = []
+    cards = []
     for username, rows in per_user.items():
         user = enabled[username]
         mentions = sum(r["mention_count"] for r in rows)
@@ -70,140 +95,42 @@ def mention_table_data() -> list[dict]:
                     if len(parts) == 2:
                         groups.add(parts[1])
 
-        table.append(
+        cards.append(
             {
                 "displayname": user.displayname or username,
                 "username": username,
                 "mentions": mentions,
                 "distinct_pages": distinct_pages,
                 "distinct_protocols": protocol_count,
-                "groups": ", ".join(sorted(groups)),
+                "groups": [
+                    {"name": name, "hue": group_hue(name)} for name in sorted(groups)
+                ],
             }
         )
 
-    table.sort(key=lambda row: row["mentions"], reverse=True)
-    return table
-
-
-def build_mention_graph(
-    limit_user: str, limit_page_type: str
-) -> tuple[list[dict], list[dict]]:
-    user_list = NCUserList()
-    enabled = {u.username: u for u in user_list.get_enabled_users()}
-
-    relations = Mention.all_user_page_relations()
-    pages = page_subtype_map({r["page_id"] for r in relations})
-
-    filtered = [r for r in relations if r["username"] in enabled]
-    if limit_user:
-        filtered = [r for r in filtered if r["username"] == limit_user]
-    if limit_page_type in ("protocol", "group"):
-        filtered = [
-            r
-            for r in filtered
-            if pages.get(r["page_id"])
-            and pages[r["page_id"]].subtype == limit_page_type
-        ]
-
-    nodes: list[dict] = []
-    edges: list[dict] = []
-    added_users: set[str] = set()
-    added_pages: set[int] = set()
-
-    for r in filtered:
-        username = r["username"]
-        page_id = r["page_id"]
-        page = pages.get(page_id)
-        if not page:
-            continue
-
-        if username not in added_users:
-            user = enabled[username]
-            nodes.append(
-                {
-                    "id": f"user:{username}",
-                    "label": user.displayname or username,
-                    "size": 25,
-                    "color": "#FF5733",  # Orange for users
-                    "shape": "dot",
-                    "title": username,
-                }
-            )
-            added_users.add(username)
-
-        if page_id not in added_pages:
-            if page.subtype == PageSubtype.PROTOCOL:
-                color = "#33C1FF"  # Blue for protocols
-                label = f"📋 {page.title}"
-            elif page.subtype == PageSubtype.GROUP:
-                color = "#2FA24E"  # Green for group pages
-                label = f"👥 {page.title}"
-            else:
-                color = "#DAA520"  # Gold for other pages
-                label = f"📄 {page.title}"
-
-            if len(label) > 30:
-                label = label[:27] + "..."
-
-            nodes.append(
-                {
-                    "id": f"page:{page_id}",
-                    "label": label,
-                    "size": 15,
-                    "color": color,
-                    "shape": "box",
-                    "title": page.title,
-                }
-            )
-            added_pages.add(page_id)
-
-        edges.append({"from": f"user:{username}", "to": f"page:{page_id}"})
-
-    return nodes, edges
+    cards.sort(key=lambda card: card["mentions"], reverse=True)
+    return cards
 
 
 @get("/mentions")
 def mentions_page(
     request: Request,
-    view: str = "table",
-    limit_user: str = "",
-    page_type: str = "",
-    solver: str = "repulsion",
-    height: int = 800,
+    months: int = DEFAULT_MONTHS,
     user: str = "",
 ) -> Template:
-    user_list = NCUserList()
-    table = mention_table_data()
-
-    users = [
-        {"username": u.username, "displayname": u.displayname or u.username}
-        for u in sorted(
-            user_list.get_enabled_users(), key=lambda u: u.displayname or ""
-        )
-    ]
+    if months not in MONTHS_OPTIONS:
+        months = DEFAULT_MONTHS
 
     return Template(
         name="mentions.html",
         context=template_context(
             request,
-            view=view if view in ("table", "graph") else "table",
-            table=table,
-            users=users,
-            limit_user=limit_user,
-            page_type=page_type,
-            solver=solver,
-            height=max(300, min(height, 1200)),
+            cards=mention_card_data(months),
+            months=months,
+            months_options=MONTHS_OPTIONS,
             selected_user=user,
         ),
     )
-
-
-@get("/mentions/graph.json")
-def mentions_graph(
-    request: Request, limit_user: str = "", page_type: str = ""
-) -> JSONResponse:
-    nodes, edges = build_mention_graph(limit_user, page_type)
-    return JSONResponse({"nodes": nodes, "edges": edges})
 
 
 @get("/mentions/user/{username}")
@@ -233,23 +160,4 @@ def mention_user_detail(request: Request, username: str) -> Template:
             displayname=(user.displayname if user else username) or username,
             pages=pages,
         ),
-    )
-
-
-@get("/mentions/page/{page_id}")
-def mention_page_detail(request: Request, page_id: int) -> Template:
-    user_list = NCUserList()
-    page = CollectivePage.get_from_page_id_or_none(page_id)
-
-    usernames = sorted(
-        {m.username for m in Mention.fetch(limit=10000, page_id=page_id)}
-    )
-    display_names = []
-    for username in usernames:
-        user = user_list.get_user_by_uid(username)
-        display_names.append((user.displayname if user else username) or username)
-
-    return Template(
-        name="partials/mention_page_detail.html",
-        context=template_context(request, page=page, mentioned_users=display_names),
     )

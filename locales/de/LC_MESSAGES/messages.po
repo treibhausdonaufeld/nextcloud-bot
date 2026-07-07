@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 11:15+0200\n"
+"POT-Creation-Date: 2026-07-07 20:02+0000\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -275,51 +275,29 @@ msgstr "Nächste Seite"
 msgid "Last page"
 msgstr "Letzte Seite"
 
+msgid "Time range"
+msgstr "Zeitraum"
+
+msgid "All data"
+msgstr "Alle Daten"
+
+#, python-format
+msgid "%(num)d month"
+msgid_plural "%(num)d months"
+msgstr[0] "%(num)d Monat"
+msgstr[1] "%(num)d Monate"
+
 msgid "No mentions found."
 msgstr "Keine Erwähnungen gefunden."
 
-msgid "Table View"
-msgstr "Tabellenansicht"
+msgid "Total mentions"
+msgstr "Erwähnungen insgesamt"
 
-msgid "Graph View"
-msgstr "Netzwerkansicht"
-
-msgid "Mention Network"
-msgstr "Erwähnungsnetzwerk"
-
-msgid ""
-"🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
-"(gold)"
-msgstr ""
-"🔴 Benutzer | 📋 Protokolle (blau) | 👥 Gruppenseiten (grün) | 📄 Andere "
-"Seiten (gold)"
-
-msgid "Filter by User"
-msgstr "Nach Benutzer filtern"
-
-msgid "All Users"
-msgstr "Alle Benutzer"
-
-msgid "Filter by Page Type"
-msgstr "Nach Seitentyp filtern"
-
-msgid "All Pages"
-msgstr "Alle Seiten"
-
-msgid "Protocols Only"
-msgstr "Nur Protokolle"
-
-msgid "Group Pages Only"
-msgstr "Nur Gruppenseiten"
-
-msgid "User"
-msgstr "Benutzer"
-
-msgid "Distinct Pages"
+msgid "Distinct pages"
 msgstr "Unterschiedliche Seiten"
 
-msgid "Distinct Protocols"
-msgstr "Unterschiedliche Protokolle"
+msgid "Protocols / meetings"
+msgstr "Protokolle / Treffen"
 
 msgid "Protocol"
 msgstr "Protokoll"
@@ -422,13 +400,6 @@ msgstr "Untergruppen"
 msgid "Close"
 msgstr "Schließen"
 
-msgid "Open page"
-msgstr "Seite öffnen"
-
-#, python-brace-format
-msgid "Users mentioned in this page: {count}"
-msgstr "In dieser Seite erwähnte Benutzer: {count}"
-
 msgid "Mention Details for"
 msgstr "Erwähnungsdetails für"
 
@@ -441,6 +412,9 @@ msgstr "Gruppenseite"
 
 msgid "Page"
 msgstr "Seite"
+
+msgid "Open page"
+msgstr "Seite öffnen"
 
 msgid "No snippet available"
 msgstr "Kein Textausschnitt verfügbar"
@@ -515,6 +489,53 @@ msgstr "Seiten, die den Benutzer erwähnen"
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr "Erwähnungen insgesamt: {count}"
+
+#~ msgid "Table View"
+#~ msgstr "Tabellenansicht"
+
+#~ msgid "Graph View"
+#~ msgstr "Netzwerkansicht"
+
+#~ msgid "Mention Network"
+#~ msgstr "Erwähnungsnetzwerk"
+
+#~ msgid ""
+#~ "🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
+#~ "(gold)"
+#~ msgstr ""
+#~ "🔴 Benutzer | 📋 Protokolle (blau) | 👥 Gruppenseiten (grün) | 📄 Andere "
+#~ "Seiten (gold)"
+
+#~ msgid "Filter by User"
+#~ msgstr "Nach Benutzer filtern"
+
+#~ msgid "All Users"
+#~ msgstr "Alle Benutzer"
+
+#~ msgid "Filter by Page Type"
+#~ msgstr "Nach Seitentyp filtern"
+
+#~ msgid "All Pages"
+#~ msgstr "Alle Seiten"
+
+#~ msgid "Protocols Only"
+#~ msgstr "Nur Protokolle"
+
+#~ msgid "Group Pages Only"
+#~ msgstr "Nur Gruppenseiten"
+
+#~ msgid "User"
+#~ msgstr "Benutzer"
+
+#~ msgid "Distinct Pages"
+#~ msgstr "Unterschiedliche Seiten"
+
+#~ msgid "Distinct Protocols"
+#~ msgstr "Unterschiedliche Protokolle"
+
+#, python-brace-format
+#~ msgid "Users mentioned in this page: {count}"
+#~ msgstr "In dieser Seite erwähnte Benutzer: {count}"
 
 #, python-format
 #~ msgid "~%(n)s attendee"

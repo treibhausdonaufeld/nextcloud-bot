@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 11:15+0200\n"
+"POT-Creation-Date: 2026-07-07 20:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -137,6 +137,12 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
+msgid "Bottom navigation"
+msgstr ""
+
+msgid "Others"
+msgstr ""
+
 #, python-brace-format
 msgid "{common_name} Dashboard"
 msgstr ""
@@ -254,48 +260,28 @@ msgstr ""
 msgid "Last page"
 msgstr ""
 
+msgid "Time range"
+msgstr ""
+
+msgid "All data"
+msgstr ""
+
+#, python-format
+msgid "%(num)d month"
+msgid_plural "%(num)d months"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "No mentions found."
 msgstr ""
 
-msgid "Table View"
+msgid "Total mentions"
 msgstr ""
 
-msgid "Graph View"
+msgid "Distinct pages"
 msgstr ""
 
-msgid "Mention Network"
-msgstr ""
-
-msgid ""
-"🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
-"(gold)"
-msgstr ""
-
-msgid "Filter by User"
-msgstr ""
-
-msgid "All Users"
-msgstr ""
-
-msgid "Filter by Page Type"
-msgstr ""
-
-msgid "All Pages"
-msgstr ""
-
-msgid "Protocols Only"
-msgstr ""
-
-msgid "Group Pages Only"
-msgstr ""
-
-msgid "User"
-msgstr ""
-
-msgid "Distinct Pages"
-msgstr ""
-
-msgid "Distinct Protocols"
+msgid "Protocols / meetings"
 msgstr ""
 
 msgid "Protocol"
@@ -399,13 +385,6 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-msgid "Open page"
-msgstr ""
-
-#, python-brace-format
-msgid "Users mentioned in this page: {count}"
-msgstr ""
-
 msgid "Mention Details for"
 msgstr ""
 
@@ -417,6 +396,9 @@ msgid "Group Page"
 msgstr ""
 
 msgid "Page"
+msgstr ""
+
+msgid "Open page"
 msgstr ""
 
 msgid "No snippet available"
