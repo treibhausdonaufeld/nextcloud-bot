@@ -61,7 +61,10 @@
                 {% elif p.location_type == "hybrid" %}
                   <span>🔀 {{ _("Hybrid") }}</span>
                 {% endif %}
-                <span>👥 {{ _n("~%(n)s attendee", "~%(n)s attendees", p.attendee_count) | format(n=p.attendee_count) }}</span>
+                <span>👥 {{ _n("%(n)s attendee", "%(n)s attendees", p.attendee_count) | format(n=p.attendee_count) }}</span>
+                {% if p.decision_count > 0 %}
+                  <span class="decision-badge" title="{{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}">✅ {{ _n("%(n)s decision", "%(n)s decisions", p.decision_count) | format(n=p.decision_count) }}</span>
+                {% endif %}
               </p>
               {% if p.moderated_by or p.protocol_by %}
                 <p class="protocol-roles">

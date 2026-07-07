@@ -659,6 +659,14 @@ mark {
   margin: 0.6rem 0 0;
 }
 
+.decision-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--pico-primary);
+  font-weight: 600;
+}
+
 .protocol-roles {
   display: flex;
   flex-wrap: wrap;

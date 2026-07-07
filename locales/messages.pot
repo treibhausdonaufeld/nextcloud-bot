@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 03:40+0000\n"
+"POT-Creation-Date: 2026-07-07 11:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -298,6 +298,12 @@ msgstr ""
 msgid "Distinct Protocols"
 msgstr ""
 
+msgid "Protocol"
+msgstr ""
+
+msgid "Back to protocols"
+msgstr ""
+
 msgid "Search protocols"
 msgstr ""
 
@@ -321,8 +327,14 @@ msgid "Hybrid"
 msgstr ""
 
 #, python-format
-msgid "~%(n)s attendee"
-msgid_plural "~%(n)s attendees"
+msgid "%(n)s attendee"
+msgid_plural "%(n)s attendees"
+msgstr[0] ""
+msgstr[1] ""
+
+#, python-format
+msgid "%(n)s decision"
+msgid_plural "%(n)s decisions"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -392,9 +404,6 @@ msgstr ""
 msgid "Total pages mentioning user: {count}"
 msgstr ""
 
-msgid "Protocol"
-msgstr ""
-
 msgid "Group Page"
 msgstr ""
 
@@ -408,6 +417,9 @@ msgid "Version"
 msgstr ""
 
 msgid "latest"
+msgstr ""
+
+msgid "Permalink"
 msgstr ""
 
 msgid "Open in Nextcloud"

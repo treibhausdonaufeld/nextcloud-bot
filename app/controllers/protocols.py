@@ -9,7 +9,7 @@ from ravyn import Request, Template, get
 
 from app.db import search
 from app.i18n import template_context
-from app.models import CollectivePage, Group, NCUserList, Protocol
+from app.models import CollectivePage, Decision, Group, NCUserList, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +133,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
     for protocol in protocols:
         page = CollectivePage.get_from_page_id_or_none(protocol.page_id)
         card_group = group_names.get(protocol.group_page_id, "")
+        decision_count = Decision.count(page_id=protocol.page_id)
         cards.append(
             {
                 "date": protocol.date_obj.strftime("%Y-%m-%d")
@@ -142,6 +143,7 @@ def protocols_page(request: Request, group: str = "", q: str = "") -> Template:
                 "time": protocol.time,
                 "location_type": protocol.location_type,
                 "attendee_count": protocol.attendee_count,
+                "decision_count": decision_count,
                 "title": (page.title if page else "") or protocol.date,
                 "page_id": protocol.page_id,
                 "url": (page.url if page else "") or "",
