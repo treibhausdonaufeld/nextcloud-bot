@@ -49,6 +49,39 @@
         <main class="container-fluid">{% block content %}{% endblock %}</main>
       </div>
     </div>
+    {% set others_active = current_path == '/' or current_path.startswith('/functions') or current_path.startswith('/milestones') or current_path.startswith('/mentions') %}
+    <nav class="bottom-nav" id="bottom-nav" aria-label="{{ _('Bottom navigation') }}">
+      <a href="/logbook" class="bottom-nav-item" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}>
+        <span class="icon" aria-hidden="true">✅</span>
+        <span class="label">{{ _("Logbook") }}</span>
+      </a>
+      <a href="/protocols" class="bottom-nav-item" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}>
+        <span class="icon" aria-hidden="true">📝</span>
+        <span class="label">{{ _("Protocols") }}</span>
+      </a>
+      <a href="/groups" class="bottom-nav-item" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}>
+        <span class="icon" aria-hidden="true">⭕</span>
+        <span class="label">{{ _("Groups") }}</span>
+      </a>
+      <button
+        type="button"
+        class="bottom-nav-item bottom-nav-more{% if others_active %} bottom-nav-active{% endif %}"
+        aria-controls="bottom-nav-menu"
+        aria-expanded="false"
+        aria-haspopup="true"
+      >
+        <span class="icon" aria-hidden="true">⋯</span>
+        <span class="label">{{ _("Others") }}</span>
+      </button>
+      <div class="bottom-nav-menu" id="bottom-nav-menu" hidden>
+        <ul>
+          <li><a href="/" {% if current_path == '/' %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🏠</span> {{ _("Home") }}</a></li>
+          <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">⌛</span> {{ _("Functions") }}</a></li>
+          <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🚩</span> {{ _("Milestones") }}</a></li>
+          <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">📣</span> {{ _("Mentions") }}</a></li>
+        </ul>
+      </div>
+    </nav>
     <script>
       (function () {
         const sidebar = document.getElementById('sidebar');
@@ -73,6 +106,38 @@
         // Dismiss the open drawer via outside tap or the Escape key.
         document.addEventListener('click', function (e) {
           if (sidebar.classList.contains('nav-open') && !sidebar.contains(e.target)) {
+            close();
+          }
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') close();
+        });
+      })();
+
+      (function () {
+        const nav = document.getElementById('bottom-nav');
+        const more = nav && nav.querySelector('.bottom-nav-more');
+        const menu = document.getElementById('bottom-nav-menu');
+        if (!nav || !more || !menu) return;
+
+        function close() {
+          menu.hidden = true;
+          more.setAttribute('aria-expanded', 'false');
+        }
+
+        more.addEventListener('click', function () {
+          menu.hidden = !menu.hidden;
+          more.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+        });
+
+        // Collapse the submenu once the user picks a destination.
+        menu.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', close);
+        });
+
+        // Dismiss the open submenu via outside tap or the Escape key.
+        document.addEventListener('click', function (e) {
+          if (!menu.hidden && !more.contains(e.target) && !menu.contains(e.target)) {
             close();
           }
         });
