@@ -866,15 +866,20 @@ mark {
 
 .protocol-view-scroll {
   flex: 1 1 auto;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 0 var(--pico-block-spacing-horizontal, 1.5rem)
     var(--pico-block-spacing-vertical, 1.5rem);
 }
 
 @media (max-width: 640px) {
-  /* near-fullscreen on phones: no wasted letterboxing, edge-to-edge card */
+  /* near-fullscreen on phones: no wasted letterboxing, edge-to-edge card.
+     <dialog> defaults to width: fit-content, so a percentage max-width
+     can't clamp it once oversized content (e.g. a wide inline image) is
+     inside — use a viewport unit instead, which clamps regardless. */
   #protocol-dialog article {
-    max-width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     max-height: 100vh;
     height: 100vh;
     margin: 0;
@@ -1089,6 +1094,12 @@ mark {
 @media (max-width: 768px) {
   .protocol-view-layout {
     flex-direction: column;
+    /* In column layout the cross-axis is width; the row layout's
+       align-items: flex-start would otherwise let children shrink-wrap to
+       their content, so a wide inline image blows out the viewport. Stretch
+       makes .protocol-content fill the available width like .version-panel
+       already does via its explicit width: 100%. */
+    align-items: stretch;
   }
 
   .version-panel {
