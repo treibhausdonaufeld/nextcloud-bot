@@ -986,6 +986,75 @@ mark {
   color: var(--pico-muted-color);
 }
 
+/* ---------- Mentions: per-user cards ---------- */
+
+.mention-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.75rem;
+}
+
+.mention-card {
+  margin-bottom: 0;
+  padding: 1.1rem 1.25rem;
+}
+
+.mention-card h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.mention-card-selected {
+  outline: 2px solid var(--pico-primary);
+  outline-offset: -1px;
+}
+
+.mention-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+/* The attribute selector outweighs Pico's [data-tooltip]:not(a,button,input)
+   rule, which would otherwise add a dotted underline; the emoji already
+   signals the meaning, so keep the number clean. */
+.mention-stat[data-tooltip] {
+  border-bottom: none;
+  cursor: help;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mention-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* Group badge matching the logbook's .decision-group */
+.mention-group {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+}
+
+.mention-group-colored {
+  background: hsl(var(--group-hue) 55% 88%);
+  color: hsl(var(--group-hue) 65% 25%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .mention-group-colored {
+    background: hsl(var(--group-hue) 35% 25%);
+    color: hsl(var(--group-hue) 70% 82%);
+  }
+}
+
 #detail-dialog article {
   position: relative;
   width: 100%;

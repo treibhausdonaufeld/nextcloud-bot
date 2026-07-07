@@ -59,11 +59,15 @@ class Mention(BaseDBModel):
         )
 
     @classmethod
-    def all_user_page_relations(cls) -> list[dict]:
-        """All (username, page) mention pairs for the network graph."""
+    def all_user_page_relations(cls, since: int | None = None) -> list[dict]:
+        """All (username, page) mention pairs, optionally limited to pages
+        modified at or after the `since` unix timestamp."""
+        where = " WHERE p.timestamp >= :since" if since is not None else ""
         return fetch_all_sql(
             "SELECT m.username, m.page_id, m.mention_count, p.title"
             " FROM mentions m"
             " JOIN collective_pages p ON p.page_id = m.page_id"
-            " ORDER BY m.mention_count DESC"
+            f"{where}"
+            " ORDER BY m.mention_count DESC",
+            {"since": since} if since is not None else None,
         )
