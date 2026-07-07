@@ -30,6 +30,19 @@ ATTACHMENT_LINK_RE = re.compile(
 )
 
 
+def media_name(raw_path: str) -> str:
+    """Stored/served name of an attachment: "<folder-id>/<filename>".
+
+    Keeping the attachment folder id avoids collisions when a page
+    references same-named files from different attachment folders (e.g.
+    after copy-pasting content from another page).
+    """
+    path = unquote(raw_path)
+    if path.startswith("./"):
+        path = path[2:]
+    return path.removeprefix(".attachments.")
+
+
 def extract_attachment_paths(content: str) -> List[str]:
     """Return the unique attachment paths referenced in the markdown."""
     if not content:
@@ -85,11 +98,11 @@ def sync_page_media(page: CollectivePage) -> None:
     if not paths:
         return
 
-    existing = {m.name for m in ProtocolMedia.fetch(page_id=page.page_id, limit=10000)}
+    existing = ProtocolMedia.names_for_page(page.page_id)
 
     for raw_path in paths:
         path = unquote(raw_path)
-        name = path.rsplit("/", 1)[-1]
+        name = media_name(raw_path)
         if name in existing:
             continue
         try:

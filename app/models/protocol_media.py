@@ -6,7 +6,7 @@ attachments are copied into this table and served by the app itself.
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Set
 
 import edgy
 
@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 class ProtocolMedia(BaseDBModel):
     page_id: int = edgy.BigIntegerField(index=True)
-    # file name as referenced in the markdown (URL-decoded)
+    # "<attachment-folder-id>/<filename>" as referenced in the markdown
+    # (URL-decoded); the folder id disambiguates same-named files
     name: str = edgy.CharField(max_length=512)
     # original relative path in the markdown, e.g. ".attachments.123/img.png"
     path: str = edgy.CharField(max_length=1024, default="")
@@ -38,6 +39,21 @@ class ProtocolMedia(BaseDBModel):
     @classmethod
     def get_for_page(cls, page_id: int, name: str) -> Optional["ProtocolMedia"]:
         return cls.fetch_one(page_id=page_id, name=name)
+
+    @classmethod
+    def names_for_page(cls, page_id: int) -> Set[str]:
+        """Names of all stored attachments of a page.
+
+        Uses a name-only query so the (potentially large) data blobs are
+        not loaded just to check for existence.
+        """
+        from app.db import fetch_all_sql
+
+        rows = fetch_all_sql(
+            "SELECT name FROM protocol_media WHERE page_id = :page_id",
+            {"page_id": page_id},
+        )
+        return {row["name"] for row in rows}
 
     @classmethod
     def remove_for_page(cls, page_id: int) -> None:

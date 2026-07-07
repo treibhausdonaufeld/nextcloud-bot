@@ -170,7 +170,9 @@ class TestRenderer:
     def test_media_urls_are_rewritten_to_local_route(self):
         md = "![Foto](.attachments.123/G%C3%A4rten%20plan.png)"
         rewritten = rewrite_media_urls(md, 42)
-        assert rewritten == "![Foto](/protocols/42/media/G%C3%A4rten%20plan.png)"
+        # the attachment folder id stays part of the served name so
+        # same-named files from different folders cannot collide
+        assert rewritten == "![Foto](/protocols/42/media/123/G%C3%A4rten%20plan.png)"
 
     def test_render_full_protocol(self):
         content = (
@@ -180,10 +182,23 @@ class TestRenderer:
         )
         html = render_protocol_html(content, 42, {"anna": "Anna A."})
         assert '<span class="mention">@Anna</span>' in html
-        assert 'src="/protocols/42/media/plan.png"' in html
+        assert 'src="/protocols/42/media/123/plan.png"' in html
         assert 'class="callout callout-success"' in html
         # markdown inside the callout is still processed
         assert "<strong>Beschluss:</strong>" in html
+
+    def test_embedded_html_is_sanitized(self):
+        content = (
+            "# Agenda\n\n<script>alert(1)</script>\n\n"
+            '<img src="x" onerror="alert(2)">\n\n'
+            '<a href="javascript:alert(3)">link</a>\n'
+        )
+        html = render_protocol_html(content, 42)
+        assert "<script>" not in html
+        assert "onerror" not in html
+        assert "javascript:" not in html
+        # regular content is untouched
+        assert "Agenda" in html
 
     def test_bare_mentions_use_display_names(self):
         html = render_protocol_html(

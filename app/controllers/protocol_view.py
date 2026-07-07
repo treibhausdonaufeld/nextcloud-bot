@@ -11,7 +11,7 @@ import logging
 from ravyn import Request, Template, get
 from ravyn.responses import Response
 
-from app.i18n import template_context
+from app.i18n import activate, template_context
 from app.models import CollectivePage, NCUserList, ProtocolMedia, ProtocolVersion
 from app.services.protocol_render import render_diff_html, render_protocol_html
 from app.settings import _
@@ -41,6 +41,10 @@ def _user_name_map(user_list: NCUserList) -> dict[str, str]:
 @get("/protocols/{page_id}/view")
 def protocol_view(request: Request, page_id: int, version: int = 0) -> Template:
     """Protocol popup partial for the given (or latest) version."""
+    # activate the request language before any _() call (template_context
+    # only runs at the end of the handler)
+    activate(request)
+
     page = CollectivePage.get_from_page_id_or_none(page_id)
     versions = ProtocolVersion.history_for_page(page_id) if page else []
 
@@ -95,13 +99,20 @@ def protocol_view(request: Request, page_id: int, version: int = 0) -> Template:
     )
 
 
-@get("/protocols/{page_id}/media/{name}")
-def protocol_media(request: Request, page_id: int, name: str) -> Response:
-    media = ProtocolMedia.get_for_page(page_id, name)
+@get("/protocols/{page_id}/media/{folder}/{name}")
+def protocol_media(request: Request, page_id: int, folder: str, name: str) -> Response:
+    """Serve a stored attachment ("<folder-id>/<filename>", see media_name)."""
+    media = ProtocolMedia.get_for_page(page_id, f"{folder}/{name}")
     if media is None:
         return Response(content=b"Not found", status_code=404, media_type="text/plain")
     return Response(
         content=bytes(media.data),
         media_type=media.content_type or "application/octet-stream",
-        headers={"cache-control": "public, max-age=86400"},
+        headers={
+            "cache-control": "public, max-age=86400",
+            # attachments are user-controlled: forbid MIME sniffing and any
+            # active content (e.g. scripts in SVG files)
+            "x-content-type-options": "nosniff",
+            "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'",
+        },
     )

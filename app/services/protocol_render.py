@@ -10,16 +10,27 @@ from __future__ import annotations
 
 import html
 import re
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 import markdown as markdown_lib
+import nh3
 from markupsafe import Markup
 
-from app.services.protocol_media import ATTACHMENT_LINK_RE
+from app.services.protocol_media import ATTACHMENT_LINK_RE, media_name
 
 # "md_in_html" (part of "extra") lets the callout <div> wrappers keep
 # markdown-processed content via the markdown="1" attribute.
 _MD_EXTENSIONS = ["extra", "nl2br", "sane_lists"]
+
+# Page content comes from the Nextcloud wiki and may contain raw HTML —
+# sanitize the rendered output so embedded scripts cannot execute in the
+# viewer. The nh3 defaults cover the markdown output; `class` is additionally
+# allowed for the callout divs and mention spans.
+_ALLOWED_ATTRIBUTES = {k: set(v) for k, v in nh3.ALLOWED_ATTRIBUTES.items()}
+for _tag in ("div", "span", "a", "img", "code", "pre"):
+    _ALLOWED_ATTRIBUTES.setdefault(_tag, set()).add("class")
+_ALLOWED_ATTRIBUTES["a"] |= {"title"}
+_ALLOWED_ATTRIBUTES["img"] |= {"title"}
 
 _CALLOUT_RE = re.compile(
     r"^:::[ \t]*(\w+)[ \t]*\r?\n(.*?)^:::[ \t]*$",
@@ -31,12 +42,16 @@ _BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
 def rewrite_media_urls(content: str, page_id: int) -> str:
-    """Point attachment links at the app's own media route."""
+    """Point attachment links at the app's own media route.
+
+    The stored media name keeps the attachment folder id
+    ("<folder-id>/<filename>"), so same-named files from different
+    attachment folders cannot collide.
+    """
 
     def replace(match: re.Match) -> str:
-        path = match.group(1)
-        name = unquote(path[2:] if path.startswith("./") else path).rsplit("/", 1)[-1]
-        return f"(/protocols/{page_id}/media/{quote(name)})"
+        name = media_name(match.group(1))
+        return f"(/protocols/{page_id}/media/{quote(name, safe='/')})"
 
     return ATTACHMENT_LINK_RE.sub(replace, content)
 
@@ -82,7 +97,8 @@ def render_protocol_html(
     text = _replace_callouts(text)
     text = _replace_mentions(text, user_names)
     # A fresh conversion per call keeps this safe under Ravyn's threadpool.
-    return Markup(markdown_lib.markdown(text, extensions=_MD_EXTENSIONS))
+    rendered = markdown_lib.markdown(text, extensions=_MD_EXTENSIONS)
+    return Markup(nh3.clean(rendered, attributes=_ALLOWED_ATTRIBUTES))
 
 
 def render_diff_html(diff: str | None) -> Markup:
