@@ -8,6 +8,8 @@ raw markdown via WebDAV, upserting `CollectivePage` rows.
 from __future__ import annotations
 
 import logging
+import time
+from datetime import datetime
 from typing import List, Set
 
 import requests
@@ -174,36 +176,6 @@ def snapshot_protocol_page(page: CollectivePage) -> None:
         logger.exception("Failed to snapshot protocol page %s", page.page_id)
 
 
-def save_page_markdown(page: CollectivePage, content: str) -> None:
-    """Write markdown content of a collectives page back via WebDAV.
-
-    Used to restore an earlier protocol version: Nextcloud stays the source
-    of truth, so a revert must be written there (a local-only change would be
-    overwritten by the next sync).
-    """
-    base = settings.nextcloud.base_url
-    if not base:
-        raise RuntimeError("settings.nextcloud.base_url is not configured")
-
-    base_str = str(base).rstrip("/")
-    filepath = "/".join(
-        (page.collective_path or "", page.file_path or "", page.file_name or "")
-    )
-    url = base_str + PAGE_CONTENT_URL.format(
-        username=settings.nextcloud.admin_username, filepath=filepath
-    )
-
-    logger.info("Writing markdown content for page %s to %s", page.page_id, url)
-    resp = requests.put(
-        url,
-        auth=_build_auth(),
-        data=content.encode("utf-8"),
-        headers={"Content-Type": "text/markdown"},
-        timeout=90,
-    )
-    resp.raise_for_status()
-
-
 def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     """Upsert the given pages into the database. Returns the stored pages."""
     stored = []
@@ -231,9 +203,41 @@ def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     return stored
 
 
+# Protocols older than this are never deleted from the database, even when
+# they disappear from Nextcloud — their history stays self-contained here.
+PROTOCOL_DELETE_PROTECTION_DAYS = 7
+
+
+def protocol_age_days(page: CollectivePage) -> int | None:
+    """Age of a protocol in days, or None when it cannot be determined.
+
+    Prefers the parsed protocol date; falls back to the page's Nextcloud
+    modification timestamp.
+    """
+    from app.models.protocol import Protocol
+
+    protocol = Protocol.fetch_one(page_id=page.page_id)
+    if protocol is not None:
+        try:
+            date_obj = protocol.date_obj
+        except ValueError:
+            date_obj = None
+        if date_obj is not None:
+            return (datetime.now().date() - date_obj).days
+
+    if page.timestamp:
+        try:
+            return int((time.time() - float(page.timestamp)) // 86400)
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 def delete_orphaned_pages(fetched_page_ids: Set[int]) -> None:
     """Delete pages from the database that are no longer in Nextcloud.
 
+    Protocol pages older than PROTOCOL_DELETE_PROTECTION_DAYS are never
+    deleted (renaming a page keeps its page_id, so renames are unaffected).
     Each page's remove method handles cleanup of related objects and the
     search index.
 
@@ -243,11 +247,23 @@ def delete_orphaned_pages(fetched_page_ids: Set[int]) -> None:
     stored_pages = CollectivePage.fetch(limit=10000)
 
     for page in stored_pages:
-        if page.page_id not in fetched_page_ids:
-            logger.info(
-                "Deleting orphaned page: %s (page_id=%s)", page.title, page.page_id
-            )
-            page.remove()
+        if page.page_id in fetched_page_ids:
+            continue
+
+        if is_protocol_page_safe(page):
+            age = protocol_age_days(page)
+            # When the age is unknown, err on the side of keeping the protocol.
+            if age is None or age > PROTOCOL_DELETE_PROTECTION_DAYS:
+                logger.info(
+                    "Keeping orphaned protocol page: %s (page_id=%s, age=%s days)",
+                    page.title,
+                    page.page_id,
+                    age,
+                )
+                continue
+
+        logger.info("Deleting orphaned page: %s (page_id=%s)", page.title, page.page_id)
+        page.remove()
 
 
 def fetch_and_store_all_pages() -> List[CollectivePage]:

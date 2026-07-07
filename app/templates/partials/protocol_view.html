@@ -18,20 +18,11 @@
       </p>
     </header>
 
-    {% if error %}<p class="flash flash-error">{{ error }}</p>{% endif %}
-    {% if notice %}<p class="flash flash-notice">{{ notice }}</p>{% endif %}
-
     {% if not selected_is_latest %}
       <div class="version-banner">
         <span>{{ _("You are viewing an older version of this protocol.") }}</span>
         <span class="version-banner-actions">
           <a href="#" hx-get="/protocols/{{ page.page_id }}/view" hx-target="#protocol-detail">{{ _("Show latest") }}</a>
-          <button type="button" class="restore-button"
-                  hx-post="/protocols/{{ page.page_id }}/versions/{{ selected_version }}/restore"
-                  hx-target="#protocol-detail"
-                  hx-confirm="{{ _('Restore version %(version)s? The protocol in Nextcloud will be overwritten with this version.') | format(version=selected_version) }}">
-            {{ _("Restore this version") }}
-          </button>
         </span>
       </div>
     {% endif %}
@@ -55,7 +46,6 @@
                 <small>
                   ✍️ {{ v.editor }}
                   {% if v.timestamp %}<br />🕒 {{ v.timestamp }}{% endif %}
-                  {% if v.restored_from %}<br />↩️ {{ _("restored from version %(version)s") | format(version=v.restored_from) }}{% endif %}
                 </small>
               </li>
             {% endfor %}
@@ -70,5 +60,19 @@
         {{ diff_html }}
       </details>
     {% endif %}
+
+    <details class="raw-markdown">
+      <summary>{{ _("Show raw markdown") }}</summary>
+      <p class="meta">{{ _("To restore this version, copy the markdown and paste it into the page in Nextcloud.") }}</p>
+      <button type="button" class="copy-markdown"
+              onclick="var pre = this.parentElement.querySelector('pre'); var btn = this;
+                       navigator.clipboard.writeText(pre.textContent).then(function () {
+                         var label = btn.textContent; btn.textContent = '✓';
+                         setTimeout(function () { btn.textContent = label; }, 1500);
+                       });">
+        {{ _("Copy markdown") }}
+      </button>
+      <pre class="raw-markdown-text">{{ raw_content }}</pre>
+    </details>
   {% endif %}
 </article>

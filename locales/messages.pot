@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 03:29+0000\n"
+"POT-Creation-Date: 2026-07-07 03:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,20 +21,6 @@ msgid "No Title"
 msgstr ""
 
 msgid "unknown"
-msgstr ""
-
-msgid "Version not found."
-msgstr ""
-
-msgid "This is already the latest version."
-msgstr ""
-
-#, python-brace-format
-msgid "Could not write the restored version to Nextcloud: {error}"
-msgstr ""
-
-#, python-brace-format
-msgid "Version {version} was restored."
 msgstr ""
 
 msgid "Functions"
@@ -433,23 +419,21 @@ msgstr ""
 msgid "Show latest"
 msgstr ""
 
-#, python-format
-msgid ""
-"Restore version %(version)s? The protocol in Nextcloud will be "
-"overwritten with this version."
-msgstr ""
-
-msgid "Restore this version"
-msgstr ""
-
 msgid "Version history"
 msgstr ""
 
-#, python-format
-msgid "restored from version %(version)s"
+msgid "Changes compared to the previous version"
 msgstr ""
 
-msgid "Changes compared to the previous version"
+msgid "Show raw markdown"
+msgstr ""
+
+msgid ""
+"To restore this version, copy the markdown and paste it into the page in "
+"Nextcloud."
+msgstr ""
+
+msgid "Copy markdown"
 msgstr ""
 
 msgid "Source Documents"

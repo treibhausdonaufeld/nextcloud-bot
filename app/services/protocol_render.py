@@ -47,9 +47,7 @@ def _replace_callouts(content: str) -> str:
     def replace(match: re.Match) -> str:
         kind = match.group(1).lower()
         body = match.group(2).strip("\n")
-        return (
-            f'<div class="callout callout-{kind}" markdown="1">\n\n{body}\n\n</div>'
-        )
+        return f'<div class="callout callout-{kind}" markdown="1">\n\n{body}\n\n</div>'
 
     return _CALLOUT_RE.sub(replace, content)
 

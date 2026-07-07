@@ -34,8 +34,6 @@ class ProtocolVersion(BaseDBModel):
     editor: str | None = edgy.CharField(max_length=255, null=True)
     # Nextcloud modification timestamp of the page at snapshot time
     page_timestamp: int | None = edgy.BigIntegerField(null=True)
-    # set when this version was created by restoring an older version
-    restored_from: int | None = edgy.IntegerField(null=True)
 
     natural_key_fields = ("page_id", "version")
 
@@ -74,12 +72,7 @@ class ProtocolVersion(BaseDBModel):
         return "\n".join(lines)
 
     @classmethod
-    def record(
-        cls,
-        page: "CollectivePage",
-        editor: str | None = None,
-        restored_from: int | None = None,
-    ) -> Optional["ProtocolVersion"]:
+    def record(cls, page: "CollectivePage") -> Optional["ProtocolVersion"]:
         """Snapshot the page content as a new version if it changed.
 
         Idempotent: when the content equals the latest stored version, no new
@@ -101,9 +94,8 @@ class ProtocolVersion(BaseDBModel):
             )
             if latest is not None
             else "",
-            editor=editor if editor is not None else page.last_user_id,
+            editor=page.last_user_id,
             page_timestamp=page.timestamp,
-            restored_from=restored_from,
         )
         snapshot.store()
         logger.info(

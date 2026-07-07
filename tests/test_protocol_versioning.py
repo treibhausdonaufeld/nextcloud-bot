@@ -1,9 +1,13 @@
 """Unit tests for protocol versioning, media extraction and the renderer."""
 
+import time
+from datetime import date, timedelta
 from unittest.mock import patch
 
-from app.models.collective_page import CollectivePage
+from app.models.collective_page import CollectivePage, PageSubtype
+from app.models.protocol import Protocol
 from app.models.protocol_version import ProtocolVersion
+from app.services.collectives_loader import delete_orphaned_pages
 from app.services.protocol_media import extract_attachment_paths
 from app.services.protocol_render import (
     render_diff_html,
@@ -70,23 +74,71 @@ class TestVersionRecording:
         assert "--- v1" in created.diff
         assert "+++ v2" in created.diff
 
-    def test_restore_records_editor_and_origin(self):
-        page = _make_page("old content")
-        latest = _make_version(2, "new content")
-        with (
-            patch.object(ProtocolVersion, "fetch", return_value=[latest]),
-            patch.object(ProtocolVersion, "store", lambda self: None),
-        ):
-            created = ProtocolVersion.record(page, editor="bot", restored_from=1)
-
-        assert created.version == 3
-        assert created.editor == "bot"
-        assert created.restored_from == 1
-
     def test_compute_diff_marks_removed_lines(self):
         diff = ProtocolVersion.compute_diff("a\nb\n", "a\nc\n", "v1", "v2")
         assert "-b" in diff
         assert "+c" in diff
+
+
+class TestOrphanedProtocolProtection:
+    """delete_orphaned_pages must never delete protocols older than 7 days."""
+
+    def _run_cleanup(self, page, protocol):
+        removed = []
+        with (
+            patch.object(CollectivePage, "fetch", return_value=[page]),
+            patch.object(
+                CollectivePage, "remove", lambda self: removed.append(self.page_id)
+            ),
+            patch.object(Protocol, "fetch_one", return_value=protocol),
+            # the config-based fallback classification is not under test here
+            patch.object(Protocol, "is_protocol_page", return_value=False),
+        ):
+            delete_orphaned_pages(fetched_page_ids=set())
+        return removed
+
+    def test_old_protocol_is_kept(self):
+        page = _make_page("# Agenda\n")
+        page.subtype = PageSubtype.PROTOCOL
+        old_date = (date.today() - timedelta(days=30)).isoformat()
+        protocol = Protocol(page_id=42, date=old_date)
+        assert self._run_cleanup(page, protocol) == []
+
+    def test_recent_protocol_is_deleted(self):
+        page = _make_page("# Agenda\n")
+        page.subtype = PageSubtype.PROTOCOL
+        recent_date = (date.today() - timedelta(days=2)).isoformat()
+        protocol = Protocol(page_id=42, date=recent_date)
+        assert self._run_cleanup(page, protocol) == [42]
+
+    def test_protocol_with_unknown_age_is_kept(self):
+        page = _make_page("# Agenda\n", timestamp=None)
+        page.subtype = PageSubtype.PROTOCOL
+        protocol = Protocol(page_id=42, date="kein datum")
+        assert self._run_cleanup(page, protocol) == []
+
+    def test_old_page_timestamp_protects_when_date_is_missing(self):
+        page = _make_page("# Agenda\n", timestamp=int(time.time()) - 30 * 86400)
+        page.subtype = PageSubtype.PROTOCOL
+        assert self._run_cleanup(page, protocol=None) == []
+
+    def test_non_protocol_page_is_deleted(self):
+        page = _make_page("# Some page\n")
+        page.subtype = None
+        assert self._run_cleanup(page, protocol=None) == [42]
+
+    def test_page_still_in_nextcloud_is_untouched(self):
+        page = _make_page("# Agenda\n")
+        page.subtype = PageSubtype.PROTOCOL
+        removed = []
+        with (
+            patch.object(CollectivePage, "fetch", return_value=[page]),
+            patch.object(
+                CollectivePage, "remove", lambda self: removed.append(self.page_id)
+            ),
+        ):
+            delete_orphaned_pages(fetched_page_ids={42})
+        assert removed == []
 
 
 class TestAttachmentExtraction:
