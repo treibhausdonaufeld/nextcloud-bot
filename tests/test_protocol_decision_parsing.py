@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from app.services.config import OrganisationConfig
 from app.models.base import BaseDBModel
 from app.models.decision import Decision
 from app.models.protocol import Protocol
+from app.services.config import OrganisationConfig
 
 
 @pytest.fixture
@@ -335,16 +335,13 @@ More text here.
         """User mentions in the title are resolved to the plain display name."""
         with patch("app.models.protocol.bot_config", mock_bot_config):
             block = (
-                "**Beschluss:** @[Barbara Riccabona]"
-                "(mention://user/Barbara.Riccabona) ist Delegierte der AG Viertel"
+                "**Beschluss:** @[Barbara Mayer]"
+                "(mention://user/Barbara.Mayer) ist Delegierte der AG Viertel"
             )
             mock_protocol.save_decision(block)
 
             call_kwargs = mock_decision_class.call_args[1]
-            assert (
-                call_kwargs["title"]
-                == "Barbara Riccabona ist Delegierte der AG Viertel"
-            )
+            assert call_kwargs["title"] == "Barbara Mayer ist Delegierte der AG Viertel"
 
     def test_empty_block_returns_early(
         self, mock_protocol, mock_bot_config, mock_decision_class

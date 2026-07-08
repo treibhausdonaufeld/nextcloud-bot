@@ -311,9 +311,6 @@ class Protocol(BaseDBModel):
                 .strip(":")
                 .strip()
             )
-        # Resolve user mentions to plain names so the title reads as a normal
-        # sentence ("Barbara Riccabona ist Delegierte …") instead of leaking
-        # the "@[…](mention://…)" markup.
         title = strip_mentions(title)
         # remove first line
         lines = lines[1:]

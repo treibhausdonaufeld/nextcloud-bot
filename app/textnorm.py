@@ -64,11 +64,8 @@ _BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 
 
 def strip_mentions(text: str) -> str:
-    """Replace ``mention://`` links with the mentioned user's plain name.
-
-    ``@[Barbara Riccabona](mention://user/Barbara.Riccabona) ist Delegierte``
-    becomes ``Barbara Riccabona ist Delegierte`` instead of leaking the
-    ``@[...](mention://...)`` markup into the displayed title.
+    """
+    Replace ``mention://`` links with the mentioned user's plain name.
     """
     if not text:
         return ""

@@ -81,16 +81,16 @@ class TestStripMentions:
     def test_link_mention_becomes_plain_name(self):
         assert (
             strip_mentions(
-                "@[Barbara Riccabona](mention://user/Barbara.Riccabona) "
+                "@[Barbara Mayer](mention://user/Barbara.Mayer) "
                 "ist Delegierte der AG Viertel"
             )
-            == "Barbara Riccabona ist Delegierte der AG Viertel"
+            == "Barbara Mayer ist Delegierte der AG Viertel"
         )
 
     def test_link_mention_without_at_prefix(self):
         assert (
-            strip_mentions("[Barbara Riccabona](mention://user/Barbara.Riccabona)")
-            == "Barbara Riccabona"
+            strip_mentions("[Barbara Mayer](mention://user/Barbara.Mayer)")
+            == "Barbara Mayer"
         )
 
     def test_bare_mention_falls_back_to_username(self):
