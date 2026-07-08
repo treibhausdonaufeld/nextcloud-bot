@@ -17,7 +17,7 @@ from app.db import search
 from app.i18n import template_context
 from app.models import Decision, Group
 from app.settings import _
-from app.textnorm import strip_markdown
+from app.textnorm import strip_markdown, strip_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,8 @@ def logbook_context(
         cards.append(
             {
                 "decision": decision,
-                "display_title": strip_markdown(decision.title) or _("No Title"),
+                "display_title": strip_markdown(strip_mentions(decision.title))
+                or _("No Title"),
                 "preview_html": render_markdown(preview_text),
                 "text_html": render_markdown(decision.text),
                 "context_html": render_markdown(decision.context),
