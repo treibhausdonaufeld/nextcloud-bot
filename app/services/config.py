@@ -133,6 +133,9 @@ class OrganisationConfig(BaseModel):
     member_person_keywords: List[str] = Field(
         default_factory=lambda: ["mitglied", "mitglieder"]
     )
+    absent_member_keywords: List[str] = Field(
+        default_factory=lambda: ["karenz", "karenziert", "in karenz"]
+    )
 
     @field_validator("group_prefixes", mode="before")
     def to_upper(cls, v: List[str]) -> List[str]:

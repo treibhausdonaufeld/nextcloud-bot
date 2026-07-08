@@ -44,6 +44,8 @@ def build_group_graph(
                 color = "#FF5733"  # Red for coordination
             elif member_name in group.delegate:
                 color = "#33C1FF"  # Blue for delegates
+            elif member_name in group.absent:
+                color = "#999999"  # Gray for absent
             else:
                 color = "#DAA520"  # Goldenrod for regular members
 
@@ -148,6 +150,7 @@ def user_detail_context(username: str, all_groups: list[Group]) -> dict:
             "name": g.name,
             "coordination": username in g.coordination,
             "delegate": username in g.delegate,
+            "absent": username in g.absent,
         }
         for g in all_groups
         if username in g.all_members
@@ -275,6 +278,7 @@ def group_detail(request: Request, node: str = "") -> Template:
             coordination_names=names(group.coordination),
             delegate_names=names(group.delegate),
             member_names=names(group.members),
+            absent_names=names(group.absent),
         )
         return Template(name="partials/group_detail.html", context=context)
 

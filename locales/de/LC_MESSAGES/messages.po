@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 20:02+0000\n"
+"POT-Creation-Date: 2026-07-08 20:05+0200\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -134,17 +134,14 @@ msgstr "Bitte erstelle manuell einen Beitrag im Kanal #{protocols}"
 msgid "Toggle navigation"
 msgstr "Navigation umschalten"
 
-msgid "Home"
-msgstr "Startseite"
-
-msgid "Groups"
-msgstr "Gruppen"
+msgid "Logbook"
+msgstr "Logbuch"
 
 msgid "Protocols"
 msgstr "Protokolle"
 
-msgid "Logbook"
-msgstr "Logbuch"
+msgid "Groups"
+msgstr "Gruppen"
 
 msgid "Mentions"
 msgstr "Erwähnungen"
@@ -158,30 +155,8 @@ msgstr "Untere Navigation"
 msgid "Others"
 msgstr "Weitere"
 
-#, python-brace-format
-msgid "{common_name} Dashboard"
-msgstr "{common_name} Übersicht"
-
-msgid "Search"
-msgstr "Suchen"
-
-msgid "Search collective pages and decisions"
-msgstr "Kollektiv-Seiten und Beschlüsse durchsuchen"
-
-msgid "Type"
-msgstr "Typ"
-
-msgid "Pages and decisions"
-msgstr "Seiten und Beschlüsse"
-
-msgid "Pages"
-msgstr "Seiten"
-
-msgid "Decisions"
-msgstr "Beschlüsse"
-
-msgid "Results"
-msgstr "Ergebnisse"
+msgid "Home"
+msgstr "Startseite"
 
 msgid "Hierarchical layout"
 msgstr "Hierarchische Darstellung"
@@ -206,6 +181,9 @@ msgstr "Höhe des Graphen"
 
 msgid "Search decisions…"
 msgstr "Beschlüsse durchsuchen…"
+
+msgid "Search"
+msgstr "Suchen"
 
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
@@ -394,6 +372,9 @@ msgstr "Delegierte"
 msgid "Members"
 msgstr "Mitglieder"
 
+msgid "Absent"
+msgstr "Abwesend"
+
 msgid "Subgroups"
 msgstr "Untergruppen"
 
@@ -459,6 +440,9 @@ msgstr "Markdown kopieren"
 msgid "Source Documents"
 msgstr "Quell-Dokumente"
 
+msgid "Type"
+msgstr "Typ"
+
 msgid "Title"
 msgstr "Titel"
 
@@ -483,12 +467,34 @@ msgstr "(Koordination)"
 msgid "(Delegate)"
 msgstr "(Delegierter)"
 
+msgid "(Absent)"
+msgstr ""
+
 msgid "Pages mentioning User"
 msgstr "Seiten, die den Benutzer erwähnen"
 
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr "Erwähnungen insgesamt: {count}"
+
+#, python-brace-format
+#~ msgid "{common_name} Dashboard"
+#~ msgstr "{common_name} Übersicht"
+
+#~ msgid "Search collective pages and decisions"
+#~ msgstr "Kollektiv-Seiten und Beschlüsse durchsuchen"
+
+#~ msgid "Pages and decisions"
+#~ msgstr "Seiten und Beschlüsse"
+
+#~ msgid "Pages"
+#~ msgstr "Seiten"
+
+#~ msgid "Decisions"
+#~ msgstr "Beschlüsse"
+
+#~ msgid "Results"
+#~ msgstr "Ergebnisse"
 
 #~ msgid "Table View"
 #~ msgstr "Tabellenansicht"

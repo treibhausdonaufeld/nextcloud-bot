@@ -6,7 +6,7 @@
     {% for g in member_of_groups %}
       <li>
         {{ g.name }}
-        {% if g.coordination %}{{ _("(Coordination)") }}{% elif g.delegate %}{{ _("(Delegate)") }}{% endif %}
+        {% if g.coordination %}{{ _("(Coordination)") }}{% elif g.delegate %}{{ _("(Delegate)") }}{% elif g.absent %}{{ _("(Absent)") }}{% endif %}
       </li>
     {% endfor %}
   </ul>

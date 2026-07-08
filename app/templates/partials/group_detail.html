@@ -19,6 +19,9 @@
     {% if member_names %}
       <li><strong>{{ _("Members") }}</strong> ({{ member_names | length }}): {{ member_names | join(", ") }}</li>
     {% endif %}
+    {% if absent_names %}
+      <li><strong>{{ _("Absent") }}</strong> ({{ absent_names | length }}): {{ absent_names | join(", ") }}</li>
+    {% endif %}
   </ul>
 
   {% if subgroups %}

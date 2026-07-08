@@ -298,6 +298,118 @@ mention://user/charlie
                     assert mock_group.coordination == sorted(mock_group.coordination)
                     assert mock_group.members == sorted(mock_group.members)
 
+    def test_parse_absent_section(self, mock_group, mock_page, mock_bot_config):
+        """Test parsing members from a dedicated 'Karenz' section."""
+        with patch("app.models.group.bot_config", mock_bot_config):
+            mock_page.content = """
+# AG Test Group
+
+**Karenz:**
+mention://user/alice
+mention://user/bob
+
+**Mitglieder:**
+mention://user/charlie
+"""
+
+            with patch.object(
+                CollectivePage, "get_from_page_id", return_value=mock_page
+            ):
+                with patch.object(Group, "store"):
+                    mock_group.update_from_page()
+
+                    assert "alice" in mock_group.absent
+                    assert "bob" in mock_group.absent
+                    assert "charlie" in mock_group.members
+                    assert "charlie" not in mock_group.absent
+
+    def test_parse_absent_inline(self, mock_group, mock_page, mock_bot_config):
+        """Test that members with an absent keyword on the same line are marked absent."""
+        with patch("app.models.group.bot_config", mock_bot_config):
+            mock_page.content = """
+# AG Test Group
+
+**Mitglieder:**
+mention://user/alice (in Karenz)
+mention://user/bob
+"""
+
+            with patch.object(
+                CollectivePage, "get_from_page_id", return_value=mock_page
+            ):
+                with patch.object(Group, "store"):
+                    mock_group.update_from_page()
+
+                    assert "alice" in mock_group.absent
+                    assert "alice" not in mock_group.members
+                    assert "bob" in mock_group.members
+                    assert "bob" not in mock_group.absent
+
+    def test_absent_excludes_from_other_lists(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        """Test that absent members are excluded from coordination/delegate/members."""
+        with patch("app.models.group.bot_config", mock_bot_config):
+            mock_page.content = """
+# AG Test Group
+
+**Koordination:**
+mention://user/alice
+
+**Delegierte:**
+mention://user/bob (karenziert)
+
+**Mitglieder:**
+mention://user/charlie
+mention://user/dave (karenz)
+"""
+
+            with patch.object(
+                CollectivePage, "get_from_page_id", return_value=mock_page
+            ):
+                with patch.object(Group, "store"):
+                    mock_group.update_from_page()
+
+                    assert "alice" in mock_group.coordination
+                    assert "alice" not in mock_group.absent
+
+                    assert "bob" in mock_group.absent
+                    assert "bob" not in mock_group.delegate
+
+                    assert "charlie" in mock_group.members
+                    assert "charlie" not in mock_group.absent
+
+                    assert "dave" in mock_group.absent
+                    assert "dave" not in mock_group.members
+
+    def test_all_members_includes_absent(self, mock_group, mock_page, mock_bot_config):
+        """Test that all_members property includes absent members."""
+        with patch("app.models.group.bot_config", mock_bot_config):
+            mock_page.content = """
+# AG Test Group
+
+**Koordination:**
+mention://user/alice
+
+**Karenz:**
+mention://user/bob
+
+**Mitglieder:**
+mention://user/charlie
+"""
+
+            with patch.object(
+                CollectivePage, "get_from_page_id", return_value=mock_page
+            ):
+                with patch.object(Group, "store"):
+                    mock_group.update_from_page()
+
+                    all_members = mock_group.all_members
+                    assert "alice" in all_members
+                    assert "bob" in all_members
+                    assert "charlie" in all_members
+                    assert len(all_members) == 3
+
 
 class TestGroupNameAndMetadata:
     """Test suite for Group name and metadata extraction."""
@@ -444,3 +556,30 @@ mention://user/charlie
                     mock_group.update_from_page()
 
                     assert "charlie" in mock_group.members
+
+    @pytest.mark.parametrize(
+        "keyword",
+        [
+            "Karenz",
+            "Karenziert",
+        ],
+    )
+    def test_absent_section_keywords(
+        self, mock_group, mock_page, mock_bot_config, keyword
+    ):
+        """Test that various absent section keywords are recognized."""
+        with patch("app.models.group.bot_config", mock_bot_config):
+            mock_page.content = f"""
+# AG Test Group
+
+**{keyword}:**
+mention://user/dave
+"""
+
+            with patch.object(
+                CollectivePage, "get_from_page_id", return_value=mock_page
+            ):
+                with patch.object(Group, "store"):
+                    mock_group.update_from_page()
+
+                    assert "dave" in mock_group.absent

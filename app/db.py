@@ -122,6 +122,12 @@ async def _migrate_schema() -> None:
         )
         logger.info("Migrated users table: added authentik_username column")
 
+    if "absent" not in await _table_columns("groups"):
+        await database.execute(
+            "ALTER TABLE groups ADD COLUMN absent TEXT NOT NULL DEFAULT '[]'"
+        )
+        logger.info("Migrated groups table: added absent column")
+
     # Early protocol_media versions stored attachment bytes as a database
     # blob; media now lives on disk. Drop the old table (attachments are
     # re-fetched from Nextcloud on the next sync) and recreate it with the

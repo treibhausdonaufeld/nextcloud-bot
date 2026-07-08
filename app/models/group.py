@@ -18,6 +18,7 @@ class Group(BaseDBModel):
     coordination: List[str] = edgy.JSONField(default=list)
     delegate: List[str] = edgy.JSONField(default=list)
     members: List[str] = edgy.JSONField(default=list)
+    absent: List[str] = edgy.JSONField(default=list)
     short_names: List[str] = edgy.JSONField(default=list)
 
     natural_key_fields = ("page_id",)
@@ -38,8 +39,10 @@ class Group(BaseDBModel):
 
     @property
     def all_members(self) -> List[str]:
-        """Return all members, including coordination and delegates."""
-        return sorted(set(self.coordination + self.delegate + self.members))
+        """Return all members, including coordination, delegates and absent."""
+        return sorted(
+            set(self.coordination + self.delegate + self.members + self.absent)
+        )
 
     @property
     def abbreviated(self) -> str:
@@ -133,6 +136,7 @@ class Group(BaseDBModel):
         self.coordination = []
         self.delegate = []
         self.members = []
+        self.absent = []
         attr = ""
 
         for line in lines:
@@ -148,6 +152,8 @@ class Group(BaseDBModel):
                 attr = "delegate"
             elif first_word in bot_config.organisation.member_person_keywords:
                 attr = "members"
+            elif first_word in bot_config.organisation.absent_member_keywords:
+                attr = "absent"
             elif first_word in bot_config.organisation.group_shortname_keywords:
                 # shortnames are split by commas
                 shortnames = line.split(":")[-1].strip("*").strip().split(",")
@@ -158,19 +164,32 @@ class Group(BaseDBModel):
                 continue
 
             users = re.findall(user_regex, line)
-            if users and attr:
-                users_list = list(getattr(self, attr))
-                users_list.extend(users)
-                setattr(self, attr, sorted(users_list))
+            if users:
+                line_lower = line.lower()
+                is_absent_line = any(
+                    kw.lower() in line_lower
+                    for kw in bot_config.organisation.absent_member_keywords
+                )
+                if is_absent_line:
+                    self.absent.extend(users)
+                    self.absent = sorted(set(self.absent))
+                elif attr:
+                    users_list = list(getattr(self, attr))
+                    users_list.extend(users)
+                    setattr(self, attr, sorted(users_list))
             elif line.strip() != "" and first_word not in (
                 bot_config.organisation.coordination_person_keywords
                 + bot_config.organisation.delegate_person_keywords
                 + bot_config.organisation.member_person_keywords
+                + bot_config.organisation.absent_member_keywords
             ):
                 attr = ""
 
+        absent_set = set(self.absent)
         self.members = sorted(
-            set(self.members) - set(self.coordination) - set(self.delegate)
+            set(self.members) - set(self.coordination) - set(self.delegate) - absent_set
         )
+        self.coordination = sorted(set(self.coordination) - absent_set)
+        self.delegate = sorted(set(self.delegate) - absent_set)
 
         self.store()
