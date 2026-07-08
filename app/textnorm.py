@@ -66,11 +66,29 @@ _BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
 def strip_mentions(text: str) -> str:
     """
     Replace ``mention://`` links with the mentioned user's plain name.
+
+    Ensures a space is inserted between the substituted name and any
+    following non-whitespace character.
     """
     if not text:
         return ""
-    text = _MENTION_LINK_RE.sub(lambda m: m.group(1).lstrip("@").strip(), text)
-    return _BARE_MENTION_RE.sub(lambda m: m.group(1), text)
+
+    def _replace_link(m: re.Match) -> str:
+        name = m.group(1).lstrip("@").strip()
+        pos = m.end()
+        if pos < len(text) and not text[pos].isspace():
+            return name + " "
+        return name
+
+    def _replace_bare(m: re.Match) -> str:
+        name = m.group(1)
+        pos = m.end()
+        if pos < len(text) and not text[pos].isspace():
+            return name + " "
+        return name
+
+    text = _MENTION_LINK_RE.sub(_replace_link, text)
+    return _BARE_MENTION_RE.sub(_replace_bare, text)
 
 
 # only try to split reasonably long, purely alphabetic words into parts that
