@@ -44,11 +44,6 @@ def build_search_results(query: str, doc_type: str, limit: int) -> list[dict]:
     return results
 
 
-@get("/")
-def dashboard(request: Request) -> Template:
-    return Template(name="dashboard.html", context=template_context(request))
-
-
 @get("/search")
 def search_results(
     request: Request, q: str = "", doc_type: str = "", limit: int = 25

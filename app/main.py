@@ -10,10 +10,13 @@ from ravyn import Gateway, Ravyn, Request, StaticFilesConfig, get
 from ravyn.core.config.template import TemplateConfig
 from ravyn.responses import RedirectResponse
 
-from app.controllers.dashboard import dashboard, search_results
+from app.controllers.dashboard import search_results
 from app.controllers.groups import group_detail, groups_graph, groups_page
-from app.controllers.logbook import logbook_page
-from app.controllers.mentions import mention_user_detail, mentions_page
+from app.controllers.logbook import index, logbook_page
+from app.controllers.mentions import (
+    mention_user_detail,
+    mentions_page,
+)
 from app.controllers.protocol_view import protocol_media, protocol_view
 from app.controllers.protocols import protocols_page
 from app.controllers.timeline import functions_page, milestones_page
@@ -75,7 +78,7 @@ app = Ravyn(
     routes=[
         Gateway(handler=health),
         Gateway(handler=switch_language),
-        Gateway(handler=dashboard),
+        Gateway(handler=index),
         Gateway(handler=search_results),
         Gateway(handler=groups_page),
         Gateway(handler=groups_graph),

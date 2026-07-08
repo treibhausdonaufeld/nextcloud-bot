@@ -11,6 +11,7 @@ from typing import Any
 import markdown as markdown_lib
 from markupsafe import Markup
 from ravyn import Request, Template, get
+from ravyn.responses import RedirectResponse
 
 from app.db import search
 from app.i18n import template_context
@@ -164,6 +165,11 @@ def logbook_context(
         q=q,
         search_type=search_type,
     )
+
+
+@get("/")
+def index(request: Request) -> RedirectResponse:
+    return RedirectResponse(url="/logbook", status_code=302)
 
 
 @get("/logbook")
