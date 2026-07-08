@@ -329,6 +329,23 @@ More text here.
             call_kwargs = mock_decision_class.call_args[1]
             assert call_kwargs["title"] == "_Approve_ the budget"
 
+    def test_mention_in_title_becomes_plain_name(
+        self, mock_protocol, mock_bot_config, mock_decision_class
+    ):
+        """User mentions in the title are resolved to the plain display name."""
+        with patch("app.models.protocol.bot_config", mock_bot_config):
+            block = (
+                "**Beschluss:** @[Barbara Riccabona]"
+                "(mention://user/Barbara.Riccabona) ist Delegierte der AG Viertel"
+            )
+            mock_protocol.save_decision(block)
+
+            call_kwargs = mock_decision_class.call_args[1]
+            assert (
+                call_kwargs["title"]
+                == "Barbara Riccabona ist Delegierte der AG Viertel"
+            )
+
     def test_empty_block_returns_early(
         self, mock_protocol, mock_bot_config, mock_decision_class
     ):

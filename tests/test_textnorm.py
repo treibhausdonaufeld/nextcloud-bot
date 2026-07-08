@@ -2,7 +2,13 @@
 
 from app.db import fts_escape
 from app.models.protocol import Protocol
-from app.textnorm import compound_parts, index_terms, lemmatize, token_variants
+from app.textnorm import (
+    compound_parts,
+    index_terms,
+    lemmatize,
+    strip_mentions,
+    token_variants,
+)
 
 
 class TestLemmatize:
@@ -69,6 +75,33 @@ class TestFtsEscape:
     def test_strips_fts_syntax(self):
         assert '"' + "" not in fts_escape('"')
         assert fts_escape("") == ""
+
+
+class TestStripMentions:
+    def test_link_mention_becomes_plain_name(self):
+        assert (
+            strip_mentions(
+                "@[Barbara Riccabona](mention://user/Barbara.Riccabona) "
+                "ist Delegierte der AG Viertel"
+            )
+            == "Barbara Riccabona ist Delegierte der AG Viertel"
+        )
+
+    def test_link_mention_without_at_prefix(self):
+        assert (
+            strip_mentions("[Barbara Riccabona](mention://user/Barbara.Riccabona)")
+            == "Barbara Riccabona"
+        )
+
+    def test_bare_mention_falls_back_to_username(self):
+        assert strip_mentions("mention://user/alice ist dabei") == "alice ist dabei"
+
+    def test_text_without_mentions_is_unchanged(self):
+        assert strip_mentions("Just a normal title") == "Just a normal title"
+
+    def test_empty(self):
+        assert strip_mentions("") == ""
+        assert strip_mentions(None) == ""
 
 
 class TestHeadingBefore:

@@ -15,7 +15,7 @@ from app.models.user import NCUserList
 from app.services.config import bot_config
 from app.services.notify import send_message
 from app.settings import _, user_regex
-from app.textnorm import strip_markdown
+from app.textnorm import strip_markdown, strip_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +311,10 @@ class Protocol(BaseDBModel):
                 .strip(":")
                 .strip()
             )
+        # Resolve user mentions to plain names so the title reads as a normal
+        # sentence ("Barbara Riccabona ist Delegierte …") instead of leaking
+        # the "@[…](mention://…)" markup.
+        title = strip_mentions(title)
         # remove first line
         lines = lines[1:]
 

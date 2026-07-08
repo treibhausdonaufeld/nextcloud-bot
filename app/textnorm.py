@@ -45,12 +45,35 @@ def strip_markdown(text: str) -> str:
     if not text:
         return ""
     result = _MD_FORMATTING_RE.sub(
-        lambda m: next(g for g in m.groups() if g is not None)
-        if any(g is not None for g in m.groups())
-        else "",
+        lambda m: (
+            next(g for g in m.groups() if g is not None)
+            if any(g is not None for g in m.groups())
+            else ""
+        ),
         text,
     )
     return result.strip()
+
+
+# Nextcloud exports user mentions as ``@[Display Name](mention://user/uid)``
+# (occasionally as a bare ``mention://user/uid``). For plain-text display —
+# decision titles above all — they should read as the person's name, without
+# the leading ``@`` or the link/mention markup leaking through.
+_MENTION_LINK_RE = re.compile(r"@?\[([^\]]*)\]\(mention://user/[A-Za-z0-9_.-]+\)")
+_BARE_MENTION_RE = re.compile(r"mention://user/([A-Za-z0-9_.-]+)")
+
+
+def strip_mentions(text: str) -> str:
+    """Replace ``mention://`` links with the mentioned user's plain name.
+
+    ``@[Barbara Riccabona](mention://user/Barbara.Riccabona) ist Delegierte``
+    becomes ``Barbara Riccabona ist Delegierte`` instead of leaking the
+    ``@[...](mention://...)`` markup into the displayed title.
+    """
+    if not text:
+        return ""
+    text = _MENTION_LINK_RE.sub(lambda m: m.group(1).lstrip("@").strip(), text)
+    return _BARE_MENTION_RE.sub(lambda m: m.group(1), text)
 
 
 # only try to split reasonably long, purely alphabetic words into parts that
