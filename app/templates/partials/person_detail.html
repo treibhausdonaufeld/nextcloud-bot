@@ -1,0 +1,32 @@
+{% if not username %}
+{% else %}
+<article>
+  <header>
+    <h3>{{ user.displayname if user else display_name }}</h3>
+    <p>{{ _("Group membership history") }}</p>
+  </header>
+
+  {% if history %}
+    <ul>
+      {% for entry in history %}
+        <li class="history-entry{% if not entry.active %} history-inactive{% endif %}">
+          <span class="role-badge role-{{ entry.role }}">{{ entry.role_label }}</span>
+          <strong>{% if entry.group_emoji %}{{ entry.group_emoji }} {% endif %}{{ entry.group_name }}</strong>
+          <br>
+          <small>
+            {{ entry.first_seen }} — {{ entry.last_seen }}
+            {% if entry.active %}
+              <em>({{ _("currently active") }})</em>
+            {% else %}
+              <em>({{ _("ended") }})</em>
+            {% endif %}
+            · {{ _("Duration: {duration}").format(duration=entry.duration) }}
+          </small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>{{ _("No group history recorded yet.") }}</p>
+  {% endif %}
+</article>
+{% endif %}

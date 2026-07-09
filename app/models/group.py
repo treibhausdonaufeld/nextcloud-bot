@@ -5,6 +5,7 @@ import edgy
 
 from app.models.base import BaseDBModel
 from app.models.collective_page import CollectivePage
+from app.models.member_history import MemberHistory
 from app.services.config import bot_config
 from app.settings import user_regex
 
@@ -191,5 +192,14 @@ class Group(BaseDBModel):
         )
         self.coordination = sorted(set(self.coordination) - absent_set)
         self.delegate = sorted(set(self.delegate) - absent_set)
+
+        MemberHistory.record_changes(
+            self.page_id,
+            self.name,
+            coordination=self.coordination,
+            delegate=self.delegate,
+            members=self.members,
+            absent=self.absent,
+        )
 
         self.store()

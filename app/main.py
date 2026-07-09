@@ -17,6 +17,7 @@ from app.controllers.mentions import (
     mention_user_detail,
     mentions_page,
 )
+from app.controllers.people import people_page, person_detail
 from app.controllers.protocol_view import protocol_media, protocol_view
 from app.controllers.protocols import protocols_page
 from app.controllers.timeline import functions_page, milestones_page
@@ -83,6 +84,8 @@ app = Ravyn(
         Gateway(handler=groups_page),
         Gateway(handler=groups_graph),
         Gateway(handler=group_detail),
+        Gateway(handler=people_page),
+        Gateway(handler=person_detail),
         Gateway(handler=functions_page),
         Gateway(handler=milestones_page),
         Gateway(handler=protocols_page),

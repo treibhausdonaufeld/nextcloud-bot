@@ -9,6 +9,13 @@ from app.models.collective_page import CollectivePage
 from app.models.group import Group
 
 
+@pytest.fixture(autouse=True)
+def _mock_record_changes():
+    """Prevent MemberHistory.record_changes from hitting the database."""
+    with patch("app.models.group.MemberHistory.record_changes"):
+        yield
+
+
 @pytest.fixture
 def mock_bot_config():
     """Provide a mock bot_config with default organisation settings."""

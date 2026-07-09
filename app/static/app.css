@@ -1412,3 +1412,59 @@ mark {
 .attachment-download:hover {
   border-color: var(--pico-primary);
 }
+
+/* ---------- People overview and history ---------- */
+
+.role-badge.role-coordination {
+  background: hsl(12, 80%, 88%);
+  color: hsl(12, 70%, 30%);
+}
+
+.role-badge.role-delegate {
+  background: hsl(198, 90%, 88%);
+  color: hsl(198, 70%, 30%);
+}
+
+.role-badge.role-member {
+  background: hsl(45, 80%, 88%);
+  color: hsl(45, 70%, 25%);
+}
+
+.role-badge.role-absent {
+  background: hsl(0, 0%, 85%);
+  color: hsl(0, 0%, 35%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .role-badge.role-coordination {
+    background: hsl(12, 40%, 23%);
+    color: hsl(12, 80%, 78%);
+  }
+
+  .role-badge.role-delegate {
+    background: hsl(198, 40%, 23%);
+    color: hsl(198, 80%, 78%);
+  }
+
+  .role-badge.role-member {
+    background: hsl(45, 40%, 20%);
+    color: hsl(45, 80%, 68%);
+  }
+
+  .role-badge.role-absent {
+    background: hsl(0, 0%, 25%);
+    color: hsl(0, 0%, 70%);
+  }
+}
+
+.history-entry {
+  padding: 0.4rem 0;
+}
+
+.history-entry + .history-entry {
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.history-inactive {
+  opacity: 0.55;
+}

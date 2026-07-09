@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-08 20:05+0200\n"
+"POT-Creation-Date: 2026-07-09 09:36+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -126,6 +126,9 @@ msgid "Protocols"
 msgstr ""
 
 msgid "Groups"
+msgstr ""
+
+msgid "People"
 msgstr ""
 
 msgid "Mentions"
@@ -262,6 +265,12 @@ msgstr ""
 msgid "Protocols / meetings"
 msgstr ""
 
+msgid "Person"
+msgstr ""
+
+msgid "Roles"
+msgstr ""
+
 msgid "Protocol"
 msgstr ""
 
@@ -383,6 +392,22 @@ msgid "Open page"
 msgstr ""
 
 msgid "No snippet available"
+msgstr ""
+
+msgid "Group membership history"
+msgstr ""
+
+msgid "currently active"
+msgstr ""
+
+msgid "ended"
+msgstr ""
+
+#, python-brace-format
+msgid "Duration: {duration}"
+msgstr ""
+
+msgid "No group history recorded yet."
 msgstr ""
 
 msgid "Version"

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ _("People") }} — {{ settings.name }}{% endblock %}
+{% block content %}
+<h1>{{ _("People") }}</h1>
+
+<div class="overflow-auto">
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>{{ _("Person") }}</th>
+        <th>{{ _("Groups") }}</th>
+        <th>{{ _("Roles") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for person in people %}
+        <tr>
+          <td>
+            <a href="#"
+               hx-get="/people/detail?username={{ person.username }}"
+               hx-target="#person-detail"
+               hx-swap="innerHTML"
+               hx-push-url="true">
+              {{ person.display_name }}
+            </a>
+          </td>
+          <td>
+            {% for a in person.assignments %}
+              {% if a.group_emoji %}{{ a.group_emoji }} {% endif %}{{ a.group_name }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+          <td>
+            {% for a in person.assignments %}
+              <small class="role-badge role-{{ a.role }}">{{ a.role_label }}</small>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div id="person-detail"></div>
+{% endblock %}

@@ -2,6 +2,7 @@ from app.models.collective_page import CollectivePage, OCSCollectivePage, PageSu
 from app.models.decision import Decision
 from app.models.group import Group
 from app.models.kv import KVState, get_state, set_state
+from app.models.member_history import MemberHistory
 from app.models.mention import Mention
 from app.models.protocol import Protocol
 from app.models.protocol_media import ProtocolMedia
@@ -17,6 +18,7 @@ __all__ = [
     "KVState",
     "get_state",
     "set_state",
+    "MemberHistory",
     "Mention",
     "Protocol",
     "ProtocolMedia",

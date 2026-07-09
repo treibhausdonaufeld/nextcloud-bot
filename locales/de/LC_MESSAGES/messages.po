@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-08 20:05+0200\n"
+"POT-Creation-Date: 2026-07-09 09:36+0200\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -143,6 +143,9 @@ msgstr "Protokolle"
 msgid "Groups"
 msgstr "Gruppen"
 
+msgid "People"
+msgstr "Personen"
+
 msgid "Mentions"
 msgstr "Erwähnungen"
 
@@ -277,6 +280,12 @@ msgstr "Unterschiedliche Seiten"
 msgid "Protocols / meetings"
 msgstr "Protokolle / Treffen"
 
+msgid "Person"
+msgstr "Person"
+
+msgid "Roles"
+msgstr "Rollen"
+
 msgid "Protocol"
 msgstr "Protokoll"
 
@@ -399,6 +408,22 @@ msgstr "Seite öffnen"
 
 msgid "No snippet available"
 msgstr "Kein Textausschnitt verfügbar"
+
+msgid "Group membership history"
+msgstr "Gruppenmitgliedschaften (Verlauf)"
+
+msgid "currently active"
+msgstr "derzeit aktiv"
+
+msgid "ended"
+msgstr "beendet"
+
+#, python-brace-format
+msgid "Duration: {duration}"
+msgstr "Dauer: {duration}"
+
+msgid "No group history recorded yet."
+msgstr "Noch keine Gruppenhistorie aufgezeichnet."
 
 msgid "Version"
 msgstr "Version"
