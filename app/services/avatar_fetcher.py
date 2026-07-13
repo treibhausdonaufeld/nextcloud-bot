@@ -1,9 +1,9 @@
 import base64
+import hashlib
 import logging
 from functools import cached_property
 from io import BytesIO
 from pathlib import Path
-from time import time
 from typing import List, NamedTuple, Optional
 
 import requests
@@ -52,20 +52,28 @@ class AvatarFetcher:
         # username == nextcloud username == authentik uid
         avatar_path_jpg = self.base_folder / f"{username}.jpg"
         avatar_path_dot_jpg = self.base_folder / f"{username.replace('_', '.')}.jpg"
+        original_path = self._original_path(username)
 
-        # skip if avatar_path_jpg already exists and is younger than configured refresh interval
-        if avatar_path_jpg.exists() and (
-            avatar_path_jpg.stat().st_mtime
-            > (time() - self.config.avatar_refresh_seconds or 86400)
-        ):
-            return
-
+        # Always fetch the raw avatar from the configured source
         result = self._fetch_raw_avatar(username)
         if result is None:
             logger.warning(
                 "No avatar found for user %s in any configured source", username
             )
             return
+
+        # Compare with the previously stored original to avoid
+        # needless JPEG re-encoding (which degrades quality over time)
+        if self._original_is_unchanged(original_path, result.content):
+            logger.debug(
+                "Avatar original for %s unchanged, skipping JPEG regeneration",
+                username,
+            )
+            return
+
+        # Store the new original bytes
+        original_path.parent.mkdir(parents=True, exist_ok=True)
+        original_path.write_bytes(result.content)
 
         try:
             self._save_as_jpeg(result.content, avatar_path_jpg)
@@ -90,6 +98,23 @@ class AvatarFetcher:
         """Convert raw image bytes to JPEG and write them to `path`."""
         image = Image.open(BytesIO(content))
         image.convert("RGB").save(path, "JPEG", quality=90)
+
+    def _original_path(self, username: str) -> Path:
+        """Return the path where the raw original image bytes are stored."""
+        return self.base_folder / "originals" / f"{username}.bin"
+
+    @staticmethod
+    def _original_is_unchanged(original_path: Path, new_content: bytes) -> bool:
+        """Return True if the fetched original matches the stored original."""
+        if not original_path.exists():
+            return False
+        try:
+            return (
+                hashlib.sha256(original_path.read_bytes()).digest()
+                == hashlib.sha256(new_content).digest()
+            )
+        except OSError:
+            return False
 
     def _fetch_raw_avatar(self, username: str) -> Optional[AvatarResult]:
         """Try each configured avatar source in order and return the first successful result."""
