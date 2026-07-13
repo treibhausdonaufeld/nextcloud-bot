@@ -9,7 +9,7 @@ from typing import List, NamedTuple, Optional
 import requests
 from PIL import Image
 
-from app.models.user import NCUserList
+from app.models.user import NCUser, NCUserList
 from app.services.config import AvatarConfig
 from app.settings import settings
 
@@ -46,9 +46,10 @@ class AvatarFetcher:
     def fetch_images(self, nc_users: NCUserList):
         logger.debug("Fetching missing avatar images")
         for user in nc_users.get_enabled_users():
-            self.fetch_avatar(user.username)
+            self.fetch_avatar(user)
 
-    def fetch_avatar(self, username: str):
+    def fetch_avatar(self, user: NCUser):
+        username = user.username
         # username == nextcloud username == authentik uid
         avatar_path_jpg = self.base_folder / f"{username}.jpg"
         avatar_path_dot_jpg = self.base_folder / f"{username.replace('_', '.')}.jpg"
@@ -75,6 +76,11 @@ class AvatarFetcher:
         original_path.parent.mkdir(parents=True, exist_ok=True)
         original_path.write_bytes(result.content)
 
+        # Collect all extra names the avatar should also be saved under
+        extra_names = list(result.extra_names)
+        if user.authentik_username and user.authentik_username not in extra_names:
+            extra_names.append(user.authentik_username)
+
         try:
             self._save_as_jpeg(result.content, avatar_path_jpg)
 
@@ -82,12 +88,12 @@ class AvatarFetcher:
             if avatar_path_jpg != avatar_path_dot_jpg:
                 self._save_as_jpeg(result.content, avatar_path_dot_jpg)
 
-            # save to any extra filenames returned by the source (e.g. authentik username)
-            for extra_name in result.extra_names:
+            # save to any extra filenames (e.g. authentik username)
+            for extra_name in extra_names:
                 extra_path = self.base_folder / f"{extra_name}.jpg"
                 if extra_path != avatar_path_jpg:
                     logger.debug(
-                        "Saving avatar for %s to extra path %s", username, extra_path
+                        "Saving avatar for %s also as %s", username, extra_name
                     )
                     self._save_as_jpeg(result.content, extra_path)
         except Exception as e:
