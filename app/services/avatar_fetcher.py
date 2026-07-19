@@ -110,15 +110,46 @@ class AvatarFetcher:
         return self.base_folder / "originals" / f"{username}.bin"
 
     @staticmethod
+    def _image_ahash(content: bytes) -> Optional[str]:
+        """Compute a 16x16 average hash for perceptual comparison."""
+        try:
+            img = (
+                Image.open(BytesIO(content))
+                .convert("L")
+                .resize((16, 16), Image.LANCZOS)
+            )
+            pixels = list(img.getdata())
+            avg = sum(pixels) // len(pixels)
+            return "".join("1" if p >= avg else "0" for p in pixels)
+        except Exception:
+            return None
+
+    @staticmethod
     def _original_is_unchanged(original_path: Path, new_content: bytes) -> bool:
-        """Return True if the fetched original matches the stored original."""
+        """Return True if the fetched original matches the stored original.
+
+        Uses a fast SHA-256 comparison first. If bytes differ (e.g. JPEG
+        re-encoded with different parameters but same visual content), falls
+        back to a perceptual average-hash comparison tolerant to minor
+        compression artifacts.
+        """
         if not original_path.exists():
             return False
         try:
-            return (
-                hashlib.sha256(original_path.read_bytes()).digest()
+            stored_content = original_path.read_bytes()
+            if (
+                hashlib.sha256(stored_content).digest()
                 == hashlib.sha256(new_content).digest()
-            )
+            ):
+                return True
+
+            stored_hash = AvatarFetcher._image_ahash(stored_content)
+            new_hash = AvatarFetcher._image_ahash(new_content)
+            if stored_hash is None or new_hash is None:
+                return False
+
+            hamming = sum(1 for a, b in zip(stored_hash, new_hash) if a != b)
+            return hamming <= 8
         except OSError:
             return False
 
