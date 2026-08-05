@@ -53,7 +53,7 @@ def send_rocketchat_message(text: str, channel: str, emoji: str = ":robot:") -> 
     webhook_url = settings.rocketchat.hook_url
 
     if settings.rocketchat.channel_overwrite:
-        # for debugging porposes, override the channel
+        # for debugging purposes, override the channel
         channel = settings.rocketchat.channel_overwrite
 
     if not webhook_url:
@@ -69,7 +69,14 @@ def send_rocketchat_message(text: str, channel: str, emoji: str = ":robot:") -> 
     last_response: requests.Response | None = None
     for candidate in candidates:
         payload = {"text": text, "channel": candidate, "emoji": emoji}
-        response = requests.post(str(webhook_url), json=payload)
+        try:
+            response = requests.post(str(webhook_url), json=payload, timeout=90)
+        except requests.RequestException:
+            logger.exception(
+                "Request to Rocket.Chat webhook failed for channel %r", candidate
+            )
+            last_response = None
+            continue
 
         if response.status_code == 200:
             if candidate != channel:

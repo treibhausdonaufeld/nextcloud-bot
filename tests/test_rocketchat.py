@@ -2,6 +2,8 @@
 
 from unittest.mock import Mock, patch
 
+import requests
+
 from app.services import rocketchat
 from app.settings import settings
 
@@ -41,6 +43,7 @@ class TestSendRocketchatMessage:
 
         assert mock_post.call_count == 1
         assert mock_post.call_args.kwargs["json"]["channel"] == "AG-Haus"
+        assert mock_post.call_args.kwargs["timeout"] == 90
 
     def test_retries_other_casings_after_failure(self):
         with (
@@ -80,6 +83,22 @@ class TestSendRocketchatMessage:
 
         assert mock_post.call_count == 1
         assert mock_post.call_args.kwargs["json"]["channel"] == "@Bob.Beispiel"
+
+    def test_network_error_on_one_candidate_falls_through_to_next(self):
+        with (
+            patch.object(settings.rocketchat, "hook_url", "https://chat.example/hook"),
+            patch.object(settings.rocketchat, "channel_overwrite", ""),
+            patch("app.services.rocketchat.requests.post") as mock_post,
+        ):
+            mock_post.side_effect = [
+                requests.ConnectionError("boom"),
+                _response(200),
+            ]
+            rocketchat.send_rocketchat_message("hi", "AG-Haus")
+
+        assert mock_post.call_count == 2
+        sent_channels = [c.kwargs["json"]["channel"] for c in mock_post.call_args_list]
+        assert sent_channels[1] == "ag-haus"
 
     def test_no_webhook_configured_does_not_call_requests(self):
         with (
