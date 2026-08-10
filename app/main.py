@@ -13,6 +13,7 @@ from ravyn.responses import RedirectResponse
 from app.controllers.dashboard import search_results
 from app.controllers.groups import group_detail, groups_graph, groups_page
 from app.controllers.logbook import index, logbook_page
+from app.controllers.members import member_detail, members_page, role_detail
 from app.controllers.mentions import (
     mention_user_detail,
     mentions_page,
@@ -89,6 +90,9 @@ app = Ravyn(
         Gateway(handler=protocol_view),
         Gateway(handler=protocol_media),
         Gateway(handler=logbook_page),
+        Gateway(handler=members_page),
+        Gateway(handler=member_detail),
+        Gateway(handler=role_detail),
         Gateway(handler=mentions_page),
         Gateway(handler=mention_user_detail),
     ],

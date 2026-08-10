@@ -1,6 +1,7 @@
 from app.models.collective_page import CollectivePage, OCSCollectivePage, PageSubtype
 from app.models.decision import Decision
 from app.models.group import Group
+from app.models.group_role import ROLE_FIELDS, ROLES, GroupRole
 from app.models.kv import KVState, get_state, set_state
 from app.models.mention import Mention
 from app.models.protocol import Protocol
@@ -14,6 +15,9 @@ __all__ = [
     "PageSubtype",
     "Decision",
     "Group",
+    "GroupRole",
+    "ROLES",
+    "ROLE_FIELDS",
     "KVState",
     "get_state",
     "set_state",

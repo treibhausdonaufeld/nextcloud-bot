@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Members") }}{% endblock %}
+{% block content %}
+  <header class="page-head">
+    <h1>{{ _("Members") }}</h1>
+  </header>
+
+  <form class="toolbar" method="get" action="/members">
+    <div class="toolbar-search">
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="{{ _('Search member') }}"
+        aria-label="{{ _('Search member') }}"
+      />
+      <button type="submit">{{ _("Search") }}</button>
+    </div>
+    <div class="toolbar-filters">
+      <select name="role" aria-label="{{ _('Role') }}" onchange="this.form.submit()">
+        <option value="">{{ _("All roles") }}</option>
+        {% for option in role_options %}
+          <option value="{{ option.key }}" {% if option.key == selected_role %}selected{% endif %}>{{ option.label }}</option>
+        {% endfor %}
+      </select>
+      <select name="group" aria-label="{{ _('Group') }}" onchange="this.form.submit()">
+        <option value="">{{ _("All groups") }}</option>
+        {% for name in group_names %}
+          <option value="{{ name }}" {% if name == selected_group %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  {% if not members %}
+    <p class="empty-state">{{ _("No members found.") }}</p>
+  {% else %}
+    <p class="result-count">{{ _n("%(num)d member", "%(num)d members", members | length) | format(num=members | length) }}</p>
+
+    <div class="member-table-wrap">
+      <table class="member-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ _("Member") }}</th>
+            <th scope="col">{{ _("Current roles") }}</th>
+            <th scope="col">{{ _("Past roles") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+            <tr>
+              <td>
+                <a
+                  href="#detail"
+                  hx-get="/members/user/{{ member.username | urlencode }}"
+                  hx-target="#detail"
+                >{{ member.displayname }}</a>
+                {% if not member.active %}
+                  <span class="member-inactive" title="{{ _('No longer an active Nextcloud user') }}">{{ _("inactive") }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if member.roles %}
+                  <div class="role-badges">
+                    {% for role in member.roles %}
+                      <a
+                        class="role-badge role-{{ role.role }}"
+                        style="--group-hue: {{ role.hue if role.hue is not none else 0 }}"
+                        href="#detail"
+                        hx-get="/members/role/{{ role.role }}?group={{ role.group | urlencode }}"
+                        hx-target="#detail"
+                        title="{% if role.start %}{{ _('since %(date)s') | format(date=role.start) }}{% endif %}"
+                      >{{ role.group }} · {{ role.role_label }}</a>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <span class="meta">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if member.past_count %}
+                  <a href="#detail" hx-get="/members/user/{{ member.username | urlencode }}" hx-target="#detail">{{ member.past_count }}</a>
+                {% else %}
+                  <span class="meta">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="meta member-note">{{ _("Role dates are derived from the group pages' edit history; roles that existed before the bot started tracking are dated to the page's last change.") }}</p>
+
+    <dialog id="detail-dialog">
+      <div id="detail"></div>
+    </dialog>
+
+    <script>
+      (function () {
+        const dialog = document.getElementById('detail-dialog');
+        // Fall back to inline detail rendering where <dialog> is unsupported:
+        // such browsers render the dialog's contents inline, so we simply
+        // skip the modal wiring instead of throwing on showModal().
+        const supportsModal = dialog && typeof dialog.showModal === 'function';
+        // Open the overlay once the detail partial has been swapped in.
+        document.body.addEventListener('htmx:afterSwap', function (e) {
+          if (e.target.id === 'detail' && supportsModal && !dialog.open) {
+            dialog.showModal();
+          }
+        });
+        // Close when clicking the backdrop (outside the article card).
+        if (supportsModal) {
+          dialog.addEventListener('click', function (e) {
+            if (e.target === dialog) dialog.close();
+          });
+        }
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

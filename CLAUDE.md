@@ -45,7 +45,7 @@ CI (`.github/workflows/docker-build.yml`) runs pre-commit, pytest, and builds/pu
 
 One container runs everything. `app/main.py` builds the Ravyn app: routes, Jinja2 templates (`app/templates/`), vendored static assets (`app/static/`: Pico.css, htmx, plotly-basic, vis-network — no CDN), and an `on_startup` hook that initializes the database and spawns the background worker as an asyncio task.
 
-- **Controllers** (`app/controllers/`) are synchronous handlers (Ravyn runs them in a threadpool): dashboard (FTS search), groups (vis-network org chart), timeline (plotly from markdown tables on a Collectives page), protocols, logbook (decision cards + XLSX import), mentions (table + network graph). Graph pages fetch JSON endpoints (`/groups/graph.json`, `/mentions/graph.json`) and load click-detail partials via htmx.
+- **Controllers** (`app/controllers/`) are synchronous handlers (Ravyn runs them in a threadpool): dashboard (FTS search), groups (vis-network org chart), timeline (plotly from markdown tables on a Collectives page), protocols, logbook (decision cards + XLSX import), members (role overview + role history), mentions (table + network graph). Graph pages fetch JSON endpoints (`/groups/graph.json`, `/mentions/graph.json`) and load click-detail partials via htmx.
 - **Worker** (`app/worker.py`) is the former runner loop: update user list from Nextcloud → fetch changed Collectives pages → parse groups/protocols → periodic tasks (avatar fetching via Pillow, mailinglist distribution, calendar/deck reminders). It runs sync code via `asyncio.to_thread` and sleeps according to `sleep_minutes`/quiet hours from the bot config.
 - **`cli.py`** is a Click CLI for one-off operations (manual sync, clear parsed data, XLSX import).
 
@@ -69,6 +69,10 @@ Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page
 ### Parsing pipeline
 
 `app/services/collectives_loader.py` fetches page metadata via the Nextcloud OCS Collectives API and raw markdown via WebDAV (admin Basic auth), upserting `CollectivePage` rows. `collectives_parser.py` classifies pages by title/path into group/protocol subtypes; the models' `update_from_page()` methods do the actual keyword-driven markdown parsing. Protocols extract decisions from `::: success ... :::` blocks into `Decision` rows (deleting a protocol/page cascades to its decisions). User mentions everywhere use `user_regex` from `app/settings.py` (`mention://user/<name>`).
+
+### Role history
+
+`Group` rows only hold the *current* membership of a group page, so every observed membership is additionally recorded in the `group_roles` table (`app/models/group_role.py`) as a row with `role` (coordination/delegate/member), `start_date` and — once the role ends — `end_date`; open rows (`end_date is None`) are the roles held right now. `GroupRole.sync_group()` runs after `Group.update_from_page()` in `parse_groups` and closes/opens rows by comparing the parsed group against the stored ones, dating changes with the group page's Nextcloud timestamp rather than the sync time. It is idempotent: a role that reappears after being closed at the same (or a later) timestamp is reopened instead of duplicated, so re-parsing all pages does not fragment the history. `backfill_role_history()` seeds groups that were parsed before the table existed (skipped after the first run), and deleting a `Group` closes its open rows without dropping the history. `/members` (`app/controllers/members.py`) renders the current roles from the `Group` rows (the source of truth) and merges the start dates plus the past periods from `group_roles`; the member and role detail partials are swapped into a dialog via htmx.
 
 ### Protocol versioning & media
 

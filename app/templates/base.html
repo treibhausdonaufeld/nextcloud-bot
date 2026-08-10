@@ -29,6 +29,7 @@
               <li><a href="/logbook" {% if current_path.startswith('/logbook') or current_path == '/' %}aria-current="page"{% endif %}><span class="icon">✅</span> {{ _("Logbook") }}</a></li>
               <li><a href="/protocols" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}><span class="icon">📝</span> {{ _("Protocols") }}</a></li>
               <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}><span class="icon">⭕</span> {{ _("Groups") }}</a></li>
+              <li><a href="/members" {% if current_path.startswith('/members') %}aria-current="page"{% endif %}><span class="icon">👥</span> {{ _("Members") }}</a></li>
               <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon">⌛</span> {{ _("Functions") }}</a></li>
               <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon">🚩</span> {{ _("Milestones") }}</a></li>
               <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon">📣</span> {{ _("Mentions") }}</a></li>
@@ -48,7 +49,7 @@
         <main class="container-fluid">{% block content %}{% endblock %}</main>
       </div>
     </div>
-    {% set others_active = current_path == '/' or current_path.startswith('/functions') or current_path.startswith('/milestones') or current_path.startswith('/mentions') %}
+    {% set others_active = current_path == '/' or current_path.startswith('/members') or current_path.startswith('/functions') or current_path.startswith('/milestones') or current_path.startswith('/mentions') %}
     <nav class="bottom-nav" id="bottom-nav" aria-label="{{ _('Bottom navigation') }}">
       <a href="/logbook" class="bottom-nav-item" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}>
         <span class="icon" aria-hidden="true">✅</span>
@@ -75,6 +76,7 @@
       <div class="bottom-nav-menu" id="bottom-nav-menu" hidden>
         <ul>
           <li><a href="/" {% if current_path == '/' %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🏠</span> {{ _("Home") }}</a></li>
+          <li><a href="/members" {% if current_path.startswith('/members') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">👥</span> {{ _("Members") }}</a></li>
           <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">⌛</span> {{ _("Functions") }}</a></li>
           <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🚩</span> {{ _("Milestones") }}</a></li>
           <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">📣</span> {{ _("Mentions") }}</a></li>

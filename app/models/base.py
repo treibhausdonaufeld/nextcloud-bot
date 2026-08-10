@@ -23,6 +23,15 @@ def format_timestamp(timestamp: int | None) -> str | None:
     return localized_dt.strftime("%c")
 
 
+def format_date(timestamp: int | None) -> str | None:
+    """Format a unix timestamp as an ISO date in the configured timezone."""
+    if not timestamp:
+        return None
+
+    tz = pytz.timezone(settings.timezone)
+    return datetime.fromtimestamp(timestamp, tz).strftime("%Y-%m-%d")
+
+
 class BaseDBModel(edgy.Model):
     """Base model with a synchronous facade over Edgy's async API.
 

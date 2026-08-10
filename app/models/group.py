@@ -54,6 +54,13 @@ class Group(BaseDBModel):
         super().remove()
         Group.invalidate_cache()
 
+    def before_remove(self) -> None:
+        # The group is gone, so nobody holds a role in it any more; the
+        # history itself is kept.
+        from app.models.group_role import GroupRole
+
+        GroupRole.close_for_page(self.page_id)
+
     @classmethod
     def invalidate_cache(cls) -> None:
         cls._cached_groups = None

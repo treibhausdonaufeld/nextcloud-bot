@@ -3,19 +3,28 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 20:02+0000\n"
+"POT-Creation-Date: 2026-08-10 08:00+0000\n"
 "PO-Revision-Date: 2024-09-15 00:21+0200\n"
 "Last-Translator: \n"
-"Language-Team: \n"
 "Language: de\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
 msgid "No Title"
 msgstr "Kein Titel"
+
+msgid "Coordination"
+msgstr "Koordination"
+
+msgid "Delegate"
+msgstr "Delegierte"
+
+msgid "Member"
+msgstr "Mitglied"
 
 msgid "unknown"
 msgstr "unbekannt"
@@ -86,8 +95,8 @@ msgstr ""
 "\n"
 "- {issues}\n"
 "\n"
-"Bitte behebe diese bei der nächsten Bearbeitung des Protokolls (kein Stress, "
-"nimm dir Zeit!). Danke!"
+"Bitte behebe diese bei der nächsten Bearbeitung des Protokolls (kein Stress,"
+" nimm dir Zeit!). Danke!"
 
 #, python-brace-format
 msgid ""
@@ -134,17 +143,17 @@ msgstr "Bitte erstelle manuell einen Beitrag im Kanal #{protocols}"
 msgid "Toggle navigation"
 msgstr "Navigation umschalten"
 
-msgid "Home"
-msgstr "Startseite"
-
-msgid "Groups"
-msgstr "Gruppen"
+msgid "Logbook"
+msgstr "Logbuch"
 
 msgid "Protocols"
 msgstr "Protokolle"
 
-msgid "Logbook"
-msgstr "Logbuch"
+msgid "Groups"
+msgstr "Gruppen"
+
+msgid "Members"
+msgstr "Mitglieder"
 
 msgid "Mentions"
 msgstr "Erwähnungen"
@@ -158,30 +167,8 @@ msgstr "Untere Navigation"
 msgid "Others"
 msgstr "Weitere"
 
-#, python-brace-format
-msgid "{common_name} Dashboard"
-msgstr "{common_name} Übersicht"
-
-msgid "Search"
-msgstr "Suchen"
-
-msgid "Search collective pages and decisions"
-msgstr "Kollektiv-Seiten und Beschlüsse durchsuchen"
-
-msgid "Type"
-msgstr "Typ"
-
-msgid "Pages and decisions"
-msgstr "Seiten und Beschlüsse"
-
-msgid "Pages"
-msgstr "Seiten"
-
-msgid "Decisions"
-msgstr "Beschlüsse"
-
-msgid "Results"
-msgstr "Ergebnisse"
+msgid "Home"
+msgstr "Startseite"
 
 msgid "Hierarchical layout"
 msgstr "Hierarchische Darstellung"
@@ -206,6 +193,9 @@ msgstr "Höhe des Graphen"
 
 msgid "Search decisions…"
 msgstr "Beschlüsse durchsuchen…"
+
+msgid "Search"
+msgstr "Suchen"
 
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
@@ -274,6 +264,51 @@ msgstr "Nächste Seite"
 
 msgid "Last page"
 msgstr "Letzte Seite"
+
+msgid "Search member"
+msgstr "Mitglied suchen"
+
+msgid "Role"
+msgstr "Rolle"
+
+msgid "All roles"
+msgstr "Alle Rollen"
+
+msgid "Group"
+msgstr "Gruppe"
+
+msgid "No members found."
+msgstr "Keine Mitglieder gefunden."
+
+#, python-format
+msgid "%(num)d member"
+msgid_plural "%(num)d members"
+msgstr[0] "%(num)d Mitglied"
+msgstr[1] "%(num)d Mitglieder"
+
+msgid "Current roles"
+msgstr "Aktuelle Rollen"
+
+msgid "Past roles"
+msgstr "Frühere Rollen"
+
+msgid "No longer an active Nextcloud user"
+msgstr "Kein aktiver Nextcloud-Benutzer mehr"
+
+msgid "inactive"
+msgstr "inaktiv"
+
+#, python-format
+msgid "since %(date)s"
+msgstr "seit %(date)s"
+
+msgid ""
+"Role dates are derived from the group pages' edit history; roles that "
+"existed before the bot started tracking are dated to the page's last change."
+msgstr ""
+"Die Rollendaten stammen aus der Bearbeitungshistorie der Gruppenseiten; "
+"Rollen, die vor Beginn der Aufzeichnung bestanden, sind auf die letzte "
+"Änderung der Seite datiert."
 
 msgid "Time range"
 msgstr "Zeitraum"
@@ -354,9 +389,6 @@ msgstr "Mehr anzeigen"
 msgid "Member Statistics for"
 msgstr "Mitgliederstatistik für"
 
-msgid "Member"
-msgstr "Mitglied"
-
 msgid "Moderated"
 msgstr "Moderiert"
 
@@ -385,20 +417,24 @@ msgstr "Übergeordnete Gruppe"
 msgid "Short Names"
 msgstr "Kurznamen"
 
-msgid "Coordination"
-msgstr "Koordination"
-
 msgid "Delegates"
 msgstr "Delegierte"
-
-msgid "Members"
-msgstr "Mitglieder"
 
 msgid "Subgroups"
 msgstr "Untergruppen"
 
 msgid "Close"
 msgstr "Schließen"
+
+msgid "No current roles."
+msgstr "Keine aktuellen Rollen."
+
+#, python-format
+msgid "%(start)s to %(end)s"
+msgstr "%(start)s bis %(end)s"
+
+msgid "No past roles recorded."
+msgstr "Keine früheren Rollen erfasst."
 
 msgid "Mention Details for"
 msgstr "Erwähnungsdetails für"
@@ -450,14 +486,33 @@ msgid ""
 "To restore this version, copy the markdown and paste it into the page in "
 "Nextcloud."
 msgstr ""
-"Um diese Version wiederherzustellen, kopiere das Markdown und füge es in die "
-"Seite in Nextcloud ein."
+"Um diese Version wiederherzustellen, kopiere das Markdown und füge es in die"
+" Seite in Nextcloud ein."
 
 msgid "Copy markdown"
 msgstr "Markdown kopieren"
 
+#, python-format
+msgid "%(role)s of %(group)s"
+msgstr "%(role)s von %(group)s"
+
+msgid "Currently"
+msgstr "Aktuell"
+
+msgid "Nobody currently holds this role."
+msgstr "Diese Rolle hat derzeit niemand inne."
+
+msgid "Previously"
+msgstr "Früher"
+
+msgid "Nobody held this role before."
+msgstr "Diese Rolle hatte bisher niemand inne."
+
 msgid "Source Documents"
 msgstr "Quell-Dokumente"
+
+msgid "Type"
+msgstr "Typ"
 
 msgid "Title"
 msgstr "Titel"
@@ -500,10 +555,12 @@ msgstr "Erwähnungen insgesamt: {count}"
 #~ msgstr "Erwähnungsnetzwerk"
 
 #~ msgid ""
-#~ "🔴 Users | 📋 Protocols (blue) | 👥 Group Pages (green) | 📄 Other Pages "
-#~ "(gold)"
+#~ "🔴 Users | 📋 Protocols (blue) | "
+#~ "👥 Group Pages (green) | 📄 Other "
+#~ "Pages (gold)"
 #~ msgstr ""
-#~ "🔴 Benutzer | 📋 Protokolle (blau) | 👥 Gruppenseiten (grün) | 📄 Andere "
+#~ "🔴 Benutzer | 📋 Protokolle (blau) |"
+#~ " 👥 Gruppenseiten (grün) | 📄 Andere "
 #~ "Seiten (gold)"
 
 #~ msgid "Filter by User"
@@ -533,12 +590,29 @@ msgstr "Erwähnungen insgesamt: {count}"
 #~ msgid "Distinct Protocols"
 #~ msgstr "Unterschiedliche Protokolle"
 
-#, python-brace-format
 #~ msgid "Users mentioned in this page: {count}"
 #~ msgstr "In dieser Seite erwähnte Benutzer: {count}"
 
-#, python-format
 #~ msgid "~%(n)s attendee"
 #~ msgid_plural "~%(n)s attendees"
 #~ msgstr[0] "~%(n)s Teilnehmende:r"
 #~ msgstr[1] "~%(n)s Teilnehmende"
+
+#~ msgid "{common_name} Dashboard"
+#~ msgstr "{common_name} Übersicht"
+
+#~ msgid "Search collective pages and decisions"
+#~ msgstr "Kollektiv-Seiten und Beschlüsse durchsuchen"
+
+#~ msgid "Pages and decisions"
+#~ msgstr "Seiten und Beschlüsse"
+
+#~ msgid "Pages"
+#~ msgstr "Seiten"
+
+#~ msgid "Decisions"
+#~ msgstr "Beschlüsse"
+
+#~ msgid "Results"
+#~ msgstr "Ergebnisse"
+
