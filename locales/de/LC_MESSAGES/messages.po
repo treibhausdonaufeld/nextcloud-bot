@@ -615,4 +615,3 @@ msgstr "Erwähnungen insgesamt: {count}"
 
 #~ msgid "Results"
 #~ msgstr "Ergebnisse"
-

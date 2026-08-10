@@ -7,10 +7,14 @@ import logging
 from app.models.collective_page import CollectivePage, PageSubtype
 from app.models.group import Group
 from app.models.group_role import GroupRole
+from app.models.kv import get_state, set_state
 from app.models.protocol import Protocol
 from app.services.config import BotConfig, bot_config
 
 logger = logging.getLogger(__name__)
+
+# Marks the one-off seeding of `group_roles` from the already parsed groups.
+ROLE_BACKFILL_STATE_KEY = "group_roles_backfilled"
 
 
 def parse_groups(page: CollectivePage) -> None:
@@ -39,9 +43,13 @@ def backfill_role_history() -> None:
 
     Group pages are only re-parsed when they change, so without this an
     existing installation would show no roles at all until every group page
-    happens to be edited. Groups that already have history are skipped, which
-    makes this a single query once the backfill has run.
+    happens to be edited. Once every stored group has been walked the fact is
+    persisted in `KVState`, so later iterations cost a single lookup; groups
+    that appear afterwards go through `parse_groups` anyway.
     """
+    if get_state(ROLE_BACKFILL_STATE_KEY):
+        return
+
     known_pages = {row.page_id for row in GroupRole.all_rows()}
 
     for group in Group.fetch(limit=1000):
@@ -49,6 +57,9 @@ def backfill_role_history() -> None:
             continue
         page = CollectivePage.get_from_page_id_or_none(group.page_id)
         GroupRole.sync_group(group, timestamp=page.timestamp if page else None)
+
+    set_state(ROLE_BACKFILL_STATE_KEY, {"done": True})
+    logger.info("Role history backfill complete")
 
 
 def parse_protocols(page: CollectivePage) -> None:

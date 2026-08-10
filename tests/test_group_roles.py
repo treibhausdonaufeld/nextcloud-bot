@@ -7,6 +7,8 @@ import pytest
 from app.models.group import Group
 from app.models.group_role import GroupRole
 
+PARSER = "app.services.collectives_parser"
+
 JAN = 1735689600  # 2025-01-01
 FEB = 1738368000  # 2025-02-01
 MAR = 1740787200  # 2025-03-01
@@ -172,15 +174,17 @@ class TestBackfill:
 
         page = CollectivePage(page_id=42, title="AG Haus", timestamp=MAR)
         stored = []
-        with patch.object(GroupRole, "all_rows", return_value=[]):
-            with patch.object(Group, "fetch", return_value=[group]):
-                with patch.object(
-                    CollectivePage, "get_from_page_id_or_none", return_value=page
-                ):
-                    with patch.object(GroupRole, "for_group_page", return_value=[]):
-                        with patch.object(GroupRole, "store", autospec=True) as store:
-                            store.side_effect = lambda self, **kw: stored.append(self)
-                            backfill_role_history()
+        with (
+            patch(PARSER + ".get_state", return_value=None),
+            patch(PARSER + ".set_state"),
+            patch.object(GroupRole, "all_rows", return_value=[]),
+            patch.object(Group, "fetch", return_value=[group]),
+            patch.object(CollectivePage, "get_from_page_id_or_none", return_value=page),
+            patch.object(GroupRole, "for_group_page", return_value=[]),
+            patch.object(GroupRole, "store", autospec=True) as store,
+        ):
+            store.side_effect = lambda self, **kw: stored.append(self)
+            backfill_role_history()
 
         assert {(r.username, r.start_date) for r in stored} == {
             ("alice", MAR),
@@ -190,12 +194,43 @@ class TestBackfill:
     def test_groups_with_history_are_skipped(self, group):
         from app.services.collectives_parser import backfill_role_history
 
-        with patch.object(GroupRole, "all_rows", return_value=[role("alice")]):
-            with patch.object(Group, "fetch", return_value=[group]):
-                with patch.object(GroupRole, "sync_group") as sync_group:
-                    backfill_role_history()
+        with (
+            patch(PARSER + ".get_state", return_value=None),
+            patch(PARSER + ".set_state"),
+            patch.object(GroupRole, "all_rows", return_value=[role("alice")]),
+            patch.object(Group, "fetch", return_value=[group]),
+            patch.object(GroupRole, "sync_group") as sync_group,
+        ):
+            backfill_role_history()
 
         sync_group.assert_not_called()
+
+    def test_backfill_is_skipped_once_it_has_run(self):
+        from app.services.collectives_parser import backfill_role_history
+
+        with (
+            patch(PARSER + ".get_state", return_value={"done": True}),
+            patch.object(GroupRole, "all_rows") as all_rows,
+        ):
+            backfill_role_history()
+
+        all_rows.assert_not_called()
+
+    def test_completion_is_persisted(self, group):
+        from app.services.collectives_parser import (
+            ROLE_BACKFILL_STATE_KEY,
+            backfill_role_history,
+        )
+
+        with (
+            patch(PARSER + ".get_state", return_value=None),
+            patch(PARSER + ".set_state") as set_state,
+            patch.object(GroupRole, "all_rows", return_value=[role("alice")]),
+            patch.object(Group, "fetch", return_value=[group]),
+        ):
+            backfill_role_history()
+
+        set_state.assert_called_once_with(ROLE_BACKFILL_STATE_KEY, {"done": True})
 
 
 class TestDisplayHelpers:
