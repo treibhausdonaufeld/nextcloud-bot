@@ -26,7 +26,16 @@ class TestCaseVariants:
         # was never generated before and so was never tried.
         variants = rocketchat._case_variants("ag-struktur")
         assert variants[0] == "AG-Struktur"
-        assert variants[1] == "ag-struktur"
+        assert variants[2] == "ag-struktur"
+
+    def test_early_variants_cover_acronym_suffixes_too(self):
+        # "It".capitalize() would turn an acronym suffix like "IT" into
+        # "It", so the fully-uppercase form must also be tried early --
+        # title-casing alone can't tell "it" (acronym) from "struktur"
+        # (ordinary word) apart.
+        variants = rocketchat._case_variants("ug-it")
+        assert variants[0] == "UG-It"
+        assert variants[1] == "UG-IT"
 
     def test_includes_common_alternate_casings(self):
         variants = rocketchat._case_variants("AG-Haus")
@@ -65,7 +74,7 @@ class TestSendRocketchatMessage:
         assert mock_post.call_count == 2
         sent_channels = [c.kwargs["json"]["channel"] for c in mock_post.call_args_list]
         assert sent_channels[0] == "AG-Haus"
-        assert sent_channels[1] == "ag-haus"
+        assert sent_channels[1] == "AG-HAUS"
 
     def test_tries_canonical_group_casing_first(self):
         with (
@@ -118,7 +127,7 @@ class TestSendRocketchatMessage:
 
         assert mock_post.call_count == 2
         sent_channels = [c.kwargs["json"]["channel"] for c in mock_post.call_args_list]
-        assert sent_channels[1] == "ag-haus"
+        assert sent_channels[1] == "AG-HAUS"
 
     def test_no_webhook_configured_does_not_call_requests(self):
         with (

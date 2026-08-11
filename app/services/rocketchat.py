@@ -15,12 +15,15 @@ def _case_variants(channel: str) -> list[str]:
     Rocket.Chat channel names are case-sensitive, so a channel written as
     ``ag-struktur`` in the bot configuration page will not be found under a
     differently-cased channel. Group channels here follow an
-    uppercase-prefix/title-case-rest convention (e.g. ``AG-Struktur``,
-    ``UG-IT``), so that form is tried first since it's the casing the
-    channel is actually created under; the channel exactly as configured is
-    tried next, followed by other common alternate casings (all lower, all
-    upper, title-cased segments, and an upper-prefix/lower-rest form) so a
-    send still succeeds if the channel exists under yet another casing.
+    uppercase-prefix convention with either a title-cased rest for ordinary
+    words (e.g. ``AG-Struktur``) or a fully-uppercase rest for acronyms
+    (e.g. ``UG-IT``) -- there's no reliable way to tell which a given
+    lowercase segment is, so both forms are tried first since they're the
+    casings the channel is actually likely to be created under; the channel
+    exactly as configured is tried next, followed by other common alternate
+    casings (all lower, title-cased segments including the prefix, and an
+    upper-prefix/lower-rest form) so a send still succeeds if the channel
+    exists under yet another casing.
     """
     variants: list[str] = []
 
@@ -34,6 +37,9 @@ def _case_variants(channel: str) -> list[str]:
             part if part == "-" else part.capitalize() for part in parts[1:]
         )
         add(upper_prefix_rest_title)
+        # Acronym suffixes (e.g. "IT") don't survive title-casing, so also
+        # try the fully-uppercase form early for prefixed channels.
+        add(channel.upper())
 
     add(channel)
     add(channel.lower())
