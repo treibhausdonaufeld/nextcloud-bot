@@ -16,9 +16,17 @@ def _response(status_code: int) -> Mock:
 
 
 class TestCaseVariants:
-    def test_first_variant_is_configured_casing(self):
+    def test_first_variant_is_configured_casing_when_already_canonical(self):
         variants = rocketchat._case_variants("AG-Haus")
         assert variants[0] == "AG-Haus"
+
+    def test_first_variant_is_upper_prefix_title_case_rest(self):
+        # Reproduces a Sentry failure: the bot config page had "ag-struktur"
+        # but the real Rocket.Chat channel is "AG-Struktur", a casing that
+        # was never generated before and so was never tried.
+        variants = rocketchat._case_variants("ag-struktur")
+        assert variants[0] == "AG-Struktur"
+        assert variants[1] == "ag-struktur"
 
     def test_includes_common_alternate_casings(self):
         variants = rocketchat._case_variants("AG-Haus")
@@ -58,6 +66,18 @@ class TestSendRocketchatMessage:
         sent_channels = [c.kwargs["json"]["channel"] for c in mock_post.call_args_list]
         assert sent_channels[0] == "AG-Haus"
         assert sent_channels[1] == "ag-haus"
+
+    def test_tries_canonical_group_casing_first(self):
+        with (
+            patch.object(settings.rocketchat, "hook_url", "https://chat.example/hook"),
+            patch.object(settings.rocketchat, "channel_overwrite", ""),
+            patch("app.services.rocketchat.requests.post") as mock_post,
+        ):
+            mock_post.return_value = _response(200)
+            rocketchat.send_rocketchat_message("hi", "ag-struktur")
+
+        assert mock_post.call_count == 1
+        assert mock_post.call_args.kwargs["json"]["channel"] == "AG-Struktur"
 
     def test_logs_error_when_all_casings_fail(self):
         with (
