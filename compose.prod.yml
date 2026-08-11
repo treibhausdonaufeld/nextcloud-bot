@@ -17,6 +17,9 @@ services:
       LOGLEVEL: ${LOGLEVEL:-INFO}
       AUTH__PROVIDER_BASE_URL: 'https://auth.example.com'
       AUTH__AUTHENTIK_TOKEN: 'secretpassword'
+      # authentik group whose members are listed on /members and offered in
+      # the user pickers. Set to '' to show every user.
+      AUTH__MEMBER_GROUP_NAME: 'Mitglieder'
 
       NEXTCLOUD__BASE_URL: 'https://wir.example.com'
       NEXTCLOUD__ADMIN_USERNAME: 'admin'

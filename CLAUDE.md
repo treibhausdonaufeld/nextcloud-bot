@@ -63,7 +63,7 @@ Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page
 
 ### Configuration — two layers
 
-1. **Env vars** → `app/settings.py` (pydantic-settings, nested delimiter `__`, e.g. `NEXTCLOUD__BASE_URL`). Infrastructure: URLs, credentials, Sentry, `DATABASE_URL`.
+1. **Env vars** → `app/settings.py` (pydantic-settings, nested delimiter `__`, e.g. `NEXTCLOUD__BASE_URL`). Infrastructure: URLs, credentials, Sentry, `DATABASE_URL`. `AUTH__MEMBER_GROUP_NAME` (default `Mitglieder`) names the authentik group whose members are listed on `/members` and offered in the user pickers; `""` shows every user.
 2. **Runtime bot config lives in Nextcloud itself**: `BotConfig.load_config()` (`app/services/config.py`) fetches a Collectives page (`configuration_page_id`) and parses a YAML block out of it. This holds all the keyword lists that drive markdown parsing (group prefixes, protocol/decision/moderation keywords), notification channel mappings, cooldowns, quiet hours. `config.example.yml` documents the shape. Parsing behavior changes are usually config-keyword changes, not code changes.
 
 ### Parsing pipeline
@@ -73,6 +73,8 @@ Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page
 ### Role history
 
 `Group` rows only hold the _current_ membership of a group page, so every observed membership is additionally recorded in the `group_roles` table (`app/models/group_role.py`) as a row with `role` (coordination/delegate/member), `start_date` and — once the role ends — `end_date`; open rows (`end_date is None`) are the roles held right now. `GroupRole.sync_group()` runs after `Group.update_from_page()` in `parse_groups` and closes/opens rows by comparing the parsed group against the stored ones, dating changes with the group page's Nextcloud timestamp rather than the sync time. It is idempotent: a role that reappears after being closed at the same (or a later) timestamp is reopened instead of duplicated, so re-parsing all pages does not fragment the history. `backfill_role_history()` seeds groups that were parsed before the table existed (skipped after the first run), and deleting a `Group` closes its open rows without dropping the history. `/members` (`app/controllers/members.py`) renders the current roles from the `Group` rows (the source of truth) and merges the start dates plus the past periods from `group_roles`; the member and role detail partials are swapped into a dialog via htmx.
+
+Who counts as a member comes from authentik: `update_from_authentik()` stores each user's group names in `NCUser.authentik_groups`, and `NCUserList.is_member()` checks them against `settings.auth.member_group_name`. The overview and the group page's user picker list members only; the role history dialogs and the org chart still show everyone a group page names, so past roles of people who left the association stay visible. The filter switches itself off when the setting is empty, when authentik is not connected, or while no user has group data yet (i.e. before the first sync after the upgrade) — otherwise those cases would render an empty member list.
 
 ### Protocol versioning & media
 

@@ -207,11 +207,12 @@ def groups_page(
     user_list = NCUserList()
     all_groups = sorted(Group.fetch(limit=1000))
 
+    # Only association members are offered in the picker (see
+    # `NCUserList.is_member`); the graph itself still shows every person a
+    # group page lists.
     users = [
         {"username": u.username, "displayname": u.displayname or u.username}
-        for u in sorted(
-            user_list.get_enabled_users(), key=lambda u: u.displayname or ""
-        )
+        for u in sorted(user_list.get_member_users(), key=lambda u: u.displayname or "")
     ]
 
     return Template(

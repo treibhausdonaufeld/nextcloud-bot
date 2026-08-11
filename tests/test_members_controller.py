@@ -8,6 +8,7 @@ from app.controllers import members as members_controller
 from app.models.group import Group
 from app.models.group_role import GroupRole
 from app.models.user import NCUser
+from app.settings import settings
 
 JAN = 1735689600  # 2025-01-01
 FEB = 1738368000  # 2025-02-01
@@ -73,8 +74,18 @@ def history():
 @pytest.fixture
 def users():
     return {
-        "alice": NCUser(username="alice", displayname="Alice Anders", enabled=True),
-        "bob": NCUser(username="bob", displayname="Bob Berger", enabled=True),
+        "alice": NCUser(
+            username="alice",
+            displayname="Alice Anders",
+            enabled=True,
+            authentik_groups=["Mitglieder"],
+        ),
+        "bob": NCUser(
+            username="bob",
+            displayname="Bob Berger",
+            enabled=True,
+            authentik_groups=[],
+        ),
         # carol is no longer an active Nextcloud user
         "carol": NCUser(username="carol", displayname="Carol Curie", enabled=False),
     }
@@ -134,6 +145,19 @@ class TestMemberRows:
         rows = members_controller.member_rows()
 
         assert [row["username"] for row in rows] == ["alice", "bob", "carol"]
+
+    def test_only_the_configured_authentik_group_is_listed(self):
+        # With AUTH__MEMBER_GROUP_NAME set (and authentik connected), the page
+        # lists members of that group only — bob and carol drop out even
+        # though they hold roles or appear in the history.
+        with (
+            patch.object(settings.auth, "member_group_name", "Mitglieder"),
+            patch.object(settings.auth, "authentik_base_url", "https://auth.test"),
+        ):
+            rows = members_controller.member_rows()
+
+        assert [row["username"] for row in rows] == ["alice"]
+        assert rows[0]["active"] is True
 
 
 class TestMemberHistory:

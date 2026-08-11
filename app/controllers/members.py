@@ -67,7 +67,9 @@ def member_rows(
 
     Members without any current role are listed too (with an empty role list)
     as long as they pass the filters, so the page really is an overview of all
-    members.
+    members. Who counts as a member comes from the configured authentik group
+    (`AUTH__MEMBER_GROUP_NAME`); without that restriction the list falls back
+    to every enabled user plus anyone who appears in the role history.
     """
     user_list = NCUserList()
     groups = sorted(Group.all_cached())
@@ -87,9 +89,12 @@ def member_rows(
             _decorate(assignment, starts.get(key))
         )
 
-    enabled = {u.username for u in user_list.get_enabled_users()}
-    # Former members keep showing up as long as they appear in the history.
-    usernames = enabled | set(current_by_user) | {r.username for r in history}
+    members = {u.username for u in user_list.get_member_users()}
+    if user_list.member_filter_enabled():
+        usernames = members
+    else:
+        # Former members keep showing up as long as they appear in the history.
+        usernames = members | set(current_by_user) | {r.username for r in history}
 
     rows: list[dict] = []
     for username in usernames:
@@ -112,7 +117,7 @@ def member_rows(
             {
                 "username": username,
                 "displayname": displayname,
-                "active": username in enabled,
+                "active": username in members,
                 "roles": roles,
                 "past_count": past_counts.get(username, 0),
             }
