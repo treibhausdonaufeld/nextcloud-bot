@@ -12,6 +12,7 @@ Features:
 - Deck reminder
 - Protocol summaries
 - Logbook
+- Matrix chat rooms per group
 
 A single [Ravyn](https://www.ravyn.dev/) application serves the web UI
 (Jinja2 + htmx + Pico.css) and runs the background sync/notification worker
@@ -31,9 +32,41 @@ TODOs:
 - `uv run python cli.py sync` — one manual sync/notify iteration
 - `uv run python cli.py sync --update-all` — re-parse all pages
 - `uv run python cli.py clear-parsed-data`
+- `uv run python cli.py sync-matrix` — create/refresh the Matrix rooms of all groups
 - `uv run python cli.py import-xlsx decisions.xlsx`
 
 Set `WORKER_ENABLED=false` to run the UI without the background worker.
+
+## Matrix chat rooms
+
+Every active group gets a public Matrix room named after it — "AG Struktur"
+becomes `#ag-struktur:example.com` — and everyone the group page lists
+(coordination, delegates, members) is invited to it. Writing
+
+```markdown
+**Chat-Kanäle:** Fragen an AG Struktur, Termine
+```
+
+on the group page creates `#fragen-an-ag-struktur` and `#termine` next to it,
+with the same members. Rooms and invitations are checked whenever the group's
+wiki page changes; the bot only ever adds people — anyone who joined, was
+invited, or left again is left alone, so nobody is removed or pestered with a
+second invitation.
+
+The feature is off until a homeserver and an access token are configured:
+
+```bash
+MATRIX__HOMESERVER_URL=https://matrix.example.com
+MATRIX__ADMIN_TOKEN=syt_...            # may create rooms and invite users
+MATRIX__SERVER_NAME=example.com        # alias domain, defaults to the URL host
+MATRIX__USER_DOMAIN=example.com        # user id domain, defaults to SERVER_NAME
+MATRIX__ROOM_PREFIX=                   # optional alias prefix, e.g. "thd-"
+```
+
+Invited user ids are built from the authentik username (the same handle used
+for chat DMs): `@fabian.helm:example.com`. Run
+`uv run python cli.py sync-matrix` once after enabling the feature to create
+the rooms of all existing groups at once.
 
 ## Migrating from the old CouchDB setup
 

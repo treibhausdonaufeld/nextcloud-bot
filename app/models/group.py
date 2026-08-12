@@ -19,6 +19,9 @@ class Group(BaseDBModel):
     delegate: List[str] = edgy.JSONField(default=list)
     members: List[str] = edgy.JSONField(default=list)
     short_names: List[str] = edgy.JSONField(default=list)
+    # Extra Matrix chat channels named on the page ("Chat-Kanäle: ..."), in
+    # addition to the group's own channel.
+    chat_channels: List[str] = edgy.JSONField(default=list)
 
     natural_key_fields = ("page_id",)
 
@@ -170,6 +173,7 @@ class Group(BaseDBModel):
         self.coordination = []
         self.delegate = []
         self.members = []
+        self.chat_channels = []
         attr = ""
 
         for line in lines:
@@ -192,6 +196,17 @@ class Group(BaseDBModel):
                     sn.strip().lower() for sn in shortnames if sn.strip() != ""
                 ]
                 self.short_names = self.short_names + sorted(shortnames)
+                continue
+            elif first_word in bot_config.organisation.group_chat_channel_keywords:
+                # extra chat channels are split by commas, e.g.
+                # "**Chat-Kanäle:** Fragen an AG Struktur, Termine"
+                if ":" not in line:
+                    continue
+                channels = line.split(":", 1)[1].split(",")
+                channels = [
+                    name for name in (c.strip(" *_`\t") for c in channels) if name
+                ]
+                self.chat_channels = self.chat_channels + channels
                 continue
 
             users = re.findall(user_regex, line)

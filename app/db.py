@@ -115,6 +115,12 @@ async def _migrate_schema() -> None:
         )
         logger.info("Migrated protocols table: added preview column")
 
+    if "chat_channels" not in await _table_columns("groups"):
+        await database.execute(
+            "ALTER TABLE groups ADD COLUMN chat_channels JSON NOT NULL DEFAULT '[]'"
+        )
+        logger.info("Migrated groups table: added chat_channels column")
+
     user_columns = await _table_columns("users")
     if "authentik_username" not in user_columns:
         await database.execute(

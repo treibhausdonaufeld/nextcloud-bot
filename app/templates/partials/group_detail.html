@@ -21,6 +21,15 @@
     {% endif %}
   </ul>
 
+  {% if chat_channels %}
+    <p>
+      <strong>{{ _("Chat Channels") }}:</strong>
+      {% for channel in chat_channels %}
+        <a href="{{ channel.url }}" target="_blank" rel="noopener">{{ channel.alias }}</a>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+  {% endif %}
+
   {% if subgroups %}
     <h4>{{ _("Subgroups") }}</h4>
     <ul>

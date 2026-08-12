@@ -20,6 +20,19 @@ class OrganisationConfig(BaseModel):
     group_shortname_keywords: List[str] = Field(
         default_factory=lambda: ["schlagwörter", "kurznamen", "shortnames"]
     )
+    # Keywords introducing extra Matrix chat channels on a group page, e.g.
+    # "Chat-Kanäle: Fragen an AG Struktur, Termine". Each comma-separated
+    # name becomes an additional public room next to the group's own one.
+    group_chat_channel_keywords: List[str] = Field(
+        default_factory=lambda: [
+            "chat-kanäle",
+            "chat-kanaele",
+            "chat-kanal",
+            "chatkanäle",
+            "chat-channels",
+            "chat-channel",
+        ]
+    )
     top_group_name: str = "Koordinationskreis"
     extra_groups: Dict[str, List[str]] = Field(default_factory=dict)
     # Page names that mark an archive: a group page moved below one of them

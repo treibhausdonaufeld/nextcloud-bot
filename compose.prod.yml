@@ -25,6 +25,15 @@ services:
       NEXTCLOUD__ADMIN_USERNAME: 'admin'
       NEXTCLOUD__ADMIN_PASSWORD: 'secretpassword'
 
+      # Public Matrix room per group ("AG Struktur" -> #ag-struktur:...),
+      # members are invited automatically. Leave the URL/token empty to
+      # disable the feature entirely.
+      MATRIX__HOMESERVER_URL: 'https://matrix.example.com'
+      MATRIX__ADMIN_TOKEN: 'secrettoken'
+      # Server part of the room aliases and user ids; defaults to the host
+      # of MATRIX__HOMESERVER_URL, which is usually not what you want.
+      MATRIX__SERVER_NAME: 'example.com'
+
       ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
       ROCKETCHAT__INFO_CHANNEL: '#my-channel'
       ROCKETCHAT__ERROR_CHANNEL: '#my-channel'

@@ -270,12 +270,15 @@ def group_detail(request: Request, node: str = "") -> Template:
                 result.append(user.displayname if user else user_id)
             return result
 
+        from app.services.matrix_rooms import group_channel_links
+
         context.update(
             group=group,
             subgroups=subgroups,
             coordination_names=names(group.coordination),
             delegate_names=names(group.delegate),
             member_names=names(group.members),
+            chat_channels=group_channel_links(group),
         )
         return Template(name="partials/group_detail.html", context=context)
 

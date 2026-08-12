@@ -29,6 +29,7 @@ uv run python cli.py sync               # one manual sync/notify iteration
 uv run python cli.py sync --update-all  # re-fetch and re-parse all pages
 uv run python cli.py sync --update-pages 1,2
 uv run python cli.py clear-parsed-data
+uv run python cli.py sync-matrix        # create/refresh all group chat rooms
 uv run python cli.py import-xlsx decisions.xlsx
 ```
 
@@ -69,6 +70,10 @@ Full-text search is a raw FTS5 virtual table `search_index` (`doc_type` ∈ page
 ### Parsing pipeline
 
 `app/services/collectives_loader.py` fetches page metadata via the Nextcloud OCS Collectives API and raw markdown via WebDAV (admin Basic auth), upserting `CollectivePage` rows. `collectives_parser.py` classifies pages by title/path into group/protocol subtypes; the models' `update_from_page()` methods do the actual keyword-driven markdown parsing. Protocols extract decisions from `::: success ... :::` blocks into `Decision` rows (deleting a protocol/page cascades to its decisions). User mentions everywhere use `user_regex` from `app/settings.py` (`mention://user/<name>`).
+
+### Matrix chat rooms
+
+`app/services/matrix.py` is a thin wrapper around the Matrix Client-Server API (resolve alias, create room, read members, invite, join) using the admin token from `settings.matrix`; `app/services/matrix_rooms.py` turns a `Group` into channels and syncs them. Each group gets one public room named after the group (`"AG Struktur"` → `#ag-struktur:<server_name>`, see `channel_slug()` for the German transliteration), plus one per name listed after the `Chat-Kanäle:` keyword on the page (`organisation.group_chat_channel_keywords`, parsed into `Group.chat_channels`). `sync_group_rooms()` runs after `GroupRole.sync_group()` in `parse_groups`, so rooms and memberships are reconciled whenever a group page changes; it swallows its own errors so a chat outage never breaks parsing. Invited user ids come from the authentik username (`NCUserList.chat_username`) — the same handle Rocket.Chat uses. The sync only ever **adds**: a user with any existing membership event (join/invite/leave/ban) is skipped, so leaving a room is not undone and nobody gets invited twice. Everything is inert unless `MATRIX__HOMESERVER_URL` and `MATRIX__ADMIN_TOKEN` are set (`settings.matrix.enabled`); `cli.py sync-matrix` walks all stored groups for the initial rollout.
 
 ### Role history
 
