@@ -20,6 +20,7 @@ from app.services.collectives_parser import (
     backfill_role_history,
     parse_groups,
     parse_protocols,
+    remove_stale_groups,
 )
 from app.services.config import BotConfig
 from app.services.deck_reminder import DeckReminder
@@ -71,6 +72,11 @@ def process_pages(updated_pages: list[CollectivePage], force_save: bool):
 
     for page in updated_pages:
         parse_groups(page)
+
+    # Groups whose page was deleted or archived are retired here; runs over
+    # all stored groups, since archiving a page does not necessarily touch
+    # its subpages' timestamps.
+    remove_stale_groups()
 
     backfill_role_history()
 

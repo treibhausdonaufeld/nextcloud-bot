@@ -22,6 +22,9 @@ class OrganisationConfig(BaseModel):
     )
     top_group_name: str = "Koordinationskreis"
     extra_groups: Dict[str, List[str]] = Field(default_factory=dict)
+    # Page names that mark an archive: a group page moved below one of them
+    # (together with its subpages) counts as dissolved.
+    archive_page_names: List[str] = Field(default_factory=lambda: ["archiv", "archive"])
     protocol_subtype_keywords: List[str] = Field(
         default_factory=lambda: ["protocol", "protocols", "protokoll", "protokolle"]
     )

@@ -30,12 +30,63 @@ def parse_groups(page: CollectivePage) -> None:
             page.subtype = PageSubtype.GROUP
             page.store()
 
+        # A page below an archive page describes a dissolved group; the sweep
+        # in `remove_stale_groups()` retires it (and its subgroups).
+        if Group.is_archived_path(page.full_path):
+            return
+
         group = Group.fetch_one(page_id=page.page_id) or Group(page_id=page.page_id)
         group.update_from_page()
 
         # Record who gained or lost a role, dated by the page's own
         # modification time (idempotent, so re-parsing is safe).
         GroupRole.sync_group(group, timestamp=page.timestamp)
+
+
+def remove_stale_groups() -> None:
+    """Delete groups whose page is gone or has been archived.
+
+    Two ways a group ceases to exist: its page is deleted in Nextcloud (the
+    page row is already gone by the time this runs, see
+    `delete_orphaned_pages`), or the page is moved below an archive page —
+    which archives its subpages along with it, so subgroups retire too.
+
+    `Group.before_remove()` ends the roles that were still open, dated by the
+    time the bot noticed: unlike a content edit, moving or deleting a page in
+    Nextcloud does not touch its modification time, so the page timestamp
+    would put the end far too early. The role history itself is kept, so past
+    (and now-ended) roles stay visible on the members page.
+    """
+    config = bot_config or BotConfig.load_config()
+    if not config:
+        return
+
+    groups = Group.fetch(limit=1000)
+    if not groups:
+        return
+
+    pages = {
+        page.page_id: page
+        for page in CollectivePage.fetch(
+            limit=10000, page_id__in=[g.page_id for g in groups]
+        )
+    }
+
+    for group in groups:
+        page = pages.get(group.page_id)
+
+        if page is None:
+            logger.info(
+                "Retiring group %s: its page is gone (page_id=%s)",
+                group.name,
+                group.page_id,
+            )
+            group.remove()
+            continue
+
+        if Group.is_archived_path(page.full_path):
+            logger.info("Retiring archived group %s (%s)", group.name, page.full_path)
+            group.remove()
 
 
 def backfill_role_history() -> None:

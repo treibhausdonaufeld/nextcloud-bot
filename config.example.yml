@@ -10,6 +10,15 @@ nextcloud:
   avatar_folder: avatare
   avatar_refresh_seconds: 86400
 
+organisation:
+  # Pages whose name marks an archive. A group page moved below one of them
+  # counts as dissolved: the group (and every subgroup below it) is removed
+  # and the roles held in it are ended, while the role history is kept.
+  # "Archiv 2024" and "Archiv-2024" match as well, "Archivierung" does not.
+  archive_page_names:
+    - archiv
+    - archive
+
 deck_reminder:
   enabled: true
   cards_processed_storage: processed_cards.json

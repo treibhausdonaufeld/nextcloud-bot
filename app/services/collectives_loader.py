@@ -176,6 +176,13 @@ def snapshot_protocol_page(page: CollectivePage) -> None:
         logger.exception("Failed to snapshot protocol page %s", page.page_id)
 
 
+def _moved(doc: CollectivePage, page: OCSCollectivePage) -> bool:
+    """Whether the page sits somewhere else than the stored row says."""
+    return (doc.file_path or "") != (page.filePath or "") or (doc.title or "") != (
+        page.title or ""
+    )
+
+
 def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     """Upsert the given pages into the database. Returns the stored pages."""
     stored = []
@@ -183,7 +190,13 @@ def store_pages(pages: List[OCSCollectivePage]) -> List[CollectivePage]:
     for page in pages:
         doc = CollectivePage.get_from_page_id_or_none(page_id=page.id)
         if doc is not None:
-            if doc.updated_at and page.timestamp and page.timestamp < doc.updated_at:
+            unchanged = (
+                doc.updated_at and page.timestamp and page.timestamp < doc.updated_at
+            )
+            # Moving a page only touches the mtime of the page that was moved,
+            # not of its subpages — so a changed path counts as a change too,
+            # otherwise subpages would keep a stale (pre-move) path forever.
+            if unchanged and not _moved(doc, page):
                 logger.debug("Page %s unchanged, skipping", doc.title)
                 continue
         else:
