@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import sentry_sdk
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Configure logging to suppress verbose HTTP logs
@@ -77,9 +77,19 @@ class AuthSettings(BaseModel):
 
     board_group_name: str = "Vorstand"
 
-    @field_validator("authentik_base_url")
-    def set_authentik_base_url(cls, v, values):
-        return v or values.get("provider_base_url")
+    # Only users belonging to this authentik group count as members of the
+    # association and are offered in the member overview and user pickers.
+    # Set AUTH__MEMBER_GROUP_NAME to an empty string to show every user.
+    member_group_name: str = "Mitglieder"
+
+    @model_validator(mode="after")
+    def set_authentik_base_url(self) -> "AuthSettings":
+        # Field validators do not run for unset defaults, so the fallback has
+        # to happen after the model is built — otherwise deployments that only
+        # set AUTH__PROVIDER_BASE_URL end up without an authentik connection.
+        if self.authentik_base_url is None:
+            self.authentik_base_url = self.provider_base_url
+        return self
 
 
 class RocketchatSettings(BaseModel):

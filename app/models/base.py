@@ -14,13 +14,24 @@ T = TypeVar("T", bound="BaseDBModel")
 
 
 def format_timestamp(timestamp: int | None) -> str | None:
+    """Format a unix timestamp as a full date/time in the configured timezone."""
     if not timestamp:
         return None
 
-    dt_object = datetime.fromtimestamp(timestamp)
+    # Convert into the configured timezone; attaching it to a naive local
+    # datetime instead would render the container's timezone under a wrong
+    # label whenever the two differ.
     tz = pytz.timezone(settings.timezone)
-    localized_dt = tz.localize(dt_object)
-    return localized_dt.strftime("%c")
+    return datetime.fromtimestamp(timestamp, tz).strftime("%c")
+
+
+def format_date(timestamp: int | None) -> str | None:
+    """Format a unix timestamp as an ISO date in the configured timezone."""
+    if not timestamp:
+        return None
+
+    tz = pytz.timezone(settings.timezone)
+    return datetime.fromtimestamp(timestamp, tz).strftime("%Y-%m-%d")
 
 
 class BaseDBModel(edgy.Model):

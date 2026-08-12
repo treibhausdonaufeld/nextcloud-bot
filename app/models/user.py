@@ -54,6 +54,9 @@ class NCUser(BaseDBModel):
     # authentik username (e.g. "fabian.helm"); the Nextcloud username above
     # is the authentik uuid, but Rocket.Chat knows users by this name
     authentik_username: str = edgy.CharField(max_length=255, default="")
+    # names of the authentik groups the user belongs to; membership in
+    # `settings.auth.member_group_name` decides who counts as a member
+    authentik_groups: List[str] = edgy.JSONField(default=list)
 
     natural_key_fields = ("username",)
 
@@ -181,10 +184,11 @@ class NCUserList:
         self.update_from_authentik()
 
     def update_from_authentik(self) -> None:
-        """Store each user's authentik username.
+        """Store each user's authentik username and group memberships.
 
         The Nextcloud username is the authentik uuid; chat DMs must be
         addressed to the authentik username (e.g. "fabian.helm") instead.
+        The group names come from the same payload and drive `is_member()`.
         Fetches the authentik user list in bulk and updates changed rows.
         """
         if not settings.auth.authentik_base_url or not settings.auth.authentik_token:
@@ -198,6 +202,7 @@ class NCUserList:
         }
 
         uuid_to_username: Dict[str, str] = {}
+        uuid_to_groups: Dict[str, List[str]] = {}
         page = 1
         while True:
             try:
@@ -218,6 +223,15 @@ class NCUserList:
                 username = result.get("username")
                 if uuid and username:
                     uuid_to_username[uuid] = username
+                # `groups_obj` is only present when authentik serializes the
+                # full user; skip the key entirely rather than storing an
+                # empty list that would drop everyone out of the member list.
+                if uuid and "groups_obj" in result:
+                    uuid_to_groups[uuid] = sorted(
+                        group["name"]
+                        for group in result["groups_obj"]
+                        if group.get("name")
+                    )
 
             next_page = data.get("pagination", {}).get("next") or 0
             if next_page <= page:
@@ -226,13 +240,23 @@ class NCUserList:
 
         updated = 0
         for user in self.users.values():
+            changed = False
+
             authentik_username = uuid_to_username.get(user.username, "")
             if authentik_username and authentik_username != user.authentik_username:
                 user.authentik_username = authentik_username
+                changed = True
+
+            groups = uuid_to_groups.get(user.username)
+            if groups is not None and groups != list(user.authentik_groups):
+                user.authentik_groups = groups
+                changed = True
+
+            if changed:
                 user.store()
                 updated += 1
         if updated:
-            logger.info("Updated authentik usernames for %d users", updated)
+            logger.info("Updated authentik data for %d users", updated)
 
     def mails_for_groups(self, group_names: List[str]) -> Set[str]:
         """
@@ -271,6 +295,47 @@ class NCUserList:
         return [
             u.username
             for u in sorted(self.get_enabled_users(), key=lambda u: u.displayname or "")
+        ]
+
+    @staticmethod
+    def member_filter_configured() -> bool:
+        """Whether the settings ask for membership to be restricted.
+
+        Off when no group is configured (`AUTH__MEMBER_GROUP_NAME=""`) or when
+        authentik is not connected at all — without it there is no group data
+        to filter on.
+        """
+        return bool(
+            settings.auth.member_group_name and settings.auth.authentik_base_url
+        )
+
+    def member_filter_enabled(self) -> bool:
+        """Whether the member filter can actually be applied.
+
+        Group memberships arrive with the authentik sync, so right after the
+        column was added (or while the sync fails) nobody would qualify. Rather
+        than showing an empty member list, fall back to "everyone is a member"
+        until at least one user has group data.
+        """
+        if not self.member_filter_configured():
+            return False
+        return any(u.authentik_groups for u in self.users.values())
+
+    def is_member(self, user: NCUser) -> bool:
+        """Whether the user belongs to the configured authentik member group."""
+        if not self.member_filter_enabled():
+            return True
+        return settings.auth.member_group_name in (user.authentik_groups or [])
+
+    def get_member_users(self) -> List[NCUser]:
+        """Enabled users that belong to the configured member group."""
+        return [u for u in self.get_enabled_users() if self.is_member(u)]
+
+    def get_member_usernames(self) -> List[str]:
+        """Usernames of the members, ordered by display name."""
+        return [
+            u.username
+            for u in sorted(self.get_member_users(), key=lambda u: u.displayname or "")
         ]
 
     def get_all_emails(self) -> Set[str]:

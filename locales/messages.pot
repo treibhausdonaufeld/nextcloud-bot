@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-07 20:02+0000\n"
+"POT-Creation-Date: 2026-08-10 08:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,6 +18,15 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 msgid "No Title"
+msgstr ""
+
+msgid "Coordination"
+msgstr ""
+
+msgid "Delegate"
+msgstr ""
+
+msgid "Member"
 msgstr ""
 
 msgid "unknown"
@@ -70,8 +79,8 @@ msgstr ""
 msgid ""
 "Hello {displayname},\n"
 "\n"
-"The protocol [{protocol}]({url}) looks generally fine, but there are some"
-" issues:\n"
+"The protocol [{protocol}]({url}) looks generally fine, but there are some "
+"issues:\n"
 "\n"
 "- {issues}\n"
 "\n"
@@ -119,16 +128,16 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr ""
 
-msgid "Home"
-msgstr ""
-
-msgid "Groups"
+msgid "Logbook"
 msgstr ""
 
 msgid "Protocols"
 msgstr ""
 
-msgid "Logbook"
+msgid "Groups"
+msgstr ""
+
+msgid "Members"
 msgstr ""
 
 msgid "Mentions"
@@ -143,29 +152,7 @@ msgstr ""
 msgid "Others"
 msgstr ""
 
-#, python-brace-format
-msgid "{common_name} Dashboard"
-msgstr ""
-
-msgid "Search"
-msgstr ""
-
-msgid "Search collective pages and decisions"
-msgstr ""
-
-msgid "Type"
-msgstr ""
-
-msgid "Pages and decisions"
-msgstr ""
-
-msgid "Pages"
-msgstr ""
-
-msgid "Decisions"
-msgstr ""
-
-msgid "Results"
+msgid "Home"
 msgstr ""
 
 msgid "Hierarchical layout"
@@ -190,6 +177,9 @@ msgid "Graph Height"
 msgstr ""
 
 msgid "Search decisions…"
+msgstr ""
+
+msgid "Search"
 msgstr ""
 
 msgid "Filter by group"
@@ -258,6 +248,48 @@ msgid "Next page"
 msgstr ""
 
 msgid "Last page"
+msgstr ""
+
+msgid "Search member"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "All roles"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "No members found."
+msgstr ""
+
+#, python-format
+msgid "%(num)d member"
+msgid_plural "%(num)d members"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Current roles"
+msgstr ""
+
+msgid "Past roles"
+msgstr ""
+
+msgid "No longer an active Nextcloud user"
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
+#, python-format
+msgid "since %(date)s"
+msgstr ""
+
+msgid ""
+"Role dates are derived from the group pages' edit history; roles that "
+"existed before the bot started tracking are dated to the page's last change."
 msgstr ""
 
 msgid "Time range"
@@ -339,9 +371,6 @@ msgstr ""
 msgid "Member Statistics for"
 msgstr ""
 
-msgid "Member"
-msgstr ""
-
 msgid "Moderated"
 msgstr ""
 
@@ -370,19 +399,23 @@ msgstr ""
 msgid "Short Names"
 msgstr ""
 
-msgid "Coordination"
-msgstr ""
-
 msgid "Delegates"
-msgstr ""
-
-msgid "Members"
 msgstr ""
 
 msgid "Subgroups"
 msgstr ""
 
 msgid "Close"
+msgstr ""
+
+msgid "No current roles."
+msgstr ""
+
+#, python-format
+msgid "%(start)s to %(end)s"
+msgstr ""
+
+msgid "No past roles recorded."
 msgstr ""
 
 msgid "Mention Details for"
@@ -439,7 +472,26 @@ msgstr ""
 msgid "Copy markdown"
 msgstr ""
 
+#, python-format
+msgid "%(role)s of %(group)s"
+msgstr ""
+
+msgid "Currently"
+msgstr ""
+
+msgid "Nobody currently holds this role."
+msgstr ""
+
+msgid "Previously"
+msgstr ""
+
+msgid "Nobody held this role before."
+msgstr ""
+
 msgid "Source Documents"
+msgstr ""
+
+msgid "Type"
 msgstr ""
 
 msgid "Title"

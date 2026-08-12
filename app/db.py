@@ -115,12 +115,18 @@ async def _migrate_schema() -> None:
         )
         logger.info("Migrated protocols table: added preview column")
 
-    if "authentik_username" not in await _table_columns("users"):
+    user_columns = await _table_columns("users")
+    if "authentik_username" not in user_columns:
         await database.execute(
             "ALTER TABLE users ADD COLUMN authentik_username VARCHAR(255)"
             " NOT NULL DEFAULT ''"
         )
         logger.info("Migrated users table: added authentik_username column")
+    if "authentik_groups" not in user_columns:
+        await database.execute(
+            "ALTER TABLE users ADD COLUMN authentik_groups JSON NOT NULL DEFAULT '[]'"
+        )
+        logger.info("Migrated users table: added authentik_groups column")
 
     # Early protocol_media versions stored attachment bytes as a database
     # blob; media now lives on disk. Drop the old table (attachments are

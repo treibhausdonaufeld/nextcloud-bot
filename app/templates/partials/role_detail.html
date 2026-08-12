@@ -1,0 +1,45 @@
+<article>
+  <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
+     onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
+  <h3>
+    {% if group_name %}
+      {{ _("%(role)s of %(group)s") | format(role=role_label, group=group_name) }}
+    {% else %}
+      {{ role_label }}
+    {% endif %}
+  </h3>
+
+  <h4>{{ _("Currently") }}</h4>
+  {% if current_holders %}
+    <ul class="role-history">
+      {% for holder in current_holders %}
+        <li>
+          <a href="#detail" hx-get="/members/user/{{ holder.username | urlencode }}" hx-target="#detail">{{ holder.displayname }}</a>
+          {% if not group_name %}
+            <span class="role-badge" style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}">{{ holder.group }}</span>
+          {% endif %}
+          <span class="role-period">{{ _("since %(date)s") | format(date=holder.start) }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="meta">{{ _("Nobody currently holds this role.") }}</p>
+  {% endif %}
+
+  <h4>{{ _("Previously") }}</h4>
+  {% if past_holders %}
+    <ul class="role-history">
+      {% for holder in past_holders %}
+        <li>
+          <a href="#detail" hx-get="/members/user/{{ holder.username | urlencode }}" hx-target="#detail">{{ holder.displayname }}</a>
+          {% if not group_name %}
+            <span class="role-badge role-badge-past" style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}">{{ holder.group }}</span>
+          {% endif %}
+          <span class="role-period">{{ _("%(start)s to %(end)s") | format(start=holder.start, end=holder.end) }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="meta">{{ _("Nobody held this role before.") }}</p>
+  {% endif %}
+</article>

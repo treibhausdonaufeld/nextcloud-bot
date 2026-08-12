@@ -54,6 +54,13 @@ class Group(BaseDBModel):
         super().remove()
         Group.invalidate_cache()
 
+    def before_remove(self) -> None:
+        # The group is gone, so nobody holds a role in it any more; the
+        # history itself is kept.
+        from app.models.group_role import GroupRole
+
+        GroupRole.close_for_page(self.page_id)
+
     @classmethod
     def invalidate_cache(cls) -> None:
         cls._cached_groups = None
@@ -103,6 +110,36 @@ class Group(BaseDBModel):
         """Extract valid group names from the given file path."""
         path_parts = file_path.split("/")
         return [name for name in reversed(path_parts) if Group.valid_name(name)]
+
+    @staticmethod
+    def is_archived_path(path: str) -> bool:
+        """Whether any path segment marks the page as archived.
+
+        Group pages are archived by moving them below a page such as
+        "Archiv" (see `organisation.archive_page_names`), which shows up as a
+        segment of every affected page's path — subpages included, so a whole
+        branch is archived at once.
+        """
+        names = [
+            name.strip().lower()
+            for name in bot_config.organisation.archive_page_names
+            if name.strip()
+        ]
+
+        for segment in path.split("/"):
+            segment = segment.strip().lower()
+            for name in names:
+                # "Archiv", "Archiv 2024" and "Archiv-2024" all count; a page
+                # like "Archivierung" does not.
+                if segment == name:
+                    return True
+                if segment.startswith(name) and segment[len(name) : len(name) + 1] in (
+                    " ",
+                    "-",
+                    "_",
+                ):
+                    return True
+        return False
 
     @classmethod
     def get_for_page(cls, page: CollectivePage) -> "Group":
