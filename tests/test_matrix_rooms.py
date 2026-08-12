@@ -136,6 +136,18 @@ class TestMemberMapping:
 
         assert sync.matrix_ids(["uuid-x"]) == ["@annsmith:example.com"]
 
+    def test_full_matrix_id_is_kept_as_is(self, userlist):
+        userlist.chat_username.side_effect = lambda username: "@alice:other.example"
+        sync = make_sync(FakeClient(), userlist)
+
+        assert sync.matrix_ids(["uuid-x"]) == ["@alice:other.example"]
+
+    def test_leading_at_without_domain_gets_the_default_domain(self, userlist):
+        userlist.chat_username.side_effect = lambda username: "@alice"
+        sync = make_sync(FakeClient(), userlist)
+
+        assert sync.matrix_ids(["uuid-x"]) == ["@alice:example.com"]
+
 
 class TestRoomSync:
     def test_creates_public_room_and_invites_members(self, userlist):

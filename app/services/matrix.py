@@ -101,7 +101,10 @@ class MatrixClient:
             except ValueError:
                 body = {}
 
-            if response.status_code == 200:
+            # The spec answers these endpoints with 200, but homeservers and
+            # reverse proxies do return other 2xx codes (201/204) — treat the
+            # whole range as success.
+            if 200 <= response.status_code < 300:
                 return body if isinstance(body, dict) else {}
 
             errcode = str(body.get("errcode", "")) if isinstance(body, dict) else ""

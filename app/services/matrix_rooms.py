@@ -142,11 +142,15 @@ class MatrixRoomSync:
         """Matrix id of a Nextcloud user (`@fabian.helm:example.com`).
 
         Accounts are provisioned from the same identity provider as
-        Rocket.Chat, so the authentik username is the localpart.
+        Rocket.Chat, so the authentik username is the localpart. A chat
+        username that already is a full matrix id (`@alice:other.example`,
+        e.g. for someone on another homeserver) is used as it stands.
         """
-        localpart = USER_LOCALPART_RE.sub(
-            "", self.userlist.chat_username(username).lower()
-        )
+        chat_name = self.userlist.chat_username(username).strip()
+        if chat_name.startswith("@") and ":" in chat_name:
+            return chat_name
+
+        localpart = USER_LOCALPART_RE.sub("", chat_name.lstrip("@").lower())
         return self.client.user_id(localpart) if localpart else ""
 
     def matrix_ids(self, usernames: Iterable[str]) -> List[str]:

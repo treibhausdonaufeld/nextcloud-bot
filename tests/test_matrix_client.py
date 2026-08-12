@@ -135,6 +135,11 @@ class TestMembersAndInvites:
             "@bob:example.com": "leave",
         }
 
+    def test_other_2xx_codes_count_as_success(self, client):
+        client.session.request.return_value = FakeResponse(status_code=204, body={})
+
+        client.invite("!room:example.com", "@alice:example.com")
+
     def test_invite_posts_the_user_id(self, client):
         client.session.request.return_value = FakeResponse(body={})
 
