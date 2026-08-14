@@ -6,9 +6,11 @@ maps each channel to one or more Apprise service URLs, which lets the bot
 deliver to any service Apprise supports (Matrix, Telegram, Discord, e-mail,
 Rocket.Chat, ...).
 
-When a channel has no Apprise targets configured, the message falls back to
-the legacy Rocket.Chat incoming webhook so existing deployments keep working
-without any config change.
+When a channel has no Apprise targets configured, the message is delivered
+into the channel's Matrix room if one exists (see
+:mod:`app.services.matrix_notify`), and otherwise falls back to the legacy
+Rocket.Chat incoming webhook, so existing deployments keep working without
+any config change.
 """
 
 import logging
@@ -16,6 +18,7 @@ import logging
 import apprise
 
 from app.services.config import bot_config
+from app.services.matrix_notify import send_matrix_message
 from app.services.rocketchat import send_rocketchat_message
 from app.settings import settings
 
@@ -53,7 +56,12 @@ def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
     urls = _resolve_urls(channel)
 
     if not urls:
-        # No generic targets configured -> keep the legacy Rocket.Chat behaviour.
+        # No explicit Apprise target: try the channel's Matrix room (every
+        # group has one, see `app.services.matrix_rooms`), then fall back to
+        # the legacy Rocket.Chat webhook.
+        if send_matrix_message(text=text, channel=channel):
+            return
+
         send_rocketchat_message(text=text, channel=channel, emoji=emoji)
         return
 

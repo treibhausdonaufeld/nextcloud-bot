@@ -1,5 +1,5 @@
 import re
-from typing import ClassVar, List
+from typing import ClassVar, List, Optional
 
 import edgy
 
@@ -95,6 +95,33 @@ class Group(BaseDBModel):
         if not docs:
             raise ValueError(f"Group with name '{name}' not found")
         return docs[0]
+
+    @classmethod
+    def find_in_text(cls, text: str) -> Optional["Group"]:
+        """The group whose name or short name occurs in `text`.
+
+        Used to route a calendar event such as "AG Struktur Treffen" to its
+        own chat channel. Matches on word boundaries (so "IT" does not match
+        inside "Sitzung") and prefers the longest match, so a subgroup wins
+        over the parent group it is named after.
+        """
+        haystack = (text or "").lower()
+        if not haystack:
+            return None
+
+        best: Optional["Group"] = None
+        best_length = 0
+
+        for group in cls.all_cached():
+            for candidate in [group.name, *group.short_names]:
+                needle = (candidate or "").strip().lower()
+                if len(needle) <= best_length:
+                    continue
+                if re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", haystack):
+                    best = group
+                    best_length = len(needle)
+
+        return best
 
     @classmethod
     def valid_name(cls, name: str) -> bool:

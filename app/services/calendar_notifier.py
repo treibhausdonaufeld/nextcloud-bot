@@ -169,21 +169,50 @@ class Notifier:
         set_state(self.processed_events_key, self.events)
 
     def check_event(self, event_data):
-        for channel, keywords in self.config.channel_keywords.items():
-            summary = event_data["summary"]
-            if not summary:
-                continue
+        summary = event_data["summary"]
+        if not summary:
+            return
 
-            summary = summary.lower()
-            if any(s in summary for s in keywords):
+        for channel, keywords in self.config.channel_keywords.items():
+            if any(s in summary.lower() for s in keywords):
                 self.send_event_notification(channel, event_data)
-                break
+                return
+
+        channel = self.group_channel(summary)
+        if channel:
+            self.send_event_notification(channel, event_data)
+
+    def group_channel(self, summary: str) -> str:
+        """Channel of the group named in the event, e.g. "ag-struktur".
+
+        The fallback for events the configured `channel_keywords` do not
+        cover: an event called "AG Struktur Treffen" is announced in the
+        group's own chat channel, which the Matrix sync has already created.
+        """
+        if not self.config.group_channel_fallback:
+            return ""
+
+        from app.models.group import Group
+        from app.services.matrix_rooms import channel_slug
+
+        try:
+            group = Group.find_in_text(summary)
+        except Exception:  # group table/bot config unavailable
+            logger.exception("Could not look up the group for event %r", summary)
+            return ""
+
+        if group is None:
+            logger.debug("No group found for event %r", summary)
+            return ""
+
+        return channel_slug(group.name)
 
     def send_event_notification(self, channel, event_data):
         text = (
             f"Nächster Termin: **{event_data['summary']}**"
             f"\n - Start: **{self._local_datetime(event_data['start'])}**"
-            f"\n - Ende: **{self._local_datetime(event_data['end'])}**"
+            # `fill_event` omits "end" for events without DTEND
+            f"\n - Ende: **{self._local_datetime(event_data.get('end'))}**"
         )
         if event_data.get("location"):
             text += f"\n - Ort: {event_data['location']}"

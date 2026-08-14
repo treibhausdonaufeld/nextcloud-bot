@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Any, Dict, Optional
 from urllib.parse import quote
+from uuid import uuid4
 
 import requests
 
@@ -209,6 +210,25 @@ class MatrixClient:
             if user_id and membership:
                 members[str(user_id)] = str(membership)
         return members
+
+    def send_message(self, room_id: str, body: str, formatted_body: str = "") -> None:
+        """Send an `m.text` message into the room.
+
+        `formatted_body` (HTML) is attached when given; clients that cannot
+        render it fall back to the plain `body`.
+        """
+        content: Dict[str, Any] = {"msgtype": "m.text", "body": body}
+        if formatted_body:
+            content["format"] = "org.matrix.custom.html"
+            content["formatted_body"] = formatted_body
+
+        # The transaction id makes the send idempotent if a retry ever races.
+        txn_id = uuid4().hex
+        self._request(
+            "PUT",
+            f"{API}/rooms/{quote(room_id, safe='')}/send/m.room.message/{txn_id}",
+            content,
+        )
 
     def invite(self, room_id: str, user_id: str) -> None:
         self._request(

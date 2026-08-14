@@ -77,6 +77,24 @@ for chat DMs): `@fabian.helm:example.com`. Run
 `uv run python cli.py sync-matrix` once after enabling the feature to create
 the rooms of all existing groups at once.
 
+### Notifications into Matrix
+
+Bot notifications are addressed by a logical channel name, and that name maps
+onto a room alias with the same slug rule (`ug-it` → `#ug-it:example.com`), so
+no per-channel configuration is needed. The order is: Apprise targets from the
+bot-config page if the channel has any, otherwise the channel's Matrix room if
+it exists, otherwise the Rocket.Chat webhook. Direct messages (`@user`
+channels, used for protocol feedback) always take the Rocket.Chat path — the
+bot does not open Matrix DMs.
+
+Calendar reminders pick their channel in two steps: the `channel_keywords`
+mapping on the bot-config page wins, and when no keyword matches, the event is
+announced in the channel of the group named in its title — "AG Struktur
+Treffen" goes to `ag-struktur`, matching group names and short names on word
+boundaries and preferring the most specific one. Set
+`calendar_notifier.group_channel_fallback: false` to keep the old behaviour of
+only notifying the mapped channels.
+
 ## Migrating from the old CouchDB setup
 
 Nextcloud is the source of truth for pages, groups and protocols — after

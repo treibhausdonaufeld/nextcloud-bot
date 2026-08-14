@@ -9,7 +9,6 @@ from typing import Dict, List, Optional
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.collective_page import CollectivePage
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -190,6 +189,11 @@ class CalendarNotifierConfig(BaseModel):
     timezone: str = "Europe/Vienna"
     channel_keywords: Dict[str, List[str]] = Field(default_factory=dict)
 
+    # When no channel_keywords entry matches, announce the event in the
+    # channel of the group named in its title ("AG Struktur Treffen" ->
+    # ag-struktur). Set to false to only notify the mapped channels.
+    group_channel_fallback: bool = True
+
 
 class MailerListItem(BaseModel):
     prefix: str = ""
@@ -260,6 +264,11 @@ class BotConfig(BaseModel):
     @classmethod
     def load_config(cls) -> BotConfig:
         """Load bot configuration from the Nextcloud Collectives configuration page."""
+        # Imported here: `app.models.group` imports this module, so importing
+        # the models at module level makes the import order decide whether
+        # `bot_config` exists yet.
+        from app.models.collective_page import CollectivePage
+
         config_page = CollectivePage.get_from_page_id(
             page_id=settings.nextcloud.configuration_page_id
         )

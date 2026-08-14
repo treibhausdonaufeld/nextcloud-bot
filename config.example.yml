@@ -131,3 +131,9 @@ calendar_notifier:
   # channels where to post the events
   channel_keywords:
     channel-name: [kw1, keyword2]
+
+  # When no keyword above matches, post the event in the channel of the
+  # group named in its title ("AG Struktur Treffen" -> ag-struktur, which
+  # is the group's own Matrix room). Set to false to notify only the
+  # channels mapped above.
+  group_channel_fallback: true
