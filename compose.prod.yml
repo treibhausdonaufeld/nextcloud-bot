@@ -37,6 +37,11 @@ services:
       # ("Allgemein" -> #allgemein). Comma-separated, empty to disable.
       MATRIX__DEFAULT_ROOMS: 'Allgemein, Ankündigungen'
 
+      # Testing: redirect EVERY notification (channel messages and direct
+      # messages, any backend) to one channel or user. Leave empty in
+      # production. '@max.mueller' sends everything as a DM to that user.
+      NOTIFY_CHANNEL_OVERWRITE: ''
+
       ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
       ROCKETCHAT__INFO_CHANNEL: '#my-channel'
       ROCKETCHAT__ERROR_CHANNEL: '#my-channel'

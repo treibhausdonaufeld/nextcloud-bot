@@ -83,9 +83,28 @@ Bot notifications are addressed by a logical channel name, and that name maps
 onto a room alias with the same slug rule (`ug-it` → `#ug-it:example.com`), so
 no per-channel configuration is needed. The order is: Apprise targets from the
 bot-config page if the channel has any, otherwise the channel's Matrix room if
-it exists, otherwise the Rocket.Chat webhook. Direct messages (`@user`
-channels, used for protocol feedback) always take the Rocket.Chat path — the
-bot does not open Matrix DMs.
+it exists, otherwise the Rocket.Chat webhook.
+
+Direct messages (`@user` channels, used for protocol feedback) are delivered
+as Matrix DMs: the bot reuses the one-to-one room recorded in its `m.direct`
+account data — including a DM the recipient opened themselves — and creates
+one if there is none. A DM room the recipient has left is replaced rather
+than reused. Unlike channel rooms, which the bot never creates from a
+notification, a DM room has to be created on demand.
+
+To try a deployment out without messaging the whole association, redirect
+every notification — channel messages and DMs alike, whichever backend they
+would go out through:
+
+```bash
+NOTIFY_CHANNEL_OVERWRITE=@max.mueller   # everything as a DM to one person
+NOTIFY_CHANNEL_OVERWRITE=bot-test       # everything into one channel
+```
+
+It takes precedence over the bot-config page's `notifier.channel_overwrite`,
+so it can be set and removed without editing the wiki. Note that Apprise
+targets still win over Matrix, so a global `notifier.default_urls` entry
+keeps its precedence for the redirected channel too.
 
 Calendar reminders pick their channel in two steps: the `channel_keywords`
 mapping on the bot-config page wins, and when no keyword matches, the event is

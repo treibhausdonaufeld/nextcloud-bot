@@ -63,6 +63,7 @@ class MatrixClient:
         self.access_token = access_token
         self.server_name = server_name
         self.user_domain = user_domain or server_name
+        self._user_id = ""
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -137,6 +138,36 @@ class MatrixClient:
             return localpart if ":" in localpart else f"{localpart}:{self.user_domain}"
         return f"@{localpart}:{self.user_domain}"
 
+    def whoami(self) -> str:
+        """User id this token belongs to (cached for the client's lifetime)."""
+        if not self._user_id:
+            body = self._request("GET", f"{API}/account/whoami")
+            self._user_id = str(body.get("user_id", ""))
+        return self._user_id
+
+    # --- account data -------------------------------------------------------
+
+    def get_account_data(self, event_type: str) -> Dict[str, Any]:
+        """Account data of the bot user; `{}` when it was never set."""
+        user_id = self.whoami()
+        try:
+            return self._request(
+                "GET",
+                f"{API}/user/{quote(user_id, safe='')}/account_data/{event_type}",
+            )
+        except MatrixError as exc:
+            if exc.status == 404 or exc.errcode == "M_NOT_FOUND":
+                return {}
+            raise
+
+    def set_account_data(self, event_type: str, content: Dict[str, Any]) -> None:
+        user_id = self.whoami()
+        self._request(
+            "PUT",
+            f"{API}/user/{quote(user_id, safe='')}/account_data/{event_type}",
+            content,
+        )
+
     # --- rooms --------------------------------------------------------------
 
     def resolve_alias(self, alias: str) -> Optional[str]:
@@ -147,6 +178,20 @@ class MatrixClient:
             if exc.status == 404 or exc.errcode == "M_NOT_FOUND":
                 return None
             raise
+        room_id = body.get("room_id")
+        return str(room_id) if room_id else None
+
+    def create_dm_room(self, user_id: str) -> Optional[str]:
+        """Create a private one-to-one room and invite `user_id` into it."""
+        body = self._request(
+            "POST",
+            f"{API}/createRoom",
+            {
+                "is_direct": True,
+                "preset": "trusted_private_chat",
+                "invite": [user_id],
+            },
+        )
         room_id = body.get("room_id")
         return str(room_id) if room_id else None
 

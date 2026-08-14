@@ -214,6 +214,14 @@ class Settings(BaseSettings):
     # concern (it must match the container's volume mount).
     avatar_folder: Optional[str] = None
 
+    # Redirect *every* notification to this channel or user, whichever
+    # backend it would go out through (env var NOTIFY_CHANNEL_OVERWRITE).
+    # For testing a deployment without messaging the whole association:
+    # "@max.mueller" sends everything as a direct message to that user,
+    # "bot-test" sends everything to that one channel. Takes precedence over
+    # the bot-config page's notifier.channel_overwrite.
+    notify_channel_overwrite: str = ""
+
     # Folder for protocol attachments (env var MEDIA_FOLDER). Files are
     # stored as YYYY/MM/DD/<page-id>/attachments/<folder-id>/<name> so old
     # attachments can easily be pruned by date when space runs low.

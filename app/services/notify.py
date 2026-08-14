@@ -40,18 +40,33 @@ def _resolve_urls(channel: str) -> list[str]:
     return urls
 
 
+def target_channel(channel: str) -> str:
+    """Apply the testing overrides to a channel name.
+
+    ``NOTIFY_CHANNEL_OVERWRITE`` (env) wins over the bot-config page's
+    ``notifier.channel_overwrite``, so a deployment can be tested without
+    having to edit the configuration page — see `app.settings.Settings`.
+    """
+    if settings.notify_channel_overwrite:
+        return settings.notify_channel_overwrite
+
+    try:
+        return bot_config.notifier.channel_overwrite or channel
+    except Exception:  # bot config page unavailable
+        return channel
+
+
 def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
     """Send a notification to ``channel``.
 
     Routes the message to any Apprise targets configured for the channel. If
-    none are configured, falls back to the legacy Rocket.Chat webhook (which
-    routes by channel name in the payload).
+    none are configured, falls back to the channel's Matrix room and then to
+    the legacy Rocket.Chat webhook (which routes by channel name in the
+    payload).
     """
 
     notifier = bot_config.notifier
-    if notifier.channel_overwrite:
-        # for debugging purposes, override the channel
-        channel = notifier.channel_overwrite
+    channel = target_channel(channel)
 
     urls = _resolve_urls(channel)
 
