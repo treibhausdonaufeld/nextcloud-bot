@@ -33,6 +33,9 @@ services:
       # Server part of the room aliases and user ids; defaults to the host
       # of MATRIX__HOMESERVER_URL, which is usually not what you want.
       MATRIX__SERVER_NAME: 'example.com'
+      # Rooms every member is invited to, independent of any group
+      # ("Allgemein" -> #allgemein). Comma-separated, empty to disable.
+      MATRIX__DEFAULT_ROOMS: 'Allgemein, Ankündigungen'
 
       ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
       ROCKETCHAT__INFO_CHANNEL: '#my-channel'

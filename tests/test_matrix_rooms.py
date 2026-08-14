@@ -12,6 +12,7 @@ from app.services.matrix_rooms import (
     MatrixRoomSync,
     channel_slug,
     group_channels,
+    sync_default_rooms,
     sync_group_rooms,
 )
 
@@ -74,6 +75,10 @@ def userlist():
         "uuid-alice": "alice",
         "uuid-bob": "bob.builder",
     }.get(username, username)
+    users.get_member_users.return_value = [
+        Mock(username="uuid-alice"),
+        Mock(username="uuid-bob"),
+    ]
     return users
 
 
@@ -257,6 +262,82 @@ class TestRoomSync:
         assert [slug for slug, _ in client.created] == ["fragen-an-ag-struktur"]
 
 
+class TestDefaultRooms:
+    """`MATRIX__DEFAULT_ROOMS`: rooms every member belongs to."""
+
+    def defaults(self, rooms, prefix=""):
+        """Patch the configured default rooms for one call."""
+        return patch.multiple(
+            "app.services.matrix_rooms.settings.matrix",
+            default_rooms=rooms,
+            room_prefix=prefix,
+        )
+
+    def test_rooms_are_created_and_all_members_invited(self, userlist):
+        client = FakeClient()
+        with self.defaults(["Allgemein", "Ankündigungen"]):
+            make_sync(client, userlist).sync_defaults()
+
+        assert client.created == [
+            ("allgemein", "Allgemein"),
+            ("ankuendigungen", "Ankündigungen"),
+        ]
+        assert [user for _, user in client.invites] == [
+            "@alice:example.com",
+            "@bob.builder:example.com",
+            "@alice:example.com",
+            "@bob.builder:example.com",
+        ]
+
+    def test_nothing_happens_without_configured_rooms(self, userlist):
+        client = FakeClient()
+        with self.defaults([]):
+            make_sync(client, userlist).sync_defaults()
+
+        assert client.created == []
+        assert client.invites == []
+
+    def test_existing_members_are_not_re_invited(self, userlist):
+        client = FakeClient(
+            rooms={"#allgemein:example.com": "!room:example.com"},
+            members={"!room:example.com": {"@alice:example.com": "join"}},
+        )
+        with self.defaults(["Allgemein"]):
+            make_sync(client, userlist).sync_defaults()
+
+        assert client.created == []
+        assert [user for _, user in client.invites] == ["@bob.builder:example.com"]
+
+    def test_room_prefix_applies(self, userlist):
+        client = FakeClient()
+        with self.defaults(["Allgemein"], prefix="thd-"):
+            make_sync(client, userlist).sync_defaults()
+
+        assert [slug for slug, _ in client.created] == ["thd-allgemein"]
+
+    def test_only_member_users_are_invited(self, userlist):
+        client = FakeClient()
+        userlist.get_member_users.return_value = [Mock(username="uuid-alice")]
+
+        with self.defaults(["Allgemein"]):
+            make_sync(client, userlist).sync_defaults()
+
+        assert [user for _, user in client.invites] == ["@alice:example.com"]
+
+    def test_entry_point_is_disabled_without_configured_rooms(self):
+        with patch("app.services.matrix_rooms.matrix_enabled", return_value=True):
+            with patch("app.services.matrix_rooms.MatrixRoomSync") as factory:
+                with self.defaults([]):
+                    sync_default_rooms()
+
+        factory.assert_not_called()
+
+    def test_entry_point_never_raises(self, userlist):
+        sync = make_sync(FakeClient(), userlist)
+        with patch.object(sync, "sync_defaults", side_effect=RuntimeError("boom")):
+            sync_default_rooms(sync=sync)
+
+
 class TestSyncEntryPoint:
     def test_disabled_without_matrix_settings(self):
         with patch("app.services.matrix_rooms.matrix_enabled", return_value=False):
@@ -269,6 +350,40 @@ class TestSyncEntryPoint:
         sync = make_sync(FakeClient(), userlist)
         with patch.object(sync, "sync_group", side_effect=RuntimeError("boom")):
             sync_group_rooms(make_group(), sync=sync)
+
+
+class TestDefaultRoomsSetting:
+    """`MATRIX__DEFAULT_ROOMS` is a comma-separated env var."""
+
+    def rooms(self, monkeypatch, value):
+        from app.settings import Settings
+
+        monkeypatch.setenv("MATRIX__DEFAULT_ROOMS", value)
+        return Settings().matrix.default_rooms
+
+    def test_comma_separated_list(self, monkeypatch):
+        assert self.rooms(monkeypatch, "Allgemein, Ankündigungen") == [
+            "Allgemein",
+            "Ankündigungen",
+        ]
+
+    def test_single_room(self, monkeypatch):
+        assert self.rooms(monkeypatch, "Allgemein") == ["Allgemein"]
+
+    def test_json_list_is_accepted_too(self, monkeypatch):
+        assert self.rooms(monkeypatch, '["Allgemein", "Termine"]') == [
+            "Allgemein",
+            "Termine",
+        ]
+
+    def test_empty_value_means_no_default_rooms(self, monkeypatch):
+        assert self.rooms(monkeypatch, "") == []
+
+    def test_unset_means_no_default_rooms(self, monkeypatch):
+        from app.settings import Settings
+
+        monkeypatch.delenv("MATRIX__DEFAULT_ROOMS", raising=False)
+        assert Settings().matrix.default_rooms == []
 
 
 class TestChatChannelParsing:

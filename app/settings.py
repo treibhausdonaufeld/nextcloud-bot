@@ -1,14 +1,15 @@
 import gettext
+import json
 import locale
 import logging
 import re
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, List, Optional
 
 import sentry_sdk
-from pydantic import BaseModel, HttpUrl, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # Configure logging to suppress verbose HTTP logs
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -145,6 +146,23 @@ class MatrixSettings(BaseModel):
     # Optional prefix for every generated room alias, e.g. "thd-" turns
     # "AG Struktur" into #thd-ag-struktur:example.com.
     room_prefix: str = ""
+
+    # Rooms every member belongs to, independent of any group, as a
+    # comma-separated list: MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"
+    # creates #allgemein and #ankuendigungen and invites all members. A JSON
+    # list works as well. `NoDecode` keeps pydantic-settings from insisting
+    # on the JSON form.
+    default_rooms: Annotated[List[str], NoDecode] = Field(default_factory=list)
+
+    @field_validator("default_rooms", mode="before")
+    @classmethod
+    def split_default_rooms(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        text = value.strip()
+        if text.startswith("["):
+            return json.loads(text)
+        return [name.strip() for name in text.split(",") if name.strip()]
 
     @model_validator(mode="after")
     def set_domains(self) -> "MatrixSettings":

@@ -53,6 +53,14 @@ wiki page changes; the bot only ever adds people — anyone who joined, was
 invited, or left again is left alone, so nobody is removed or pestered with a
 second invitation.
 
+Rooms that everybody belongs to — independent of any group — are configured
+as a comma-separated list. `MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"`
+creates `#allgemein` and `#ankuendigungen` and invites every member to them.
+These are reconciled once per worker iteration (not per page change), which
+is what picks up newly joined members. "Member" here means the same set the
+`/members` page shows: everyone in `AUTH__MEMBER_GROUP_NAME`, i.e. every
+enabled user when that setting is empty.
+
 The feature is off until a homeserver and an access token are configured:
 
 ```bash
@@ -61,6 +69,7 @@ MATRIX__ADMIN_TOKEN=syt_...            # may create rooms and invite users
 MATRIX__SERVER_NAME=example.com        # alias domain, defaults to the URL host
 MATRIX__USER_DOMAIN=example.com        # user id domain, defaults to SERVER_NAME
 MATRIX__ROOM_PREFIX=                   # optional alias prefix, e.g. "thd-"
+MATRIX__DEFAULT_ROOMS=                 # rooms every member is invited to
 ```
 
 Invited user ids are built from the authentik username (the same handle used

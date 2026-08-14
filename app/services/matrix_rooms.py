@@ -83,12 +83,12 @@ def channel_slug(name: str) -> str:
     return text.strip("-")
 
 
-def group_channels(group: "Group") -> List[Channel]:
-    """All channels of a group: its own room plus the extra ones from the page."""
+def channels_for(names: Iterable[str]) -> List[Channel]:
+    """Turn display names into channels, skipping empty and duplicate slugs."""
     channels: List[Channel] = []
     seen: set[str] = set()
 
-    for name in [group.name, *(group.chat_channels or [])]:
+    for name in names:
         slug = channel_slug(name or "")
         if not slug or slug in seen:
             continue
@@ -96,6 +96,16 @@ def group_channels(group: "Group") -> List[Channel]:
         channels.append(Channel(slug=settings.matrix.room_prefix + slug, name=name))
 
     return channels
+
+
+def group_channels(group: "Group") -> List[Channel]:
+    """All channels of a group: its own room plus the extra ones from the page."""
+    return channels_for([group.name, *(group.chat_channels or [])])
+
+
+def default_channels() -> List[Channel]:
+    """The rooms every member belongs to (`MATRIX__DEFAULT_ROOMS`)."""
+    return channels_for(settings.matrix.default_rooms)
 
 
 def group_channel_links(group: "Group") -> List[Dict[str, str]]:
@@ -214,22 +224,57 @@ class MatrixRoomSync:
 
         return invited
 
-    def sync_group(self, group: "Group") -> int:
-        """Sync every channel of one group. Returns the invitations sent."""
-        member_ids = self.matrix_ids(group.all_members)
-        channels = group_channels(group)
-
+    def sync_channels(
+        self, channels: List[Channel], member_ids: List[str], context: str
+    ) -> int:
+        """Sync a list of channels; one failing channel does not stop the rest."""
         invited = 0
         for channel in channels:
             try:
                 invited += self.sync_channel(channel, member_ids)
             except MatrixError:
                 logger.exception(
-                    "Matrix sync failed for channel %s of group %s",
-                    channel.slug,
-                    group.name,
+                    "Matrix sync failed for channel %s (%s)", channel.slug, context
                 )
         return invited
+
+    def sync_group(self, group: "Group") -> int:
+        """Sync every channel of one group. Returns the invitations sent."""
+        return self.sync_channels(
+            group_channels(group),
+            self.matrix_ids(group.all_members),
+            context=f"group {group.name}",
+        )
+
+    def sync_defaults(self) -> int:
+        """Sync the rooms every member belongs to (`MATRIX__DEFAULT_ROOMS`).
+
+        Membership follows the same rule as the member overview: everyone in
+        the configured authentik member group, i.e. every enabled user when
+        `AUTH__MEMBER_GROUP_NAME` is empty (see `NCUserList.is_member`).
+        """
+        channels = default_channels()
+        if not channels:
+            return 0
+
+        member_ids = self.matrix_ids(
+            user.username for user in self.userlist.get_member_users()
+        )
+        if not member_ids:
+            logger.warning("No members to invite to the default Matrix rooms")
+
+        return self.sync_channels(channels, member_ids, context="default rooms")
+
+
+def _room_sync(userlist: Optional["NCUserList"] = None) -> Optional[MatrixRoomSync]:
+    """Build a sync, or None when Matrix is not configured/reachable."""
+    if not matrix_enabled():
+        return None
+    try:
+        return MatrixRoomSync(userlist=userlist)
+    except MatrixError:
+        logger.exception("Could not create the Matrix client")
+        return None
 
 
 def sync_group_rooms(group: "Group", sync: Optional[MatrixRoomSync] = None) -> None:
@@ -238,14 +283,9 @@ def sync_group_rooms(group: "Group", sync: Optional[MatrixRoomSync] = None) -> N
     Does nothing unless Matrix is configured, and never lets a chat problem
     break the parsing of a page.
     """
+    sync = sync or _room_sync()
     if sync is None:
-        if not matrix_enabled():
-            return
-        try:
-            sync = MatrixRoomSync()
-        except MatrixError:
-            logger.exception("Could not create the Matrix client")
-            return
+        return
 
     try:
         sync.sync_group(group)
@@ -253,15 +293,39 @@ def sync_group_rooms(group: "Group", sync: Optional[MatrixRoomSync] = None) -> N
         logger.exception("Matrix room sync failed for group %s", group.name)
 
 
+def sync_default_rooms(
+    userlist: Optional["NCUserList"] = None, sync: Optional[MatrixRoomSync] = None
+) -> None:
+    """Entry point used by the worker: keep the all-member rooms in sync.
+
+    Unlike the group rooms these are not tied to a wiki page, so they are
+    reconciled once per worker iteration. Does nothing while
+    `MATRIX__DEFAULT_ROOMS` is empty, and never raises.
+    """
+    if sync is None and not settings.matrix.default_rooms:
+        return
+
+    sync = sync or _room_sync(userlist)
+    if sync is None:
+        return
+
+    try:
+        sync.sync_defaults()
+    except Exception:
+        logger.exception("Matrix default room sync failed")
+
+
 def sync_all_groups() -> int:
-    """Sync the rooms of every currently active group (manual/backfill run)."""
+    """Sync all group rooms and the default rooms (manual/backfill run)."""
     from app.models.group import Group
 
-    if not matrix_enabled():
+    sync = _room_sync()
+    if sync is None:
         logger.info("Matrix is not configured, skipping chat room sync")
         return 0
 
-    sync = MatrixRoomSync()
+    sync_default_rooms(sync=sync)
+
     groups = Group.fetch(limit=10000)
     for group in groups:
         sync_group_rooms(group, sync=sync)
