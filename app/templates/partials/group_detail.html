@@ -1,7 +1,10 @@
+{% import "partials/badges.html" as badges %}
 <article>
   <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
      onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
-  <h3>{% if group.parent_group %}{{ group.parent_group }} ➡️ {% endif %}{{ group.name }}</h3>
+  {# The parent is a link back up the tree, so a dialog reached from a
+     subgroup is not a dead end. #}
+  <h3>{% if group.parent_group %}{{ badges.group_link(group.parent_group, "group-crumb") }} <span aria-hidden="true">➡️</span> {% endif %}{{ group.name }}</h3>
 
   {% if group.short_names %}
     <p class="meta">{{ _("Short Names") }}: {{ group.short_names | join(", ") }}</p>
@@ -52,11 +55,7 @@
     <ul class="role-history">
       {% for subgroup in subgroups %}
         <li>
-          <a
-            href="#detail"
-            hx-get="/groups/detail?node={{ subgroup.name | urlencode }}"
-            hx-target="#detail"
-          >{{ subgroup.name }}</a>
+          {{ badges.group_link(subgroup.name) }}
           <span class="role-period">{{ _n("%(num)d member", "%(num)d members", subgroup.all_members | length) | format(num=subgroup.all_members | length) }}</span>
         </li>
       {% endfor %}

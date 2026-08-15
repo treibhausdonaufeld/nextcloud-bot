@@ -1,19 +1,25 @@
+{# Links and badges shared by the member, role and group dialogs. Keeping the
+   group URL scheme in one macro means the detail dialog, the role holder list
+   and the role badges cannot drift apart.
+
+   A group link carries a real href to the org chart scoped to that group, so
+   opening it in a new tab still lands somewhere sensible; a plain click is
+   intercepted by htmx and swaps the group's dialog into #detail instead. #}
+{% macro group_link(group, class_="", hue=None) -%}
+<a{% if class_ %} class="{{ class_ }}"{% endif %}{% if hue is not none %} style="--group-hue: {{ hue }}"{% endif %} href="/groups?limit_group={{ group | urlencode }}" hx-get="/groups/detail?node={{ group | urlencode }}" hx-target="#detail">{{ group }}</a>
+{%- endmacro %}
+
 {# One pill, two destinations: the group name opens that group's details, the
    role opens the list of everybody who holds it. The wrapper keeps the
    colouring and the coordination/delegate borders, so the badge looks exactly
    as it did while it was a single link.
-
-   The group half carries a real href to the org chart scoped to the group, so
-   opening it in a new tab still lands somewhere sensible; a plain click is
-   intercepted by htmx and swaps the group dialog into #detail instead.
 
    The tags are broken across lines inside the angle brackets on purpose: it
    keeps the source readable without emitting whitespace text nodes between
    the flex items. #}
 {% macro role_badge(group, role, role_label, hue, extra_class="", title="") -%}
 <span class="role-badge role-{{ role }}{% if extra_class %} {{ extra_class }}{% endif %}" style="--group-hue: {{ hue if hue is not none else 0 }}"{% if title %} title="{{ title }}"{% endif %}
-><a class="role-badge-part" href="/groups?limit_group={{ group | urlencode }}" hx-get="/groups/detail?node={{ group | urlencode }}" hx-target="#detail">{{ group }}</a
-><span class="role-badge-sep" aria-hidden="true">·</span
+>{{ group_link(group, "role-badge-part") }}<span class="role-badge-sep" aria-hidden="true">·</span
 ><a class="role-badge-part" href="#detail" hx-get="/members/role/{{ role }}?group={{ group | urlencode }}" hx-target="#detail">{{ role_label }}</a
 ></span>
 {%- endmacro %}

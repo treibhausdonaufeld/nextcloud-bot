@@ -1127,6 +1127,18 @@ mark {
   opacity: 0.6;
 }
 
+/* Parent group in a group dialog's heading: a link back up the tree that
+   reads as part of the heading until you hover it. */
+.group-crumb {
+  color: inherit;
+  text-decoration: none;
+}
+
+.group-crumb:hover,
+.group-crumb:focus-visible {
+  text-decoration: underline;
+}
+
 @media (prefers-color-scheme: dark) {
   .role-badge {
     background: hsl(var(--group-hue) 35% 25%);

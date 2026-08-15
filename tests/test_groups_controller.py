@@ -114,7 +114,7 @@ class TestRoleBadgeMacro:
         from jinja2 import Environment, FileSystemLoader
 
         env = Environment(loader=FileSystemLoader("app/templates"))
-        macro = env.get_template("partials/role_badge.html").module.role_badge
+        macro = env.get_template("partials/badges.html").module.role_badge
         return str(macro(group, role, label, 200, extra))
 
     def test_the_group_half_opens_the_group_details(self):
@@ -145,7 +145,10 @@ class TestRoleBadgeMacro:
 
     def test_no_stray_whitespace_between_the_halves(self):
         # Flex items separated by a text node would render an extra gap.
-        assert "</a\n><span" in self.render()
+        html = self.render()
+
+        assert "</a><span" in html
+        assert "</span\n><a" in html
 
 
 class TestGraphDefaults:
