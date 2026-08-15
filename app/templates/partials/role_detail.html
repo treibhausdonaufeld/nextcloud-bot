@@ -4,7 +4,13 @@
      onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>
     {% if group_name %}
-      {{ _("%(role)s of %(group)s") | format(role=role_label, group=group_name) }}
+      {# `escape` turns the translated sentence into Markup, so the group link
+         survives the interpolation while the role label is still escaped —
+         unlike `safe`, which would let anything through. #}
+      {{ _("%(role)s of %(group)s") | escape | format(
+           role=role_label,
+           group=badges.group_link(group_name, "group-crumb"),
+         ) }}
     {% else %}
       {{ role_label }}
     {% endif %}

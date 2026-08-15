@@ -154,6 +154,48 @@ class TestRoleBadgeMacro:
         assert "</span\n><a" in html
 
 
+class TestRoleDialogHeading:
+    """ "Mitglied von RT Stiegenhaus" — the group half is a link."""
+
+    @staticmethod
+    def render(group_name):
+        from jinja2 import Environment, FileSystemLoader
+
+        # autoescape mirrors the real app; the heading interpolates a link
+        # into a translated sentence, which only works with Markup.
+        env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
+        return env.get_template("partials/role_detail.html").render(
+            _=lambda text: text,
+            role="member",
+            role_label="Mitglied",
+            group_name=group_name,
+            hue=200,
+            current_holders=[],
+            past_holders=[],
+        )
+
+    def test_the_group_is_a_link_to_its_details(self):
+        html = self.render("RT Stiegenhaus")
+
+        assert 'hx-get="/groups/detail?node=RT%20Stiegenhaus"' in html
+        assert ">RT Stiegenhaus</a>" in html
+
+    def test_the_role_label_survives_the_interpolation(self):
+        assert "Mitglied" in self.render("RT Stiegenhaus")
+
+    def test_a_role_without_a_group_has_no_link(self):
+        html = self.render("")
+
+        assert "group-crumb" not in html
+
+    def test_the_group_name_is_still_escaped(self):
+        # It comes straight from the ?group= query parameter.
+        html = self.render("<script>alert(1)</script>")
+
+        assert "<script>" not in html
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+
+
 class TestGraphDefaults:
     def test_members_are_hidden_until_the_box_is_ticked(self):
         class FakeRequest:
