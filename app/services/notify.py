@@ -10,9 +10,10 @@ When a channel has no Apprise targets configured, the message is delivered
 into the channel's Matrix room if one exists (see
 :mod:`app.services.matrix_notify`) and to the legacy Rocket.Chat incoming
 webhook, so existing deployments keep working without any config change.
-While both chat systems are configured every notification goes to both
+While both chat systems are configured, such a message goes to both
 (``NOTIFY_DUAL_SEND``); otherwise Rocket.Chat only receives what Matrix
-could not deliver.
+could not deliver. A channel with Apprise targets is unaffected either way:
+those short-circuit the routing before the chat backends are reached.
 """
 
 import logging

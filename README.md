@@ -124,9 +124,11 @@ no per-channel configuration is needed. Apprise targets from the bot-config
 page win when the channel has any; otherwise the message goes to the
 channel's Matrix room and to the Rocket.Chat webhook.
 
-While a homeserver _and_ a Rocket.Chat webhook are configured, every
-notification is sent to **both** — so a migration can run with the old chat
-still live, and nobody misses a reminder while people move over one by one:
+While a homeserver _and_ a Rocket.Chat webhook are configured, every message
+that reaches this stage — i.e. everything except the channels with Apprise
+targets above — is sent to **both** systems, so a migration can run with the
+old chat still live and nobody misses a reminder while people move over one
+by one:
 
 ```bash
 NOTIFY_DUAL_SEND=false   # back to "Matrix first, Rocket.Chat as fallback"

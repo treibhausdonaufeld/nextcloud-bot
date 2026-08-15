@@ -241,7 +241,11 @@ class TestChannelOverwrite:
 
 
 class TestNotifyRouting:
-    """`notify.send_message` prefers Apprise, then Matrix, then Rocket.Chat."""
+    """`notify.send_message` prefers Apprise; otherwise Matrix and Rocket.Chat.
+
+    Which of the two chat backends receive the message depends on what is
+    configured and on whether Matrix could deliver it — see `dual_send`.
+    """
 
     def route(
         self,
