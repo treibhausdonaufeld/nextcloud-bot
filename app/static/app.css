@@ -1127,6 +1127,16 @@ mark {
   opacity: 0.6;
 }
 
+/* Header line of a group dialog: the link to the wiki page and the short
+   names, laid out like the protocol view's meta row. */
+.group-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.82rem;
+  margin: 0 0 0.8rem;
+}
+
 /* The group page a leave was recorded on — secondary to the Karenz badge
    next to it, but still a link into that group. */
 .leave-source {

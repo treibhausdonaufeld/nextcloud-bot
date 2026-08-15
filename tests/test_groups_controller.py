@@ -154,6 +154,49 @@ class TestRoleBadgeMacro:
         assert "</span\n><a" in html
 
 
+class TestGroupDialogHeader:
+    """The dialog links to the wiki page the group is parsed from."""
+
+    @staticmethod
+    def render(page_url=None, short_names=()):
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
+        return env.get_template("partials/group_detail.html").render(
+            _=lambda text: text,
+            _n=lambda singular, plural, n: singular if n == 1 else plural,
+            group=Group(
+                name="RT Stiegenhaus", page_id=42, short_names=list(short_names)
+            ),
+            subgroups=[],
+            members=[],
+            hue=200,
+            chat_channels=[],
+            page_url=page_url,
+        )
+
+    def test_links_to_the_collectives_page(self):
+        html = self.render(page_url="https://cloud.test/apps/collectives/v-1/rt-42")
+
+        assert 'href="https://cloud.test/apps/collectives/v-1/rt-42"' in html
+
+    def test_the_link_opens_in_a_new_tab(self):
+        html = self.render(page_url="https://cloud.test/x")
+
+        assert 'target="_blank"' in html
+        assert 'rel="noopener noreferrer"' in html
+
+    def test_a_group_without_a_stored_page_shows_no_link(self):
+        html = self.render(page_url=None, short_names=["rts"])
+
+        assert "Open in Nextcloud" not in html
+        # the short names still get their row
+        assert "rts" in html
+
+    def test_the_header_row_is_dropped_when_there_is_nothing_to_show(self):
+        assert "group-meta" not in self.render()
+
+
 class TestRoleDialogHeading:
     """ "Mitglied von RT Stiegenhaus" — the group half is a link."""
 

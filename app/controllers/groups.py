@@ -7,7 +7,7 @@ from ravyn import JSONResponse, Request, Template, get
 from app.controllers.logbook import group_hue
 from app.controllers.members import leave_fields, role_label
 from app.i18n import activate, template_context
-from app.models import Group, MemberLeave, Mention, NCUserList
+from app.models import CollectivePage, Group, MemberLeave, Mention, NCUserList
 from app.models.group_role import ROLE_FIELDS, ROLES
 from app.settings import user_regex
 
@@ -306,12 +306,17 @@ def group_detail(request: Request, node: str = "") -> Template:
 
         from app.services.matrix_rooms import group_channel_links
 
+        # The wiki page behind the group, so the dialog can link to the
+        # original the way the protocol view does.
+        page = CollectivePage.get_from_page_id_or_none(group.page_id)
+
         context.update(
             group=group,
             subgroups=subgroups,
             members=group_member_rows(group, user_list),
             hue=group_hue(group.name),
             chat_channels=group_channel_links(group),
+            page_url=page.url if page else None,
         )
         return Template(name="partials/group_detail.html", context=context)
 

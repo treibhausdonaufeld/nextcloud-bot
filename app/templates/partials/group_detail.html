@@ -6,8 +6,15 @@
      subgroup is not a dead end. #}
   <h3>{% if group.parent_group %}{{ badges.group_link(group.parent_group, "group-crumb") }} <span aria-hidden="true">➡️</span> {% endif %}{{ group.name }}</h3>
 
-  {% if group.short_names %}
-    <p class="meta">{{ _("Short Names") }}: {{ group.short_names | join(", ") }}</p>
+  {% if page_url or group.short_names %}
+    <p class="meta group-meta">
+      {% if page_url %}
+        <a href="{{ page_url }}" target="_blank" rel="noopener noreferrer">{{ _("Open in Nextcloud") }} ↗</a>
+      {% endif %}
+      {% if group.short_names %}
+        <span>{{ _("Short Names") }}: {{ group.short_names | join(", ") }}</span>
+      {% endif %}
+    </p>
   {% endif %}
 
   <h4>{{ _("Members") }} ({{ members | length }})</h4>
