@@ -1064,6 +1064,11 @@ mark {
   font-size: 0.9rem;
 }
 
+.graph-hint {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
 .member-table .meta,
 .role-history + .meta,
 #detail-dialog .meta {

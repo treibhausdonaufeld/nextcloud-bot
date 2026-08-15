@@ -1,4 +1,6 @@
 <article>
+  <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
+     onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>{{ user.displayname if user else username }}</h3>
 
   <h4>{{ _("Roles in Groups") }}</h4>

@@ -49,6 +49,7 @@
   </form>
 
   <div id="graph" style="height: {{ height }}px"></div>
+  <p class="meta graph-hint">{{ _("Click a group to see its members and their roles.") }}</p>
 
   <form class="filter-form" method="get" action="/groups">
     <input type="hidden" name="submitted" value="1" />
@@ -71,13 +72,7 @@
     </label>
   </form>
 
-  <div id="detail">
-    {% if limit_user %}
-      <div hx-get="/groups/detail?node={{ limit_user | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
-    {% elif limit_group %}
-      <div hx-get="/groups/detail?node={{ limit_group | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
-    {% endif %}
-  </div>
+  {% include "partials/detail_dialog.html" %}
 
   <script src="/static/vis-network.min.js"></script>
   <script>
@@ -111,7 +106,10 @@
             interaction: { hover: true },
           }
         );
-        network.on('selectNode', (ev) => {
+        // 'click' rather than 'selectNode': the latter only fires when the
+        // selection actually changes, so reopening the dialog for the node
+        // that is already selected would do nothing.
+        network.on('click', (ev) => {
           const nodeId = ev.nodes[0];
           if (nodeId) {
             htmx.ajax('GET', '/groups/detail?node=' + encodeURIComponent(nodeId), '#detail');

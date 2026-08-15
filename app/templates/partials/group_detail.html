@@ -1,29 +1,46 @@
 <article>
+  <a href="#" class="detail-close" aria-label="{{ _('Close') }}"
+     onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>{% if group.parent_group %}{{ group.parent_group }} ➡️ {% endif %}{{ group.name }}</h3>
 
-  {% if group.parent_group %}
-    <p><strong>{{ _("Parent Group") }}:</strong> {{ group.parent_group }}</p>
-  {% endif %}
-
   {% if group.short_names %}
-    <p><strong>{{ _("Short Names") }}:</strong> {{ group.short_names | join(", ") }}</p>
+    <p class="meta">{{ _("Short Names") }}: {{ group.short_names | join(", ") }}</p>
   {% endif %}
 
-  <ul>
-    {% if coordination_names %}
-      <li><strong>{{ _("Coordination") }}</strong> ({{ coordination_names | length }}): {{ coordination_names | join(", ") }}</li>
-    {% endif %}
-    {% if delegate_names %}
-      <li><strong>{{ _("Delegates") }}</strong> ({{ delegate_names | length }}): {{ delegate_names | join(", ") }}</li>
-    {% endif %}
-    {% if member_names %}
-      <li><strong>{{ _("Members") }}</strong> ({{ member_names | length }}): {{ member_names | join(", ") }}</li>
-    {% endif %}
-  </ul>
+  <h4>{{ _("Members") }} ({{ members | length }})</h4>
+  {% if members %}
+    <ul class="role-history">
+      {% for member in members %}
+        <li>
+          <a
+            href="#detail"
+            hx-get="/members/user/{{ member.username | urlencode }}"
+            hx-target="#detail"
+          >{{ member.displayname }}</a>
+          <a
+            class="role-badge role-{{ member.role }}{% if member.on_leave %} role-badge-on-leave{% endif %}"
+            style="--group-hue: {{ member.hue if member.hue is not none else 0 }}"
+            href="#detail"
+            hx-get="/members/role/{{ member.role }}?group={{ group.name | urlencode }}"
+            hx-target="#detail"
+            {% if member.on_leave %}title="{{ _('currently on leave') }}"{% endif %}
+          >{{ member.role_label }}</a>
+          {% if member.on_leave %}
+            <span
+              class="member-on-leave"
+              title="{% if member.leave_until %}{{ _('On leave until %(date)s — unavailable in all groups') | format(date=member.leave_until) }}{% else %}{{ _('On leave — unavailable in all groups') }}{% endif %}"
+            >{{ _("Karenz") }}{% if member.leave_until %} <span class="member-on-leave-date">{{ _("until %(date)s") | format(date=member.leave_until) }}</span>{% endif %}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="meta">{{ _("This group has no members.") }}</p>
+  {% endif %}
 
   {% if chat_channels %}
+    <h4>{{ _("Chat Channels") }}</h4>
     <p>
-      <strong>{{ _("Chat Channels") }}:</strong>
       {% for channel in chat_channels %}
         <a href="{{ channel.url }}" target="_blank" rel="noopener">{{ channel.alias }}</a>{% if not loop.last %}, {% endif %}
       {% endfor %}
@@ -32,9 +49,16 @@
 
   {% if subgroups %}
     <h4>{{ _("Subgroups") }}</h4>
-    <ul>
+    <ul class="role-history">
       {% for subgroup in subgroups %}
-        <li>{{ subgroup.name }} ({{ subgroup.all_members | length }})</li>
+        <li>
+          <a
+            href="#detail"
+            hx-get="/groups/detail?node={{ subgroup.name | urlencode }}"
+            hx-target="#detail"
+          >{{ subgroup.name }}</a>
+          <span class="role-period">{{ _n("%(num)d member", "%(num)d members", subgroup.all_members | length) | format(num=subgroup.all_members | length) }}</span>
+        </li>
       {% endfor %}
     </ul>
   {% endif %}

@@ -408,17 +408,11 @@ msgstr "Ohne Titel"
 msgid "No events to display for \"%s\""
 msgstr "Keine Ereignisse für \"%s\" vorhanden"
 
-msgid "Parent Group"
-msgstr "Übergeordnete Gruppe"
-
 msgid "Short Names"
 msgstr "Kurznamen"
 
 msgid "Chat Channels"
 msgstr "Chat-Kanäle"
-
-msgid "Delegates"
-msgstr "Delegierte"
 
 msgid "Subgroups"
 msgstr "Untergruppen"
@@ -572,6 +566,18 @@ msgstr "Karenz seit %(start)s – in allen Gruppen nicht verfügbar."
 
 msgid "Leave"
 msgstr "Karenz"
+
+msgid "Click a group to see its members and their roles."
+msgstr "Zum Anzeigen der Mitglieder und ihrer Rollen auf eine Gruppe klicken."
+
+msgid "This group has no members."
+msgstr "Diese Gruppe hat keine Mitglieder."
+
+#~ msgid "Parent Group"
+#~ msgstr "Übergeordnete Gruppe"
+
+#~ msgid "Delegates"
+#~ msgstr "Delegierte"
 
 #~ msgid "Home"
 #~ msgstr "Startseite"

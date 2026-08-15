@@ -390,16 +390,10 @@ msgstr ""
 msgid "No events to display for \"%s\""
 msgstr ""
 
-msgid "Parent Group"
-msgstr ""
-
 msgid "Short Names"
 msgstr ""
 
 msgid "Chat Channels"
-msgstr ""
-
-msgid "Delegates"
 msgstr ""
 
 msgid "Subgroups"
@@ -551,4 +545,10 @@ msgid "On leave since %(start)s — unavailable in all groups."
 msgstr ""
 
 msgid "Leave"
+msgstr ""
+
+msgid "Click a group to see its members and their roles."
+msgstr ""
+
+msgid "This group has no members."
 msgstr ""
