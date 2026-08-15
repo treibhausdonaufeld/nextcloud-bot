@@ -62,8 +62,35 @@ local user can find them by searching) and created with `m.federate: false`,
 which keeps them on this server. Every sync re-checks the directory listing
 and restores it if a room was unlisted, but federation is fixed when a room
 is created and cannot be changed afterwards — rooms created before this
-existed stay federated. If the homeserver's `room_list_publication_rules`
-refuse the listing, the sync logs a warning and carries on inviting.
+existed stay federated. If the homeserver refuses the listing, the sync logs
+a warning and carries on inviting.
+
+#### Letting the bot publish rooms (Synapse)
+
+Since Synapse 1.126 the default is that **nobody except server admins may
+publish a room to the directory**. The rooms are then created and joinable
+but never show up in the directory search, and the bot logs
+`Could not publish … (403 M_FORBIDDEN)`. Allow it in `homeserver.yaml`:
+
+```yaml
+# every local user may publish (the pre-1.126 behaviour)
+room_list_publication_rules:
+  - action: allow
+
+# ...or only the bot:
+room_list_publication_rules:
+  - user_id: '@nextcloud-bot:example.com'
+    action: allow
+  - action: deny
+```
+
+Rules are matched in order, first match wins, and anything unmatched is
+denied — so a list without a catch-all denies everyone else. Restart Synapse
+(this is not hot-reloaded) and run `cli.py sync-matrix`: the sync re-checks
+every room's directory entry and publishes the ones that are missing, so
+rooms created while publication was denied are fixed without recreating
+them. `enable_room_list_search` must stay `true` as well, otherwise the
+directory search returns nothing regardless of what is published.
 
 Rooms that everybody belongs to — independent of any group — are configured
 as a comma-separated list. `MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"`
