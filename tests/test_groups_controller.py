@@ -106,6 +106,48 @@ class TestGroupMemberRows:
         assert rows(Group(name="AG Leer", page_id=2)) == []
 
 
+class TestRoleBadgeMacro:
+    """The badge is one pill with two destinations."""
+
+    @staticmethod
+    def render(group="RT Freiraum", role="member", label="Mitglied", extra=""):
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(loader=FileSystemLoader("app/templates"))
+        macro = env.get_template("partials/role_badge.html").module.role_badge
+        return str(macro(group, role, label, 200, extra))
+
+    def test_the_group_half_opens_the_group_details(self):
+        html = self.render()
+
+        assert 'hx-get="/groups/detail?node=RT%20Freiraum"' in html
+        assert ">RT Freiraum</a" in html
+
+    def test_the_group_half_keeps_a_real_href_for_new_tabs(self):
+        assert 'href="/groups?limit_group=RT%20Freiraum"' in self.render()
+
+    def test_the_role_half_opens_the_role_details(self):
+        html = self.render()
+
+        assert 'hx-get="/members/role/member?group=RT%20Freiraum"' in html
+        assert ">Mitglied</a" in html
+
+    def test_both_halves_are_separate_links(self):
+        assert self.render().count("<a ") == 2
+
+    def test_the_pill_keeps_the_role_colouring(self):
+        html = self.render(
+            role="coordination", label="Koordination", extra="role-badge-past"
+        )
+
+        assert 'class="role-badge role-coordination role-badge-past"' in html
+        assert "--group-hue: 200" in html
+
+    def test_no_stray_whitespace_between_the_halves(self):
+        # Flex items separated by a text node would render an extra gap.
+        assert "</a\n><span" in self.render()
+
+
 class TestGraphDefaults:
     def test_members_are_hidden_until_the_box_is_ticked(self):
         class FakeRequest:

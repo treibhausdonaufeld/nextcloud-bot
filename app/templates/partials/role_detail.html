@@ -16,7 +16,13 @@
         <li>
           <a href="#detail" hx-get="/members/user/{{ holder.username | urlencode }}" hx-target="#detail">{{ holder.displayname }}</a>
           {% if not group_name %}
-            <span class="role-badge" style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}">{{ holder.group }}</span>
+            <a
+              class="role-badge"
+              style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}"
+              href="/groups?limit_group={{ holder.group | urlencode }}"
+              hx-get="/groups/detail?node={{ holder.group | urlencode }}"
+              hx-target="#detail"
+            >{{ holder.group }}</a>
           {% endif %}
           {% if holder.on_leave %}
             <span
@@ -39,7 +45,13 @@
         <li>
           <a href="#detail" hx-get="/members/user/{{ holder.username | urlencode }}" hx-target="#detail">{{ holder.displayname }}</a>
           {% if not group_name %}
-            <span class="role-badge role-badge-past" style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}">{{ holder.group }}</span>
+            <a
+              class="role-badge role-badge-past"
+              style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}"
+              href="/groups?limit_group={{ holder.group | urlencode }}"
+              hx-get="/groups/detail?node={{ holder.group | urlencode }}"
+              hx-target="#detail"
+            >{{ holder.group }}</a>
           {% endif %}
           <span class="role-period">{{ _("%(start)s to %(end)s") | format(start=holder.start, end=holder.end) }}</span>
         </li>

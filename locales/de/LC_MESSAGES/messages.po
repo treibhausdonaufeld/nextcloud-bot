@@ -573,6 +573,9 @@ msgstr "Zum Anzeigen der Mitglieder und ihrer Rollen auf eine Gruppe klicken."
 msgid "This group has no members."
 msgstr "Diese Gruppe hat keine Mitglieder."
 
+msgid "Nothing recorded under this name — the group or user no longer exists."
+msgstr "Unter diesem Namen ist nichts gespeichert – die Gruppe oder der Benutzer existiert nicht mehr."
+
 #~ msgid "Parent Group"
 #~ msgstr "Übergeordnete Gruppe"
 

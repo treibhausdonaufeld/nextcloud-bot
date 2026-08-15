@@ -552,3 +552,6 @@ msgstr ""
 
 msgid "This group has no members."
 msgstr ""
+
+msgid "Nothing recorded under this name — the group or user no longer exists."
+msgstr ""

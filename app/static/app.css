@@ -1081,9 +1081,12 @@ mark {
   gap: 0.35rem;
 }
 
-/* Group-tinted badge, matching .decision-group / .mention-group. */
+/* Group-tinted badge, matching .decision-group / .mention-group. Flex so the
+   two halves of a split badge (group · role) line up on one baseline. */
 .role-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1;
@@ -1105,6 +1108,23 @@ mark {
 
 .role-badge-past {
   opacity: 0.65;
+}
+
+/* The two halves of a split badge: the group name opens the group's details,
+   the role its holder list. They inherit the pill's colour so the badge still
+   reads as one label. */
+.role-badge-part {
+  color: inherit;
+  text-decoration: none;
+}
+
+.role-badge-part:hover,
+.role-badge-part:focus-visible {
+  text-decoration: underline;
+}
+
+.role-badge-sep {
+  opacity: 0.6;
 }
 
 @media (prefers-color-scheme: dark) {

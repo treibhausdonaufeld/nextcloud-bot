@@ -318,4 +318,10 @@ def group_detail(request: Request, node: str = "") -> Template:
     # person selected, show user details
     username = node.split(":")[-1]
     context.update(user_detail_context(username, all_groups))
+    # A node naming neither a group nor a known user — e.g. the group half of
+    # a past-role badge, whose group page has been retired since. Say so
+    # instead of rendering an empty user card.
+    context["known"] = bool(
+        context["user"] or context["member_of_groups"] or context["mention_pages"]
+    )
     return Template(name="partials/user_detail.html", context=context)

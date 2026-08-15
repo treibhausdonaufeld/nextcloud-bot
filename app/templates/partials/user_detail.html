@@ -3,25 +3,29 @@
      onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>{{ user.displayname if user else username }}</h3>
 
-  <h4>{{ _("Roles in Groups") }}</h4>
-  <ul>
-    {% for g in member_of_groups %}
-      <li>
-        {{ g.name }}
-        {% if g.coordination %}{{ _("(Coordination)") }}{% elif g.delegate %}{{ _("(Delegate)") }}{% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-
-  <h4>{{ _("Pages mentioning User") }}</h4>
-  <p>{{ _("Total Mentions: {count}").format(count=mention_pages | length) }}</p>
-  <ul>
-    {% for entry in mention_pages %}
-      {% for line in entry.lines %}
+  {% if not known %}
+    <p class="meta">{{ _("Nothing recorded under this name — the group or user no longer exists.") }}</p>
+  {% else %}
+    <h4>{{ _("Roles in Groups") }}</h4>
+    <ul>
+      {% for g in member_of_groups %}
         <li>
-          <strong><a href="{{ entry.page.url }}" target="_blank" rel="noopener noreferrer">{{ entry.page.title }}</a></strong>: {{ line }}
+          {{ g.name }}
+          {% if g.coordination %}{{ _("(Coordination)") }}{% elif g.delegate %}{{ _("(Delegate)") }}{% endif %}
         </li>
       {% endfor %}
-    {% endfor %}
-  </ul>
+    </ul>
+
+    <h4>{{ _("Pages mentioning User") }}</h4>
+    <p>{{ _("Total Mentions: {count}").format(count=mention_pages | length) }}</p>
+    <ul>
+      {% for entry in mention_pages %}
+        {% for line in entry.lines %}
+          <li>
+            <strong><a href="{{ entry.page.url }}" target="_blank" rel="noopener noreferrer">{{ entry.page.title }}</a></strong>: {{ line }}
+          </li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  {% endif %}
 </article>
