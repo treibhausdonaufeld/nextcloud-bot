@@ -3,6 +3,7 @@ from app.models.decision import Decision
 from app.models.group import Group
 from app.models.group_role import ROLE_FIELDS, ROLES, GroupRole
 from app.models.kv import KVState, get_state, set_state
+from app.models.member_leave import MemberLeave
 from app.models.mention import Mention
 from app.models.protocol import Protocol
 from app.models.protocol_media import ProtocolMedia
@@ -21,6 +22,7 @@ __all__ = [
     "KVState",
     "get_state",
     "set_state",
+    "MemberLeave",
     "Mention",
     "Protocol",
     "ProtocolMedia",

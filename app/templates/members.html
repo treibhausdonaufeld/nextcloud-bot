@@ -58,18 +58,24 @@
                 {% if not member.active %}
                   <span class="member-inactive" title="{{ _('No longer an active Nextcloud user') }}">{{ _("inactive") }}</span>
                 {% endif %}
+                {% if member.on_leave %}
+                  <span
+                    class="member-on-leave"
+                    title="{% if member.leave_until %}{{ _('On leave until %(date)s — unavailable in all groups') | format(date=member.leave_until) }}{% else %}{{ _('On leave — unavailable in all groups') }}{% endif %}"
+                  >{{ _("Karenz") }}{% if member.leave_until %} <span class="member-on-leave-date">{{ _("until %(date)s") | format(date=member.leave_until) }}</span>{% endif %}</span>
+                {% endif %}
               </td>
               <td>
                 {% if member.roles %}
                   <div class="role-badges">
                     {% for role in member.roles %}
                       <a
-                        class="role-badge role-{{ role.role }}"
+                        class="role-badge role-{{ role.role }}{% if member.on_leave %} role-badge-on-leave{% endif %}"
                         style="--group-hue: {{ role.hue if role.hue is not none else 0 }}"
                         href="#detail"
                         hx-get="/members/role/{{ role.role }}?group={{ role.group | urlencode }}"
                         hx-target="#detail"
-                        title="{% if role.start %}{{ _('since %(date)s') | format(date=role.start) }}{% endif %}"
+                        title="{% if role.start %}{{ _('since %(date)s') | format(date=role.start) }}{% endif %}{% if member.on_leave %} · {{ _('currently on leave') }}{% endif %}"
                       >{{ role.group }} · {{ role.role_label }}</a>
                     {% endfor %}
                   </div>

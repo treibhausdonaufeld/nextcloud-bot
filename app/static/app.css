@@ -1025,6 +1025,45 @@ mark {
   color: var(--pico-muted-color);
 }
 
+/* "Karenz": a global status, so it is shown once per member rather than
+   per group — the role badges next to it are only dimmed. */
+.member-on-leave {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.6rem;
+  background: var(--pico-mark-background-color, #fff3cd);
+  color: var(--pico-mark-color, #664d03);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.member-on-leave-date {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.member-on-leave-past {
+  background: transparent;
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-muted-color);
+}
+
+.role-badge-on-leave {
+  opacity: 0.55;
+}
+
+.leave-notice {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
 .member-table .meta,
 .role-history + .meta,
 #detail-dialog .meta {

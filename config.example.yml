@@ -20,6 +20,24 @@ organisation:
     - chat-kanaele
     - chat-channels
 
+  # Keywords marking somebody as being on leave ("Karenz"). Recognised as a
+  # section of its own ("**Karenz:** @anna") and inline behind a member's
+  # mention ("- @anna (Karenz bis 30.06.2026)"). The status is global: whoever
+  # is marked on any group page counts as unavailable in every group.
+  leave_person_keywords:
+    - karenz
+    - karenziert
+    - beurlaubt
+    - auszeit
+
+  # Words introducing the end of a leave ("Karenz bis 30.06.2026"). Dates are
+  # read as DD.MM.YYYY or YYYY-MM-DD; without one the leave is open-ended and
+  # lasts until the marker is removed again.
+  leave_until_keywords:
+    - bis
+    - until
+    - endet
+
   # Pages whose name marks an archive. A group page moved below one of them
   # counts as dissolved: the group (and every subgroup below it) is removed
   # and the roles held in it are ended, while the role history is kept.

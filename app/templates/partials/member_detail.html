@@ -3,6 +3,17 @@
      onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   <h3>{{ displayname }}</h3>
 
+  {% if current_leave %}
+    <p class="leave-notice">
+      <span class="member-on-leave">{{ _("Karenz") }}</span>
+      {% if current_leave.until %}
+        {{ _("On leave from %(start)s until %(end)s — unavailable in all groups.") | format(start=current_leave.start, end=current_leave.until) }}
+      {% else %}
+        {{ _("On leave since %(start)s — unavailable in all groups.") | format(start=current_leave.start) }}
+      {% endif %}
+    </p>
+  {% endif %}
+
   <h4>{{ _("Current roles") }}</h4>
   {% if current_roles %}
     <ul class="role-history">
@@ -41,5 +52,29 @@
     </ul>
   {% else %}
     <p class="meta">{{ _("No past roles recorded.") }}</p>
+  {% endif %}
+
+  {% if current_leave or past_leaves %}
+    <h4>{{ _("Leave") }}</h4>
+    <ul class="role-history">
+      {% if current_leave %}
+        <li>
+          <span class="member-on-leave">{{ _("Karenz") }}</span>
+          <span class="role-period">
+            {% if current_leave.until %}
+              {{ _("%(start)s to %(end)s") | format(start=current_leave.start, end=current_leave.until) }}
+            {% else %}
+              {{ _("since %(date)s") | format(date=current_leave.start) }}
+            {% endif %}
+          </span>
+        </li>
+      {% endif %}
+      {% for leave in past_leaves %}
+        <li>
+          <span class="member-on-leave member-on-leave-past">{{ _("Karenz") }}</span>
+          <span class="role-period">{{ _("%(start)s to %(end)s") | format(start=leave.start, end=leave.end or leave.until) }}</span>
+        </li>
+      {% endfor %}
+    </ul>
   {% endif %}
 </article>

@@ -18,6 +18,12 @@
           {% if not group_name %}
             <span class="role-badge" style="--group-hue: {{ holder.hue if holder.hue is not none else 0 }}">{{ holder.group }}</span>
           {% endif %}
+          {% if holder.on_leave %}
+            <span
+              class="member-on-leave"
+              title="{% if holder.leave_until %}{{ _('On leave until %(date)s — unavailable in all groups') | format(date=holder.leave_until) }}{% else %}{{ _('On leave — unavailable in all groups') }}{% endif %}"
+            >{{ _("Karenz") }}</span>
+          {% endif %}
           <span class="role-period">{{ _("since %(date)s") | format(date=holder.start) }}</span>
         </li>
       {% endfor %}

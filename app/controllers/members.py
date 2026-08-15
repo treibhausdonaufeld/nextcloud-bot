@@ -12,7 +12,7 @@ from ravyn import Request, Template, get
 
 from app.controllers.logbook import group_hue
 from app.i18n import activate, template_context
-from app.models import Group, GroupRole, NCUserList
+from app.models import Group, GroupRole, MemberLeave, NCUserList
 from app.models.base import format_date
 from app.models.group_role import ROLE_FIELDS, ROLES
 from app.settings import _
@@ -60,6 +60,22 @@ def _decorate(assignment: dict, start: int | None) -> dict:
     }
 
 
+def leave_fields(leave: MemberLeave | None) -> dict:
+    """Display fields describing a member's current leave, if any.
+
+    Being on leave is global, so the same fields apply to every group the
+    member belongs to — the templates show it once per member rather than per
+    role.
+    """
+    if leave is None:
+        return {"on_leave": False, "leave_until": "", "leave_since": ""}
+    return {
+        "on_leave": True,
+        "leave_until": leave.until_display or "",
+        "leave_since": leave.start_display,
+    }
+
+
 def member_rows(
     role_filter: str = "", group_filter: str = "", query: str = ""
 ) -> list[dict]:
@@ -75,6 +91,7 @@ def member_rows(
     groups = sorted(Group.all_cached())
     assignments = current_assignments(groups)
     starts = GroupRole.start_dates_by_key()
+    leaves = MemberLeave.current_by_user()
 
     history = GroupRole.all_rows()
     past_counts: dict[str, int] = {}
@@ -121,6 +138,7 @@ def member_rows(
                 "roles": roles,
                 "past_count": past_counts.get(username, 0),
             }
+            | leave_fields(leaves.get(username))
         )
 
     rows.sort(key=lambda row: (not row["active"], str(row["displayname"]).lower()))
@@ -148,9 +166,33 @@ def member_history(username: str) -> tuple[list[dict], list[dict]]:
     return current, past
 
 
+def member_leaves(username: str) -> tuple[dict | None, list[dict]]:
+    """The member's running leave (if any) and the ones already over.
+
+    Both carry the dates the leave was announced for, which is what makes the
+    history answer "how long is this person unavailable".
+    """
+    current: dict | None = None
+    past: list[dict] = []
+    for row in MemberLeave.for_user(username):
+        entry = {
+            "start": row.start_display,
+            "until": row.until_display,
+            "end": row.end_display,
+            "group": row.group_name,
+        }
+        if row.is_current() and current is None:
+            current = entry
+        elif not row.is_current():
+            past.append(entry)
+    past.sort(key=lambda entry: entry["end"] or entry["until"] or "", reverse=True)
+    return current, past
+
+
 def role_holders(role: str, group_name: str = "") -> tuple[list[dict], list[dict]]:
     """Members who hold (current) and held (past) a role, newest first."""
     user_list = NCUserList()
+    leaves = MemberLeave.current_by_user()
     current: list[dict] = []
     past: list[dict] = []
     for row in GroupRole.for_role(role, group_name):
@@ -162,7 +204,7 @@ def role_holders(role: str, group_name: str = "") -> tuple[list[dict], list[dict
             "hue": group_hue(row.group_name),
             "start": row.start_display,
             "end": row.end_display,
-        }
+        } | leave_fields(leaves.get(row.username))
         (current if row.is_current else past).append(entry)
     current.sort(key=lambda entry: (entry["group"], entry["displayname"].lower()))
     past.sort(key=lambda entry: entry["end"] or "", reverse=True)
@@ -207,6 +249,7 @@ def member_detail(request: Request, username: str) -> Template:
     user_list = NCUserList()
     user = user_list.get_user_by_uid(username)
     current, past = member_history(username)
+    current_leave, past_leaves = member_leaves(username)
 
     return Template(
         name="partials/member_detail.html",
@@ -216,6 +259,8 @@ def member_detail(request: Request, username: str) -> Template:
             displayname=(user.displayname if user else "") or username,
             current_roles=current,
             past_roles=past,
+            current_leave=current_leave,
+            past_leaves=past_leaves,
         ),
     )
 

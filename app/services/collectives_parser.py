@@ -8,6 +8,7 @@ from app.models.collective_page import CollectivePage, PageSubtype
 from app.models.group import Group
 from app.models.group_role import GroupRole
 from app.models.kv import get_state, set_state
+from app.models.member_leave import MemberLeave
 from app.models.protocol import Protocol
 from app.services.config import BotConfig, bot_config
 from app.services.matrix_rooms import sync_group_rooms
@@ -92,6 +93,34 @@ def remove_stale_groups() -> None:
         if Group.is_archived_path(page.full_path):
             logger.info("Retiring archived group %s (%s)", group.name, page.full_path)
             group.remove()
+
+
+def sync_member_leaves() -> None:
+    """Reconcile the global "Karenz" status with what the group pages say.
+
+    Unlike roles this cannot be done per page: being on leave is a property
+    of the person, so dropping the marker from the one page that carried it
+    ends the leave no matter which page was edited. The sweep therefore walks
+    every stored group, exactly like `remove_stale_groups()` — and for the
+    same reason it has to run after it, so a retired group stops marking
+    anybody as unavailable.
+
+    Leaves start on the day the page announcing them was last edited (the
+    page timestamp), matching how roles are dated.
+    """
+    config = bot_config or BotConfig.load_config()
+    if not config:
+        return
+
+    groups = Group.fetch(limit=1000)
+    timestamps = {
+        page.page_id: page.timestamp
+        for page in CollectivePage.fetch(
+            limit=10000, page_id__in=[g.page_id for g in groups]
+        )
+        if page.timestamp
+    }
+    MemberLeave.sync_groups(groups, timestamps=timestamps)
 
 
 def backfill_role_history() -> None:
