@@ -167,9 +167,6 @@ msgstr "Untere Navigation"
 msgid "Others"
 msgstr "Weitere"
 
-msgid "Hierarchical layout"
-msgstr "Hierarchische Darstellung"
-
 msgid "With Members"
 msgstr "Mit Mitgliedern"
 
@@ -578,6 +575,9 @@ msgstr "Unter diesem Namen ist nichts gespeichert – die Gruppe oder der Benutz
 
 msgid "Recorded in"
 msgstr "Eingetragen in"
+
+#~ msgid "Hierarchical layout"
+#~ msgstr "Hierarchische Darstellung"
 
 #~ msgid "Parent Group"
 #~ msgstr "Übergeordnete Gruppe"

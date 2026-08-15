@@ -152,9 +152,6 @@ msgstr ""
 msgid "Others"
 msgstr ""
 
-msgid "Hierarchical layout"
-msgstr ""
-
 msgid "With Members"
 msgstr ""
 

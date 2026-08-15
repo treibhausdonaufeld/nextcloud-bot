@@ -28,8 +28,8 @@
             <ul>
               <li><a href="/logbook" {% if current_path.startswith('/logbook') or current_path == '/' %}aria-current="page"{% endif %}><span class="icon">✅</span> {{ _("Logbook") }}</a></li>
               <li><a href="/protocols" {% if current_path.startswith('/protocols') %}aria-current="page"{% endif %}><span class="icon">📝</span> {{ _("Protocols") }}</a></li>
-              <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}><span class="icon">⭕</span> {{ _("Groups") }}</a></li>
               <li><a href="/members" {% if current_path.startswith('/members') %}aria-current="page"{% endif %}><span class="icon">👥</span> {{ _("Members") }}</a></li>
+              <li><a href="/groups" {% if current_path.startswith('/groups') %}aria-current="page"{% endif %}><span class="icon">⭕</span> {{ _("Groups") }}</a></li>
               <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon">⌛</span> {{ _("Functions") }}</a></li>
               <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon">🚩</span> {{ _("Milestones") }}</a></li>
               <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon">📣</span> {{ _("Mentions") }}</a></li>

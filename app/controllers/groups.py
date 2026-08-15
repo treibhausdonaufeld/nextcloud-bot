@@ -234,9 +234,8 @@ def groups_page(
     limit_group: str = "",
     limit_user: str = "",
     solver: str = "forceAtlas2Based",
-    height: int = 700,
+    height: int = 500,
 ) -> Template:
-    hierarchical = _checkbox(request, "hierarchical", False)
     # The chart shows the groups by default; members are a lot of nodes and
     # are available per group in the detail dialog, so they stay opt-in.
     with_members = _checkbox(request, "with_members", False)
@@ -258,7 +257,6 @@ def groups_page(
             request,
             all_groups=all_groups,
             users=users,
-            hierarchical=hierarchical,
             with_members=with_members,
             with_subgroups=with_subgroups,
             limit_group=limit_group,
