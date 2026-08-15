@@ -68,11 +68,20 @@ def leave_fields(leave: MemberLeave | None) -> dict:
     role.
     """
     if leave is None:
-        return {"on_leave": False, "leave_until": "", "leave_since": ""}
+        return {
+            "on_leave": False,
+            "leave_until": "",
+            "leave_since": "",
+            "leave_group": "",
+        }
     return {
         "on_leave": True,
         "leave_until": leave.until_display or "",
         "leave_since": leave.start_display,
+        # The group page the marker was written on. Worth naming because the
+        # status applies everywhere: the group showing the badge is often not
+        # the one the leave was recorded in.
+        "leave_group": leave.group_name or "",
     }
 
 

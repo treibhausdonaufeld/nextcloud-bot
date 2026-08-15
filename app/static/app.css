@@ -1127,6 +1127,17 @@ mark {
   opacity: 0.6;
 }
 
+/* The group page a leave was recorded on — secondary to the Karenz badge
+   next to it, but still a link into that group. */
+.leave-source {
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.leave-source-note {
+  font-size: 0.8rem;
+}
+
 /* Parent group in a group dialog's heading: a link back up the tree that
    reads as part of the heading until you hover it. */
 .group-crumb {

@@ -555,3 +555,6 @@ msgstr ""
 
 msgid "Nothing recorded under this name — the group or user no longer exists."
 msgstr ""
+
+msgid "Recorded in"
+msgstr ""

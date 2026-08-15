@@ -87,7 +87,10 @@ class TestGroupMemberRows:
 
         assert by_user["bob"]["on_leave"] is True
         assert by_user["bob"]["leave_until"] == "2030-01-01"
+        # Named so the group dialog can say where the marker actually stands.
+        assert by_user["bob"]["leave_group"] == "AG Garten"
         assert by_user["alice"]["on_leave"] is False
+        assert by_user["alice"]["leave_group"] == ""
 
     def test_an_expired_leave_does_not_mark_anybody(self, group):
         leave = MemberLeave(

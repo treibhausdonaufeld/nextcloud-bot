@@ -33,6 +33,11 @@
               class="member-on-leave"
               title="{% if member.leave_until %}{{ _('On leave until %(date)s — unavailable in all groups') | format(date=member.leave_until) }}{% else %}{{ _('On leave — unavailable in all groups') }}{% endif %}"
             >{{ _("Karenz") }}{% if member.leave_until %} <span class="member-on-leave-date">{{ _("until %(date)s") | format(date=member.leave_until) }}</span>{% endif %}</span>
+            {# The marker often stands on a different group's page than the
+               one being looked at, so name the page it came from. #}
+            {% if member.leave_group %}
+              <span class="meta leave-source-note">{{ _("Recorded in") }}: {{ badges.group_link(member.leave_group, "leave-source") }}</span>
+            {% endif %}
           {% endif %}
         </li>
       {% endfor %}

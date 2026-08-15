@@ -576,6 +576,9 @@ msgstr "Diese Gruppe hat keine Mitglieder."
 msgid "Nothing recorded under this name — the group or user no longer exists."
 msgstr "Unter diesem Namen ist nichts gespeichert – die Gruppe oder der Benutzer existiert nicht mehr."
 
+msgid "Recorded in"
+msgstr "Eingetragen in"
+
 #~ msgid "Parent Group"
 #~ msgstr "Übergeordnete Gruppe"
 

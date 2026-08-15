@@ -12,6 +12,12 @@
       {% else %}
         {{ _("On leave since %(start)s — unavailable in all groups.") | format(start=current_leave.start) }}
       {% endif %}
+      {# Which page the marker stands on. The status applies everywhere, so
+         the group that recorded it is not obvious from anywhere else. #}
+      {% if current_leave.group %}
+        <br />
+        <span class="meta">{{ _("Recorded in") }}: {{ badges.group_link(current_leave.group) }}</span>
+      {% endif %}
     </p>
   {% endif %}
 
@@ -56,12 +62,18 @@
               {{ _("since %(date)s") | format(date=current_leave.start) }}
             {% endif %}
           </span>
+          {% if current_leave.group %}
+            {{ badges.group_link(current_leave.group, "leave-source") }}
+          {% endif %}
         </li>
       {% endif %}
       {% for leave in past_leaves %}
         <li>
           <span class="member-on-leave member-on-leave-past">{{ _("Karenz") }}</span>
           <span class="role-period">{{ _("%(start)s to %(end)s") | format(start=leave.start, end=leave.end or leave.until) }}</span>
+          {% if leave.group %}
+            {{ badges.group_link(leave.group, "leave-source") }}
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

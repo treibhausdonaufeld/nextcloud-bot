@@ -199,6 +199,7 @@ class TestLeaveInTheOverview:
         assert rows["bob"]["leave_since"] == "2025-02-01"
         # no announced end -> no date to show
         assert rows["bob"]["leave_until"] == ""
+        assert rows["bob"]["leave_group"] == "AG Haus"
 
     def test_the_status_is_not_tied_to_one_group(self):
         # bob holds roles in two groups; the leave is reported once for the
@@ -244,6 +245,8 @@ class TestMemberLeaveHistory:
 
         assert current["start"] == "2025-02-01"
         assert current["until"] is None
+        # The page the marker stands on, so the dialog can name it.
+        assert current["group"] == "AG Haus"
         assert past == []
 
     def test_past_leaves_keep_their_period(self, leaves):
