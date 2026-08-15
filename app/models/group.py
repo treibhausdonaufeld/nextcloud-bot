@@ -119,8 +119,10 @@ class Group(BaseDBModel):
         if not self.is_active:
             return
 
-        moment = timestamp or int(datetime.now().timestamp())
-        self.end_date = max(moment, self.start_date or moment)
+        # Clamped once and used for both, so the roles never end before the
+        # group they were held in does.
+        moment = max(timestamp or int(datetime.now().timestamp()), self.start_date or 0)
+        self.end_date = moment
         self.store()
         GroupRole.close_for_page(self.page_id, moment)
 

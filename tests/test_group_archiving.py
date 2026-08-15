@@ -171,10 +171,12 @@ class TestRetire:
         group = Group(name="AG Haus", page_id=1, start_date=MAR)
 
         with patch.object(Group, "store"):
-            with patch.object(GroupRole, "close_for_page"):
+            with patch.object(GroupRole, "close_for_page") as close:
                 group.retire(timestamp=JAN)
 
         assert group.end_date == MAR
+        # the roles end with the group, not before it
+        assert close.call_args.args == (1, MAR)
 
     def test_parsing_the_page_again_revives_the_group(self, patched_config):
         group = Group(name="AG Haus", page_id=1, end_date=JAN, start_date=JAN)
