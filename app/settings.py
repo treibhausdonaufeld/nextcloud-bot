@@ -214,6 +214,13 @@ class Settings(BaseSettings):
     # concern (it must match the container's volume mount).
     avatar_folder: Optional[str] = None
 
+    # While both a Matrix homeserver and a Rocket.Chat webhook are
+    # configured, send every notification to both instead of using
+    # Rocket.Chat only as a fallback — so a migration can run with the old
+    # chat still live. Set NOTIFY_DUAL_SEND=false to go back to
+    # "Matrix first, Rocket.Chat only when Matrix cannot deliver".
+    notify_dual_send: bool = True
+
     # Redirect *every* notification to this channel or user, whichever
     # backend it would go out through (env var NOTIFY_CHANNEL_OVERWRITE).
     # For testing a deployment without messaging the whole association:

@@ -42,6 +42,11 @@ services:
       # production. '@max.mueller' sends everything as a DM to that user.
       NOTIFY_CHANNEL_OVERWRITE: ''
 
+      # While Matrix and Rocket.Chat are both configured, every notification
+      # that is not routed to an Apprise target goes to both. Set to 'false'
+      # once the migration is done (or drop ROCKETCHAT__HOOK_URL).
+      NOTIFY_DUAL_SEND: 'true'
+
       ROCKETCHAT__HOOK_URL: 'https://chat.example.com/hooks/hook-id'
       ROCKETCHAT__INFO_CHANNEL: '#my-channel'
       ROCKETCHAT__ERROR_CHANNEL: '#my-channel'

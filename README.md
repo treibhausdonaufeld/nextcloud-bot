@@ -120,9 +120,25 @@ the rooms of all existing groups at once.
 
 Bot notifications are addressed by a logical channel name, and that name maps
 onto a room alias with the same slug rule (`ug-it` → `#ug-it:example.com`), so
-no per-channel configuration is needed. The order is: Apprise targets from the
-bot-config page if the channel has any, otherwise the channel's Matrix room if
-it exists, otherwise the Rocket.Chat webhook.
+no per-channel configuration is needed. Apprise targets from the bot-config
+page win when the channel has any; otherwise the message goes to the
+channel's Matrix room and to the Rocket.Chat webhook.
+
+While a homeserver _and_ a Rocket.Chat webhook are configured, every message
+that reaches this stage — i.e. everything except the channels with Apprise
+targets above — is sent to **both** systems, so a migration can run with the
+old chat still live and nobody misses a reminder while people move over one
+by one:
+
+```bash
+NOTIFY_DUAL_SEND=false   # back to "Matrix first, Rocket.Chat as fallback"
+```
+
+With the dual send switched off (or only one of the two configured),
+Rocket.Chat receives only what Matrix could not deliver — a channel with no
+room, an API error, or a DM to somebody without a Matrix account. Note that
+a message is never sent to Rocket.Chat twice: an undeliverable Matrix
+message still produces exactly one webhook post.
 
 Direct messages (`@user` channels, used for protocol feedback) are delivered
 as Matrix DMs: the bot reuses the one-to-one room recorded in its `m.direct`
