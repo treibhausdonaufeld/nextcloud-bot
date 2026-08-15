@@ -25,6 +25,7 @@ from app.services.collectives_parser import (
 from app.services.config import BotConfig
 from app.services.deck_reminder import DeckReminder
 from app.services.mail_fetcher import MailFetcher
+from app.services.matrix_rooms import sync_default_rooms
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,11 @@ def run_periodic_tasks(userlist: NCUserList, fetcher: MailFetcher, config: BotCo
     """Run periodic tasks like avatar fetching, mail fetching, and notifications."""
     if config.avatare.fetch_avatar:
         AvatarFetcher(config.avatare).fetch_images(userlist)
+
+    # The all-member chat rooms are not tied to a wiki page (unlike the group
+    # rooms, which are synced in `parse_groups`), so they are reconciled once
+    # per iteration — this is what picks up newly joined members.
+    sync_default_rooms(userlist)
 
     if settings.mailinglist.imap_server:
         fetcher.fetch_maildata(userlist, config.mailer)

@@ -399,6 +399,9 @@ msgstr ""
 msgid "Short Names"
 msgstr ""
 
+msgid "Chat Channels"
+msgstr ""
+
 msgid "Delegates"
 msgstr ""
 

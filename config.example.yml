@@ -11,6 +11,15 @@ nextcloud:
   avatar_refresh_seconds: 86400
 
 organisation:
+  # Keywords that introduce additional Matrix chat channels on a group page,
+  # e.g. "Chat-Kanäle: Fragen an AG Struktur, Termine". Each name becomes a
+  # public room next to the group's own one (#fragen-an-ag-struktur, ...).
+  # Requires MATRIX__HOMESERVER_URL and MATRIX__ADMIN_TOKEN to be set.
+  group_chat_channel_keywords:
+    - chat-kanäle
+    - chat-kanaele
+    - chat-channels
+
   # Pages whose name marks an archive. A group page moved below one of them
   # counts as dissolved: the group (and every subgroup below it) is removed
   # and the roles held in it are ended, while the role history is kept.
@@ -122,3 +131,9 @@ calendar_notifier:
   # channels where to post the events
   channel_keywords:
     channel-name: [kw1, keyword2]
+
+  # When no keyword above matches, post the event in the channel of the
+  # group named in its title ("AG Struktur Treffen" -> ag-struktur, which
+  # is the group's own Matrix room). Set to false to notify only the
+  # channels mapped above.
+  group_channel_fallback: true

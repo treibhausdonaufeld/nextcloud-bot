@@ -417,6 +417,9 @@ msgstr "Übergeordnete Gruppe"
 msgid "Short Names"
 msgstr "Kurznamen"
 
+msgid "Chat Channels"
+msgstr "Chat-Kanäle"
+
 msgid "Delegates"
 msgstr "Delegierte"
 

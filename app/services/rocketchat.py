@@ -66,9 +66,14 @@ def send_rocketchat_message(text: str, channel: str, emoji: str = ":robot:") -> 
 
     webhook_url = settings.rocketchat.hook_url
 
-    if settings.rocketchat.channel_overwrite:
-        # for debugging purposes, override the channel
-        channel = settings.rocketchat.channel_overwrite
+    # for debugging purposes, override the channel; the global
+    # NOTIFY_CHANNEL_OVERWRITE applies to every backend and wins here too, so
+    # a direct call to this function cannot escape it either.
+    overwrite = (
+        settings.notify_channel_overwrite or settings.rocketchat.channel_overwrite
+    )
+    if overwrite:
+        channel = overwrite
 
     if not webhook_url:
         logger.warning(

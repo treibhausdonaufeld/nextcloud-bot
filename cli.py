@@ -48,6 +48,20 @@ def clear_parsed_data() -> None:
 
 
 @cli.command()
+def sync_matrix() -> None:
+    """Create the Matrix chat rooms of all groups and invite their members.
+
+    The regular sync already does this whenever a group page changes; this
+    command walks every stored group at once (useful right after enabling
+    the feature). Existing members are never removed.
+    """
+    from app.services.matrix_rooms import sync_all_groups
+
+    count = sync_all_groups()
+    click.echo(f"Synced Matrix rooms for {count} groups")
+
+
+@cli.command()
 @click.argument("xlsx_path", type=click.Path(exists=True))
 def import_xlsx(xlsx_path: str) -> None:
     """Import logbook decisions from an XLSX file."""

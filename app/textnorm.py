@@ -28,7 +28,7 @@ LANGS = ("de", "en")
 # text for previews. Order matters: link/image alt text is kept, the other
 # constructs keep their inner content.
 _MD_FORMATTING_RE = re.compile(
-    r"\[([^\]]+)\]\([^)]+\)"  # [text](url) -> text
+    r"!?\[([^\]]*)\]\([^)]*\)"  # [text](url) / ![alt](url) -> text
     r"|~~(.+?)~~"  # ~~strikethrough~~ -> content
     r"|`([^`]+)`"  # `inline code` -> content
     r"|\*\*(.+?)\*\*"  # **bold** -> content
@@ -39,20 +39,57 @@ _MD_FORMATTING_RE = re.compile(
     re.MULTILINE,
 )
 
+# Nesting (e.g. "**[AG Struktur](url)**") only unwraps one layer per pass.
+_MAX_MARKDOWN_PASSES = 5
+
 
 def strip_markdown(text: str) -> str:
     """Remove markdown formatting characters from plain text for display."""
     if not text:
         return ""
-    result = _MD_FORMATTING_RE.sub(
-        lambda m: (
-            next(g for g in m.groups() if g is not None)
-            if any(g is not None for g in m.groups())
-            else ""
-        ),
-        text,
-    )
+
+    result = text
+    for _ in range(_MAX_MARKDOWN_PASSES):
+        stripped = _MD_FORMATTING_RE.sub(
+            lambda m: (
+                next(g for g in m.groups() if g is not None)
+                if any(g is not None for g in m.groups())
+                else ""
+            ),
+            result,
+        )
+        if stripped == result:
+            break
+        result = stripped
+
     return result.strip()
+
+
+# Anything left that is a link rather than a name: autolinks, bare URLs and
+# the ``mention://`` scheme Nextcloud uses.
+_LINK_RE = re.compile(r"<?\b[a-z][a-z0-9+.-]*://\S+", re.IGNORECASE)
+
+# Markdown leftovers that carry no meaning inside a name.
+_MD_LEFTOVER_RE = re.compile(r"[*_`~\[\]<>|]+")
+
+
+def plain_name(text: str) -> str:
+    """Reduce a wiki-page snippet to a plain single-line name.
+
+    Group pages name their chat channels in whatever markdown the editor
+    happened to use — ``[AG Struktur](https://chat.example/channel/AG-Struktur)``
+    is meant to name the channel "AG Struktur", not to carry a link into the
+    room's title. Strips the markup, drops link targets and collapses the
+    whitespace; an entry that is nothing but a link ends up empty.
+    """
+    if not text:
+        return ""
+
+    name = strip_markdown(text)
+    name = _LINK_RE.sub(" ", name)
+    name = _MD_LEFTOVER_RE.sub(" ", name)
+    name = re.sub(r"\s+", " ", name)
+    return name.strip(" \t-–—:.,;")
 
 
 # Nextcloud exports user mentions as ``@[Display Name](mention://user/uid)``

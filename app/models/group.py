@@ -1,5 +1,5 @@
 import re
-from typing import ClassVar, List
+from typing import ClassVar, List, Optional
 
 import edgy
 
@@ -7,6 +7,11 @@ from app.models.base import BaseDBModel
 from app.models.collective_page import CollectivePage
 from app.services.config import bot_config
 from app.settings import user_regex
+from app.textnorm import plain_name
+
+# Separates a keyword from its value ("Chat-Kanäle: ..."), ignoring the
+# colon of a URL scheme so a line naming a link still splits correctly.
+keyword_value_regex = re.compile(r":(?!//)")
 
 
 class Group(BaseDBModel):
@@ -19,6 +24,9 @@ class Group(BaseDBModel):
     delegate: List[str] = edgy.JSONField(default=list)
     members: List[str] = edgy.JSONField(default=list)
     short_names: List[str] = edgy.JSONField(default=list)
+    # Extra Matrix chat channels named on the page ("Chat-Kanäle: ..."), in
+    # addition to the group's own channel.
+    chat_channels: List[str] = edgy.JSONField(default=list)
 
     natural_key_fields = ("page_id",)
 
@@ -92,6 +100,33 @@ class Group(BaseDBModel):
         if not docs:
             raise ValueError(f"Group with name '{name}' not found")
         return docs[0]
+
+    @classmethod
+    def find_in_text(cls, text: str) -> Optional["Group"]:
+        """The group whose name or short name occurs in `text`.
+
+        Used to route a calendar event such as "AG Struktur Treffen" to its
+        own chat channel. Matches on word boundaries (so "IT" does not match
+        inside "Sitzung") and prefers the longest match, so a subgroup wins
+        over the parent group it is named after.
+        """
+        haystack = (text or "").lower()
+        if not haystack:
+            return None
+
+        best: Optional["Group"] = None
+        best_length = 0
+
+        for group in cls.all_cached():
+            for candidate in [group.name, *group.short_names]:
+                needle = (candidate or "").strip().lower()
+                if len(needle) <= best_length:
+                    continue
+                if re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", haystack):
+                    best = group
+                    best_length = len(needle)
+
+        return best
 
     @classmethod
     def valid_name(cls, name: str) -> bool:
@@ -170,6 +205,7 @@ class Group(BaseDBModel):
         self.coordination = []
         self.delegate = []
         self.members = []
+        self.chat_channels = []
         attr = ""
 
         for line in lines:
@@ -192,6 +228,19 @@ class Group(BaseDBModel):
                     sn.strip().lower() for sn in shortnames if sn.strip() != ""
                 ]
                 self.short_names = self.short_names + sorted(shortnames)
+                continue
+            elif first_word in bot_config.organisation.group_chat_channel_keywords:
+                # extra chat channels are split by commas, e.g.
+                # "**Chat-Kanäle:** Fragen an AG Struktur, Termine". Entries
+                # are often written as links to the existing chat — only the
+                # name survives (see `plain_name`).
+                # Split on the keyword's colon, not on the one in "https://".
+                parts = keyword_value_regex.split(line, maxsplit=1)
+                if len(parts) < 2:
+                    continue
+                channels = parts[1].split(",")
+                channels = [name for name in map(plain_name, channels) if name]
+                self.chat_channels = self.chat_channels + channels
                 continue
 
             users = re.findall(user_regex, line)

@@ -1,14 +1,15 @@
 import gettext
+import json
 import locale
 import logging
 import re
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, List, Optional
 
 import sentry_sdk
-from pydantic import BaseModel, HttpUrl, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # Configure logging to suppress verbose HTTP logs
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -118,6 +119,65 @@ class MailSettings(BaseModel):
     imap_password: str = ""
 
 
+class MatrixSettings(BaseModel):
+    """Connection to a Matrix homeserver for the group chat rooms.
+
+    The whole feature is opt-in: without a homeserver URL *and* an admin
+    access token (a normal user token with the right to create rooms works
+    too) nothing is created and no request is sent — see `enabled`.
+    """
+
+    # e.g. https://matrix.example.com
+    homeserver_url: Optional[HttpUrl] = None
+
+    # Access token used for every request (Authorization: Bearer ...).
+    admin_token: str = ""
+
+    # Server part of room aliases (#ag-struktur:example.com). This is the
+    # homeserver's `server_name`, which is often shorter than the hostname of
+    # the client API (matrix.example.com vs example.com) — hence the explicit
+    # setting, falling back to the URL's host.
+    server_name: str = ""
+
+    # Server part of the user ids that get invited. Defaults to server_name;
+    # set it when the association's accounts live on another server.
+    user_domain: str = ""
+
+    # Optional prefix for every generated room alias, e.g. "thd-" turns
+    # "AG Struktur" into #thd-ag-struktur:example.com.
+    room_prefix: str = ""
+
+    # Rooms every member belongs to, independent of any group, as a
+    # comma-separated list: MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"
+    # creates #allgemein and #ankuendigungen and invites all members. A JSON
+    # list works as well. `NoDecode` keeps pydantic-settings from insisting
+    # on the JSON form.
+    default_rooms: Annotated[List[str], NoDecode] = Field(default_factory=list)
+
+    @field_validator("default_rooms", mode="before")
+    @classmethod
+    def split_default_rooms(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        text = value.strip()
+        if text.startswith("["):
+            return json.loads(text)
+        return [name.strip() for name in text.split(",") if name.strip()]
+
+    @model_validator(mode="after")
+    def set_domains(self) -> "MatrixSettings":
+        if not self.server_name and self.homeserver_url:
+            self.server_name = self.homeserver_url.host or ""
+        if not self.user_domain:
+            self.user_domain = self.server_name
+        return self
+
+    @property
+    def enabled(self) -> bool:
+        """Whether the group chat room sync should run at all."""
+        return bool(self.homeserver_url and self.admin_token and self.server_name)
+
+
 class NextcloudSettings(BaseModel):
     base_url: Optional[HttpUrl] = None
     admin_username: str = ""
@@ -154,6 +214,14 @@ class Settings(BaseSettings):
     # concern (it must match the container's volume mount).
     avatar_folder: Optional[str] = None
 
+    # Redirect *every* notification to this channel or user, whichever
+    # backend it would go out through (env var NOTIFY_CHANNEL_OVERWRITE).
+    # For testing a deployment without messaging the whole association:
+    # "@max.mueller" sends everything as a direct message to that user,
+    # "bot-test" sends everything to that one channel. Takes precedence over
+    # the bot-config page's notifier.channel_overwrite.
+    notify_channel_overwrite: str = ""
+
     # Folder for protocol attachments (env var MEDIA_FOLDER). Files are
     # stored as YYYY/MM/DD/<page-id>/attachments/<folder-id>/<name> so old
     # attachments can easily be pruned by date when space runs low.
@@ -161,6 +229,7 @@ class Settings(BaseSettings):
 
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
+    matrix: MatrixSettings = MatrixSettings()
     rocketchat: RocketchatSettings = RocketchatSettings()
     mailinglist: MailSettings = MailSettings()
 

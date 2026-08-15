@@ -10,6 +10,7 @@ from app.models.group_role import GroupRole
 from app.models.kv import get_state, set_state
 from app.models.protocol import Protocol
 from app.services.config import BotConfig, bot_config
+from app.services.matrix_rooms import sync_group_rooms
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,10 @@ def parse_groups(page: CollectivePage) -> None:
         # Record who gained or lost a role, dated by the page's own
         # modification time (idempotent, so re-parsing is safe).
         GroupRole.sync_group(group, timestamp=page.timestamp)
+
+        # Create the group's public Matrix rooms and invite its members
+        # (no-op unless a homeserver and admin token are configured).
+        sync_group_rooms(group)
 
 
 def remove_stale_groups() -> None:

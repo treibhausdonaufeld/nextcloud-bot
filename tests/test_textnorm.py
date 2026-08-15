@@ -6,9 +6,60 @@ from app.textnorm import (
     compound_parts,
     index_terms,
     lemmatize,
+    plain_name,
+    strip_markdown,
     strip_mentions,
     token_variants,
 )
+
+
+class TestPlainName:
+    """Chat channel names come out of the wiki wrapped in markdown."""
+
+    def test_markdown_link_keeps_the_text(self):
+        assert (
+            plain_name("[AG Struktur](https://chat.example.at/channel/AG-Struktur)")
+            == "AG Struktur"
+        )
+
+    def test_bold_link_is_unwrapped(self):
+        assert plain_name("**[AG Struktur](https://chat.example.at/x)**") == (
+            "AG Struktur"
+        )
+
+    def test_emphasis_is_removed(self):
+        assert plain_name("*Fragen an die AG*") == "Fragen an die AG"
+        assert plain_name("`Termine`") == "Termine"
+
+    def test_bare_link_leaves_nothing(self):
+        assert plain_name("https://chat.example.at/channel/AG-Struktur") == ""
+
+    def test_autolink_leaves_nothing(self):
+        assert plain_name("<https://chat.example.at/channel/x>") == ""
+
+    def test_whitespace_is_collapsed(self):
+        assert plain_name("  AG   Struktur \n") == "AG Struktur"
+
+    def test_list_bullet_is_dropped(self):
+        assert plain_name("- AG Struktur") == "AG Struktur"
+
+    def test_plain_name_is_unchanged(self):
+        assert plain_name("Fragen an AG Struktur") == "Fragen an AG Struktur"
+
+    def test_umlauts_survive(self):
+        assert plain_name("**Ankündigungen**") == "Ankündigungen"
+
+    def test_empty(self):
+        assert plain_name("") == ""
+        assert plain_name(None) == ""
+
+
+class TestStripMarkdown:
+    def test_nested_formatting_is_unwrapped(self):
+        assert strip_markdown("**[Titel](https://x)**") == "Titel"
+
+    def test_image_alt_text_is_kept(self):
+        assert strip_markdown("![Logo](https://x/logo.png)") == "Logo"
 
 
 class TestLemmatize:
