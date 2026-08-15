@@ -1,10 +1,11 @@
 import re
-from typing import ClassVar, List, Optional
+from typing import ClassVar, Dict, List, Optional, Set
 
 import edgy
 
 from app.models.base import BaseDBModel
 from app.models.collective_page import CollectivePage
+from app.models.member_leave import is_leave_line, parse_until
 from app.services.config import bot_config
 from app.settings import user_regex
 from app.textnorm import plain_name
@@ -27,6 +28,12 @@ class Group(BaseDBModel):
     # Extra Matrix chat channels named on the page ("Chat-Kanäle: ..."), in
     # addition to the group's own channel.
     chat_channels: List[str] = edgy.JSONField(default=list)
+    # Members this page marks as being on leave ("Karenz"), and the announced
+    # end date per user (unix timestamp, missing = open-ended). The status
+    # itself is global — `MemberLeave.sync_groups()` collects it across all
+    # pages — these fields only record what this page says.
+    on_leave: List[str] = edgy.JSONField(default=list)
+    leave_until: Dict[str, int] = edgy.JSONField(default=dict)
 
     natural_key_fields = ("page_id",)
 
@@ -54,7 +61,15 @@ class Group(BaseDBModel):
         max_len = 30
         return str(self)[:max_len] + ("..." if len(str(self)) > max_len else "")
 
+    @staticmethod
+    def normalize_short_names(names: List[str] | None) -> List[str]:
+        """Lower-cased, deduplicated and alphabetically ordered short names."""
+        return sorted({name.strip().lower() for name in names or [] if name.strip()})
+
     def store(self, skip_set_updated_at: bool = False) -> None:
+        # Enforced here rather than only at the parsing site so no writer can
+        # persist a duplicated or unsorted list.
+        self.short_names = self.normalize_short_names(self.short_names)
         super().store(skip_set_updated_at=skip_set_updated_at)
         Group.invalidate_cache()
 
@@ -184,6 +199,30 @@ class Group(BaseDBModel):
             raise ValueError("Cannot determine group name from page")
         return cls.get_by_name(group_names[0])
 
+    def _mark_on_leave(
+        self, usernames: List[str], until: Optional[int], open_ended: Set[str]
+    ) -> None:
+        """Record a leave marker seen on this page.
+
+        A name marked twice keeps the entry that lasts longer, and a marker
+        without a date beats every dated one: "Karenz" with no end is not cut
+        short by a dated mention elsewhere on the same page.
+        """
+        for username in usernames:
+            if username not in self.on_leave:
+                self.on_leave = sorted(self.on_leave + [username])
+
+            if until is None:
+                open_ended.add(username)
+                self.leave_until.pop(username, None)
+                continue
+            if username in open_ended:
+                continue
+
+            known = self.leave_until.get(username)
+            if known is None or until > known:
+                self.leave_until[username] = until
+
     def update_from_page(self) -> None:
         page = CollectivePage.get_from_page_id(self.page_id)
         if not page or not page.content:
@@ -205,8 +244,15 @@ class Group(BaseDBModel):
         self.coordination = []
         self.delegate = []
         self.members = []
+        self.short_names = []
         self.chat_channels = []
+        self.on_leave = []
+        self.leave_until = {}
         attr = ""
+        # End date announced by the heading of a "Karenz" section, applied to
+        # the names below it that do not carry one of their own.
+        section_until: Optional[int] = None
+        open_ended: Set[str] = set()
 
         for line in lines:
             # get the first word on the line, ignoring any leading non-word chars
@@ -221,13 +267,22 @@ class Group(BaseDBModel):
                 attr = "delegate"
             elif first_word in bot_config.organisation.member_person_keywords:
                 attr = "members"
+            elif first_word in bot_config.organisation.leave_person_keywords:
+                # A "Karenz:" section of its own. Names below it are marked as
+                # unavailable without becoming members of the group.
+                attr = "on_leave"
+                section_until = parse_until(
+                    line, bot_config.organisation.leave_until_keywords
+                )
             elif first_word in bot_config.organisation.group_shortname_keywords:
-                # shortnames are split by commas
+                # shortnames are split by commas. The list is rebuilt from the
+                # page on every parse (it is reset above), so a name dropped
+                # from the wiki disappears here too; a page naming them on
+                # several lines accumulates across those lines only.
                 shortnames = line.split(":")[-1].strip("*").strip().split(",")
-                shortnames = [
-                    sn.strip().lower() for sn in shortnames if sn.strip() != ""
-                ]
-                self.short_names = self.short_names + sorted(shortnames)
+                self.short_names = self.normalize_short_names(
+                    self.short_names + shortnames
+                )
                 continue
             elif first_word in bot_config.organisation.group_chat_channel_keywords:
                 # extra chat channels are split by commas, e.g.
@@ -248,12 +303,31 @@ class Group(BaseDBModel):
                 users_list = list(getattr(self, attr))
                 users_list.extend(users)
                 setattr(self, attr, sorted(users_list))
-            elif line.strip() != "" and first_word not in (
-                bot_config.organisation.coordination_person_keywords
-                + bot_config.organisation.delegate_person_keywords
-                + bot_config.organisation.member_person_keywords
+
+            # Leave is marked either by the section a name stands in, or
+            # inline behind the name ("@anna (Karenz bis 30.06.2026)").
+            if users and (
+                attr == "on_leave"
+                or is_leave_line(line, bot_config.organisation.leave_person_keywords)
+            ):
+                until = parse_until(line, bot_config.organisation.leave_until_keywords)
+                if until is None and attr == "on_leave":
+                    until = section_until
+                self._mark_on_leave(users, until, open_ended)
+
+            if (
+                line.strip() != ""
+                and not (users and attr)
+                and first_word
+                not in (
+                    bot_config.organisation.coordination_person_keywords
+                    + bot_config.organisation.delegate_person_keywords
+                    + bot_config.organisation.member_person_keywords
+                    + bot_config.organisation.leave_person_keywords
+                )
             ):
                 attr = ""
+                section_until = None
 
         self.members = sorted(
             set(self.members) - set(self.coordination) - set(self.delegate)

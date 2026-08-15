@@ -4,8 +4,11 @@ import logging
 
 from ravyn import JSONResponse, Request, Template, get
 
-from app.i18n import template_context
-from app.models import Group, Mention, NCUserList
+from app.controllers.logbook import group_hue
+from app.controllers.members import leave_fields, role_label
+from app.i18n import activate, template_context
+from app.models import CollectivePage, Group, MemberLeave, Mention, NCUserList
+from app.models.group_role import ROLE_FIELDS, ROLES
 from app.settings import user_regex
 
 logger = logging.getLogger(__name__)
@@ -185,6 +188,38 @@ def user_detail_context(username: str, all_groups: list[Group]) -> dict:
     }
 
 
+def group_member_rows(group: Group, user_list: NCUserList) -> list[dict]:
+    """The group's members with the role each of them holds in it.
+
+    One row per person — `Group.members` already excludes coordination and
+    delegates, so nobody is listed twice. Rows carry the same fields the
+    members overview uses for its badges (role key, translated label, group
+    hue, leave status), so both pages render them identically.
+    """
+    leaves = MemberLeave.current_by_user()
+    hue = group_hue(group.name)
+
+    rows: list[dict] = []
+    for role, field in ROLE_FIELDS.items():
+        for username in getattr(group, field, []) or []:
+            user = user_list.get_user_by_uid(username)
+            rows.append(
+                {
+                    "username": username,
+                    "displayname": (user.displayname if user else "") or username,
+                    "role": role,
+                    "role_label": role_label(role),
+                    "hue": hue,
+                }
+                | leave_fields(leaves.get(username))
+            )
+
+    rows.sort(
+        key=lambda row: (list(ROLES).index(row["role"]), row["displayname"].lower())
+    )
+    return rows
+
+
 def _checkbox(request: Request, name: str, default: bool) -> bool:
     """Read a checkbox value; unchecked boxes are absent from the query, so
     defaults only apply before the form was submitted at all."""
@@ -199,10 +234,11 @@ def groups_page(
     limit_group: str = "",
     limit_user: str = "",
     solver: str = "forceAtlas2Based",
-    height: int = 700,
+    height: int = 500,
 ) -> Template:
-    hierarchical = _checkbox(request, "hierarchical", False)
-    with_members = _checkbox(request, "with_members", True)
+    # The chart shows the groups by default; members are a lot of nodes and
+    # are available per group in the detail dialog, so they stay opt-in.
+    with_members = _checkbox(request, "with_members", False)
     with_subgroups = _checkbox(request, "with_subgroups", True)
     user_list = NCUserList()
     all_groups = sorted(Group.fetch(limit=1000))
@@ -221,7 +257,6 @@ def groups_page(
             request,
             all_groups=all_groups,
             users=users,
-            hierarchical=hierarchical,
             with_members=with_members,
             with_subgroups=with_subgroups,
             limit_group=limit_group,
@@ -235,7 +270,7 @@ def groups_page(
 @get("/groups/graph.json")
 def groups_graph(
     request: Request,
-    with_members: bool = True,
+    with_members: bool = False,
     with_subgroups: bool = True,
     limit_group: str = "",
     limit_user: str = "",
@@ -250,6 +285,10 @@ def groups_graph(
 
 @get("/groups/detail")
 def group_detail(request: Request, node: str = "") -> Template:
+    # Role labels are translated while collecting the rows, so the request
+    # language has to be active before that.
+    activate(request)
+
     all_groups = Group.fetch(limit=1000)
     context = template_context(request, node=node)
 
@@ -263,26 +302,29 @@ def group_detail(request: Request, node: str = "") -> Template:
         subgroups = sorted([cg for cg in all_groups if cg.parent_group == group.name])
         user_list = NCUserList()
 
-        def names(user_ids: list[str]) -> list[str]:
-            result = []
-            for user_id in user_ids:
-                user = user_list.get_user_by_uid(user_id)
-                result.append(user.displayname if user else user_id)
-            return result
-
         from app.services.matrix_rooms import group_channel_links
+
+        # The wiki page behind the group, so the dialog can link to the
+        # original the way the protocol view does.
+        page = CollectivePage.get_from_page_id_or_none(group.page_id)
 
         context.update(
             group=group,
             subgroups=subgroups,
-            coordination_names=names(group.coordination),
-            delegate_names=names(group.delegate),
-            member_names=names(group.members),
+            members=group_member_rows(group, user_list),
+            hue=group_hue(group.name),
             chat_channels=group_channel_links(group),
+            page_url=page.url if page else None,
         )
         return Template(name="partials/group_detail.html", context=context)
 
     # person selected, show user details
     username = node.split(":")[-1]
     context.update(user_detail_context(username, all_groups))
+    # A node naming neither a group nor a known user — e.g. the group half of
+    # a past-role badge, whose group page has been retired since. Say so
+    # instead of rendering an empty user card.
+    context["known"] = bool(
+        context["user"] or context["member_of_groups"] or context["mention_pages"]
+    )
     return Template(name="partials/user_detail.html", context=context)

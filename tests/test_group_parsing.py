@@ -139,6 +139,105 @@ mention://user/alice
                     assert mock_group.short_names == sorted(mock_group.short_names)
 
 
+class TestShortnameDeduplication:
+    """Short names are rebuilt from the page, deduplicated and sorted.
+
+    They used to be appended to whatever was already stored, so re-parsing a
+    page grew the list and names dropped from the wiki never disappeared.
+    """
+
+    @staticmethod
+    def parse(group, page, config, content):
+        page.content = content
+        with (
+            patch("app.models.group.bot_config", config),
+            patch.object(CollectivePage, "get_from_page_id", return_value=page),
+            patch.object(Group, "store"),
+        ):
+            group.update_from_page()
+        return group.short_names
+
+    def test_reparsing_the_same_page_does_not_duplicate(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        content = "**Kurznamen:** Test, AG-Test\n"
+        for _ in range(3):
+            names = self.parse(mock_group, mock_page, mock_bot_config, content)
+
+        assert names == ["ag-test", "test"]
+
+    def test_names_repeated_on_the_page_collapse(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        names = self.parse(
+            mock_group, mock_page, mock_bot_config, "**Kurznamen:** Test, test, TEST\n"
+        )
+
+        assert names == ["test"]
+
+    def test_names_are_sorted_alphabetically(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        names = self.parse(
+            mock_group,
+            mock_page,
+            mock_bot_config,
+            "**Kurznamen:** zebra, apple, mango\n",
+        )
+
+        assert names == ["apple", "mango", "zebra"]
+
+    def test_a_name_dropped_from_the_page_is_removed(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        self.parse(
+            mock_group, mock_page, mock_bot_config, "**Kurznamen:** alt, bleibt\n"
+        )
+        names = self.parse(
+            mock_group, mock_page, mock_bot_config, "**Kurznamen:** bleibt\n"
+        )
+
+        assert names == ["bleibt"]
+
+    def test_removing_the_keyword_clears_the_names(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        self.parse(mock_group, mock_page, mock_bot_config, "**Kurznamen:** alt\n")
+        names = self.parse(mock_group, mock_page, mock_bot_config, "# AG Test Group\n")
+
+        assert names == []
+
+    def test_several_keyword_lines_accumulate_within_one_parse(
+        self, mock_group, mock_page, mock_bot_config
+    ):
+        names = self.parse(
+            mock_group,
+            mock_page,
+            mock_bot_config,
+            "**Kurznamen:** b, a\n**Schlagwörter:** c, a\n",
+        )
+
+        assert names == ["a", "b", "c"]
+
+
+class TestNormalizeShortNames:
+    def test_deduplicates_case_insensitively_and_sorts(self):
+        assert Group.normalize_short_names(["B", "a", "b", "A"]) == ["a", "b"]
+
+    def test_drops_blank_entries_and_trims(self):
+        assert Group.normalize_short_names(["  x ", "", "   "]) == ["x"]
+
+    def test_handles_a_missing_list(self):
+        assert Group.normalize_short_names(None) == []
+
+    def test_store_normalizes_whatever_it_is_handed(self):
+        group = Group(name="AG Test", page_id=99, short_names=["b", "A", "b"])
+        with patch("app.models.base.BaseDBModel.store"):
+            group.store()
+
+        assert group.short_names == ["a", "b"]
+
+
 class TestGroupMemberParsing:
     """Test suite for Group member/coordination/delegate parsing."""
 

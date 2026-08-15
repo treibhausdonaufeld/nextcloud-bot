@@ -152,12 +152,6 @@ msgstr ""
 msgid "Others"
 msgstr ""
 
-msgid "Home"
-msgstr ""
-
-msgid "Hierarchical layout"
-msgstr ""
-
 msgid "With Members"
 msgstr ""
 
@@ -393,16 +387,10 @@ msgstr ""
 msgid "No events to display for \"%s\""
 msgstr ""
 
-msgid "Parent Group"
-msgstr ""
-
 msgid "Short Names"
 msgstr ""
 
 msgid "Chat Channels"
-msgstr ""
-
-msgid "Delegates"
 msgstr ""
 
 msgid "Subgroups"
@@ -526,4 +514,44 @@ msgstr ""
 
 #, python-brace-format
 msgid "Total Mentions: {count}"
+msgstr ""
+
+#, python-format
+msgid "On leave until %(date)s — unavailable in all groups"
+msgstr ""
+
+msgid "On leave — unavailable in all groups"
+msgstr ""
+
+msgid "Karenz"
+msgstr ""
+
+#, python-format
+msgid "until %(date)s"
+msgstr ""
+
+msgid "currently on leave"
+msgstr ""
+
+#, python-format
+msgid "On leave from %(start)s until %(end)s — unavailable in all groups."
+msgstr ""
+
+#, python-format
+msgid "On leave since %(start)s — unavailable in all groups."
+msgstr ""
+
+msgid "Leave"
+msgstr ""
+
+msgid "Click a group to see its members and their roles."
+msgstr ""
+
+msgid "This group has no members."
+msgstr ""
+
+msgid "Nothing recorded under this name — the group or user no longer exists."
+msgstr ""
+
+msgid "Recorded in"
 msgstr ""

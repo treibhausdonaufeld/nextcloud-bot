@@ -7,12 +7,14 @@ import pytest
 from app.controllers import members as members_controller
 from app.models.group import Group
 from app.models.group_role import GroupRole
+from app.models.member_leave import MemberLeave
 from app.models.user import NCUser
 from app.settings import settings
 
 JAN = 1735689600  # 2025-01-01
 FEB = 1738368000  # 2025-02-01
 MAR = 1740787200  # 2025-03-01
+FAR_FUTURE = 1893456000  # 2030-01-01
 
 
 @pytest.fixture
@@ -72,6 +74,28 @@ def history():
 
 
 @pytest.fixture
+def leaves():
+    return [
+        # bob is on leave with no announced end
+        MemberLeave(
+            username="bob",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+        ),
+        # carol's leave ran out long ago
+        MemberLeave(
+            username="carol",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=JAN,
+            until_date=MAR,
+            end_date=MAR,
+        ),
+    ]
+
+
+@pytest.fixture
 def users():
     return {
         "alice": NCUser(
@@ -92,18 +116,25 @@ def users():
 
 
 @pytest.fixture(autouse=True)
-def patched_data(groups, history, users):
+def patched_data(groups, history, users, leaves):
     from app.models.user import NCUserList
 
     NCUserList._cached_users = users
-    with patch.object(Group, "all_cached", return_value=groups):
-        with patch.object(GroupRole, "all_rows", return_value=history):
-            with patch.object(
-                GroupRole,
-                "current",
-                return_value=[r for r in history if r.end_date is None],
-            ):
-                yield
+    with (
+        patch.object(Group, "all_cached", return_value=groups),
+        patch.object(GroupRole, "all_rows", return_value=history),
+        patch.object(
+            GroupRole,
+            "current",
+            return_value=[r for r in history if r.end_date is None],
+        ),
+        patch.object(
+            MemberLeave,
+            "open_rows",
+            return_value=[r for r in leaves if r.end_date is None],
+        ),
+    ):
+        yield
 
 
 class TestMemberRows:
@@ -158,6 +189,78 @@ class TestMemberRows:
 
         assert [row["username"] for row in rows] == ["alice"]
         assert rows[0]["active"] is True
+
+
+class TestLeaveInTheOverview:
+    def test_marks_the_member_as_on_leave(self):
+        rows = {row["username"]: row for row in members_controller.member_rows()}
+
+        assert rows["bob"]["on_leave"] is True
+        assert rows["bob"]["leave_since"] == "2025-02-01"
+        # no announced end -> no date to show
+        assert rows["bob"]["leave_until"] == ""
+        assert rows["bob"]["leave_group"] == "AG Haus"
+
+    def test_the_status_is_not_tied_to_one_group(self):
+        # bob holds roles in two groups; the leave is reported once for the
+        # member, so it covers both.
+        rows = {row["username"]: row for row in members_controller.member_rows()}
+
+        assert {r["group"] for r in rows["bob"]["roles"]} == {"AG Haus", "AG Garten"}
+        assert rows["bob"]["on_leave"] is True
+
+    def test_members_without_a_leave_are_untouched(self):
+        rows = {row["username"]: row for row in members_controller.member_rows()}
+
+        assert rows["alice"]["on_leave"] is False
+        # carol's leave is over
+        assert rows["carol"]["on_leave"] is False
+
+    def test_an_announced_end_is_shown(self, leaves):
+        running = MemberLeave(
+            username="bob",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        with patch.object(MemberLeave, "open_rows", return_value=[running]):
+            rows = {row["username"]: row for row in members_controller.member_rows()}
+
+        assert rows["bob"]["leave_until"] == "2030-01-01"
+
+    def test_role_holders_carry_the_leave(self, history):
+        rows = [r for r in history if r.role == "delegate"]
+        with patch.object(GroupRole, "for_role", return_value=rows):
+            current, _ = members_controller.role_holders("delegate")
+
+        assert current[0]["username"] == "bob"
+        assert current[0]["on_leave"] is True
+
+
+class TestMemberLeaveHistory:
+    def test_reports_the_running_leave_with_its_dates(self, leaves):
+        with patch.object(MemberLeave, "for_user", return_value=leaves[:1]):
+            current, past = members_controller.member_leaves("bob")
+
+        assert current["start"] == "2025-02-01"
+        assert current["until"] is None
+        # The page the marker stands on, so the dialog can name it.
+        assert current["group"] == "AG Haus"
+        assert past == []
+
+    def test_past_leaves_keep_their_period(self, leaves):
+        with patch.object(MemberLeave, "for_user", return_value=leaves[1:]):
+            current, past = members_controller.member_leaves("carol")
+
+        assert current is None
+        assert past[0]["start"] == "2025-01-01"
+        assert past[0]["until"] == "2025-03-01"
+        assert past[0]["end"] == "2025-03-01"
+
+    def test_members_without_a_leave_report_nothing(self):
+        with patch.object(MemberLeave, "for_user", return_value=[]):
+            assert members_controller.member_leaves("alice") == (None, [])
 
 
 class TestMemberHistory:

@@ -3,12 +3,14 @@
 {% block content %}
   <h1>{{ _("Groups") }}</h1>
 
+  {# Every form re-submits the whole state, so changing one control does not
+     reset the others. #}
   <form class="filter-form" method="get" action="/groups">
     <input type="hidden" name="submitted" value="1" />
-    <label>
-      <input type="checkbox" name="hierarchical" value="true" {% if hierarchical %}checked{% endif %} onchange="this.form.submit()" />
-      {{ _("Hierarchical layout") }}
-    </label>
+    <input type="hidden" name="limit_group" value="{{ limit_group }}" />
+    <input type="hidden" name="limit_user" value="{{ limit_user }}" />
+    <input type="hidden" name="solver" value="{{ solver }}" />
+    <input type="hidden" name="height" value="{{ height }}" />
     <label>
       <input type="checkbox" name="with_members" value="true" {% if with_members %}checked{% endif %} onchange="this.form.submit()" />
       {{ _("With Members") }}
@@ -17,13 +19,13 @@
       <input type="checkbox" name="with_subgroups" value="true" {% if with_subgroups %}checked{% endif %} onchange="this.form.submit()" />
       {{ _("With Subgroups") }}
     </label>
-    <input type="hidden" name="solver" value="{{ solver }}" />
-    <input type="hidden" name="height" value="{{ height }}" />
   </form>
+
+  <div id="graph" style="height: {{ height }}px"></div>
+  <p class="meta graph-hint">{{ _("Click a group to see its members and their roles.") }}</p>
 
   <form class="filter-form" method="get" action="/groups">
     <input type="hidden" name="submitted" value="1" />
-    <input type="hidden" name="hierarchical" value="{% if hierarchical %}true{% endif %}" />
     <input type="hidden" name="with_members" value="{% if with_members %}true{% endif %}" />
     <input type="hidden" name="with_subgroups" value="{% if with_subgroups %}true{% endif %}" />
     <input type="hidden" name="solver" value="{{ solver }}" />
@@ -48,11 +50,8 @@
     </label>
   </form>
 
-  <div id="graph" style="height: {{ height }}px"></div>
-
   <form class="filter-form" method="get" action="/groups">
     <input type="hidden" name="submitted" value="1" />
-    <input type="hidden" name="hierarchical" value="{% if hierarchical %}true{% endif %}" />
     <input type="hidden" name="with_members" value="{% if with_members %}true{% endif %}" />
     <input type="hidden" name="with_subgroups" value="{% if with_subgroups %}true{% endif %}" />
     <input type="hidden" name="limit_group" value="{{ limit_group }}" />
@@ -71,13 +70,7 @@
     </label>
   </form>
 
-  <div id="detail">
-    {% if limit_user %}
-      <div hx-get="/groups/detail?node={{ limit_user | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
-    {% elif limit_group %}
-      <div hx-get="/groups/detail?node={{ limit_group | urlencode }}" hx-trigger="load" hx-target="#detail"></div>
-    {% endif %}
-  </div>
+  {% include "partials/detail_dialog.html" %}
 
   <script src="/static/vis-network.min.js"></script>
   <script>
@@ -101,9 +94,8 @@
           container,
           { nodes: new vis.DataSet(data.nodes), edges: new vis.DataSet(data.edges) },
           {
-            layout: { hierarchical: { enabled: {{ 'true' if hierarchical else 'false' }}, direction: 'UD' } },
             physics: {
-              enabled: {{ 'false' if hierarchical else 'true' }},
+              enabled: true,
               solver: '{{ solver }}',
               stabilization: { iterations: 200 },
             },
@@ -111,7 +103,10 @@
             interaction: { hover: true },
           }
         );
-        network.on('selectNode', (ev) => {
+        // 'click' rather than 'selectNode': the latter only fires when the
+        // selection actually changes, so reopening the dialog for the node
+        // that is already selected would do nothing.
+        network.on('click', (ev) => {
           const nodeId = ev.nodes[0];
           if (nodeId) {
             htmx.ajax('GET', '/groups/detail?node=' + encodeURIComponent(nodeId), '#detail');

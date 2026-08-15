@@ -18,9 +18,11 @@ from app.services.calendar_notifier import Notifier
 from app.services.collectives_loader import fetch_and_store_all_pages
 from app.services.collectives_parser import (
     backfill_role_history,
+    dedupe_short_names,
     parse_groups,
     parse_protocols,
     remove_stale_groups,
+    sync_member_leaves,
 )
 from app.services.config import BotConfig
 from app.services.deck_reminder import DeckReminder
@@ -78,6 +80,14 @@ def process_pages(updated_pages: list[CollectivePage], force_save: bool):
     # all stored groups, since archiving a page does not necessarily touch
     # its subpages' timestamps.
     remove_stale_groups()
+
+    # Runs over all groups too: "Karenz" is a global status, so it has to be
+    # reconciled against every page, not just the changed ones.
+    sync_member_leaves()
+
+    # Repairs short name lists duplicated by the old parsing; a no-op once
+    # every stored group is clean.
+    dedupe_short_names()
 
     backfill_role_history()
 

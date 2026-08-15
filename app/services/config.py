@@ -148,6 +148,28 @@ class OrganisationConfig(BaseModel):
     member_person_keywords: List[str] = Field(
         default_factory=lambda: ["mitglied", "mitglieder"]
     )
+    # Keywords marking somebody as being on leave ("Karenz"). Recognised both
+    # as a section of its own ("**Karenz:** @anna") and inline behind a
+    # member's mention ("@anna (Karenz bis 30.06.2026)"). The status is
+    # global: whoever is marked on any group page counts as unavailable in
+    # every group.
+    leave_person_keywords: List[str] = Field(
+        default_factory=lambda: [
+            "karenz",
+            "karenziert",
+            "karenzen",
+            "beurlaubt",
+            "auszeit",
+            "sabbatical",
+            "abwesend",
+            "on leave",
+        ]
+    )
+    # Words introducing the end of a leave ("Karenz bis 30.06.2026"). Without
+    # one of them a leave is open-ended and lasts until the marker is removed.
+    leave_until_keywords: List[str] = Field(
+        default_factory=lambda: ["bis", "until", "till", "endet", "ende"]
+    )
 
     @field_validator("group_prefixes", mode="before")
     def to_upper(cls, v: List[str]) -> List[str]:

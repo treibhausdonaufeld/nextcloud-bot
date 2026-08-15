@@ -8,6 +8,7 @@ from app.models.collective_page import CollectivePage, PageSubtype
 from app.models.group import Group
 from app.models.group_role import GroupRole
 from app.models.kv import get_state, set_state
+from app.models.member_leave import MemberLeave
 from app.models.protocol import Protocol
 from app.services.config import BotConfig, bot_config
 from app.services.matrix_rooms import sync_group_rooms
@@ -92,6 +93,59 @@ def remove_stale_groups() -> None:
         if Group.is_archived_path(page.full_path):
             logger.info("Retiring archived group %s (%s)", group.name, page.full_path)
             group.remove()
+
+
+def dedupe_short_names() -> None:
+    """Repair short name lists that were stored duplicated.
+
+    `update_from_page()` used to append the parsed names to whatever was
+    already stored instead of rebuilding the list, so every re-parse grew it.
+    The parsing side is fixed, but group pages are only re-parsed when they
+    change — without this sweep the duplicates would sit there until somebody
+    edits the page.
+
+    `Group.store()` does the normalising, so this only has to spot the rows
+    that need rewriting; once they are clean it is a read-only pass.
+    """
+    for group in Group.fetch(limit=1000):
+        stored = list(group.short_names or [])
+        cleaned = Group.normalize_short_names(stored)
+        if cleaned == stored:
+            continue
+
+        logger.info(
+            "Cleaning up short names of %s: %s -> %s", group.name, stored, cleaned
+        )
+        group.short_names = cleaned
+        group.store()
+
+
+def sync_member_leaves() -> None:
+    """Reconcile the global "Karenz" status with what the group pages say.
+
+    Unlike roles this cannot be done per page: being on leave is a property
+    of the person, so dropping the marker from the one page that carried it
+    ends the leave no matter which page was edited. The sweep therefore walks
+    every stored group, exactly like `remove_stale_groups()` — and for the
+    same reason it has to run after it, so a retired group stops marking
+    anybody as unavailable.
+
+    Leaves start on the day the page announcing them was last edited (the
+    page timestamp), matching how roles are dated.
+    """
+    config = bot_config or BotConfig.load_config()
+    if not config:
+        return
+
+    groups = Group.fetch(limit=1000)
+    timestamps = {
+        page.page_id: page.timestamp
+        for page in CollectivePage.fetch(
+            limit=10000, page_id__in=[g.page_id for g in groups]
+        )
+        if page.timestamp
+    }
+    MemberLeave.sync_groups(groups, timestamps=timestamps)
 
 
 def backfill_role_history() -> None:

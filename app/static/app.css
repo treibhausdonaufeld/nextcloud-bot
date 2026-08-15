@@ -234,6 +234,9 @@ body {
 
   .bottom-nav-item {
     flex: 1 1 0;
+    /* Five entries have to share the bar, so let them shrink below their
+       label width instead of overflowing on narrow phones. */
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -254,6 +257,13 @@ body {
   .bottom-nav-item .icon {
     font-size: 1.15rem;
     line-height: 1;
+  }
+
+  .bottom-nav-item .label {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .bottom-nav-item[aria-current='page'],
@@ -1015,6 +1025,50 @@ mark {
   color: var(--pico-muted-color);
 }
 
+/* "Karenz": a global status, so it is shown once per member rather than
+   per group — the role badges next to it are only dimmed. */
+.member-on-leave {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.6rem;
+  background: var(--pico-mark-background-color, #fff3cd);
+  color: var(--pico-mark-color, #664d03);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.member-on-leave-date {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.member-on-leave-past {
+  background: transparent;
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-muted-color);
+}
+
+.role-badge-on-leave {
+  opacity: 0.55;
+}
+
+.leave-notice {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.graph-hint {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
 .member-table .meta,
 .role-history + .meta,
 #detail-dialog .meta {
@@ -1027,9 +1081,12 @@ mark {
   gap: 0.35rem;
 }
 
-/* Group-tinted badge, matching .decision-group / .mention-group. */
+/* Group-tinted badge, matching .decision-group / .mention-group. Flex so the
+   two halves of a split badge (group · role) line up on one baseline. */
 .role-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1;
@@ -1051,6 +1108,56 @@ mark {
 
 .role-badge-past {
   opacity: 0.65;
+}
+
+/* The two halves of a split badge: the group name opens the group's details,
+   the role its holder list. They inherit the pill's colour so the badge still
+   reads as one label. */
+.role-badge-part {
+  color: inherit;
+  text-decoration: none;
+}
+
+.role-badge-part:hover,
+.role-badge-part:focus-visible {
+  text-decoration: underline;
+}
+
+.role-badge-sep {
+  opacity: 0.6;
+}
+
+/* Header line of a group dialog: the link to the wiki page and the short
+   names, laid out like the protocol view's meta row. */
+.group-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.82rem;
+  margin: 0 0 0.8rem;
+}
+
+/* The group page a leave was recorded on — secondary to the Karenz badge
+   next to it, but still a link into that group. */
+.leave-source {
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.leave-source-note {
+  font-size: 0.8rem;
+}
+
+/* Parent group in a group dialog's heading: a link back up the tree that
+   reads as part of the heading until you hover it. */
+.group-crumb {
+  color: inherit;
+  text-decoration: none;
+}
+
+.group-crumb:hover,
+.group-crumb:focus-visible {
+  text-decoration: underline;
 }
 
 @media (prefers-color-scheme: dark) {

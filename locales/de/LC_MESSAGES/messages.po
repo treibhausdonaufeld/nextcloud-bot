@@ -167,12 +167,6 @@ msgstr "Untere Navigation"
 msgid "Others"
 msgstr "Weitere"
 
-msgid "Home"
-msgstr "Startseite"
-
-msgid "Hierarchical layout"
-msgstr "Hierarchische Darstellung"
-
 msgid "With Members"
 msgstr "Mit Mitgliedern"
 
@@ -411,17 +405,11 @@ msgstr "Ohne Titel"
 msgid "No events to display for \"%s\""
 msgstr "Keine Ereignisse für \"%s\" vorhanden"
 
-msgid "Parent Group"
-msgstr "Übergeordnete Gruppe"
-
 msgid "Short Names"
 msgstr "Kurznamen"
 
 msgid "Chat Channels"
 msgstr "Chat-Kanäle"
-
-msgid "Delegates"
-msgstr "Delegierte"
 
 msgid "Subgroups"
 msgstr "Untergruppen"
@@ -547,6 +535,58 @@ msgstr "Seiten, die den Benutzer erwähnen"
 #, python-brace-format
 msgid "Total Mentions: {count}"
 msgstr "Erwähnungen insgesamt: {count}"
+
+#, python-format
+msgid "On leave until %(date)s — unavailable in all groups"
+msgstr "Karenz bis %(date)s – in allen Gruppen nicht verfügbar"
+
+msgid "On leave — unavailable in all groups"
+msgstr "Karenz – in allen Gruppen nicht verfügbar"
+
+msgid "Karenz"
+msgstr "Karenz"
+
+#, python-format
+msgid "until %(date)s"
+msgstr "bis %(date)s"
+
+msgid "currently on leave"
+msgstr "derzeit in Karenz"
+
+#, python-format
+msgid "On leave from %(start)s until %(end)s — unavailable in all groups."
+msgstr "Karenz von %(start)s bis %(end)s – in allen Gruppen nicht verfügbar."
+
+#, python-format
+msgid "On leave since %(start)s — unavailable in all groups."
+msgstr "Karenz seit %(start)s – in allen Gruppen nicht verfügbar."
+
+msgid "Leave"
+msgstr "Karenz"
+
+msgid "Click a group to see its members and their roles."
+msgstr "Zum Anzeigen der Mitglieder und ihrer Rollen auf eine Gruppe klicken."
+
+msgid "This group has no members."
+msgstr "Diese Gruppe hat keine Mitglieder."
+
+msgid "Nothing recorded under this name — the group or user no longer exists."
+msgstr "Unter diesem Namen ist nichts gespeichert – die Gruppe oder der Benutzer existiert nicht mehr."
+
+msgid "Recorded in"
+msgstr "Eingetragen in"
+
+#~ msgid "Hierarchical layout"
+#~ msgstr "Hierarchische Darstellung"
+
+#~ msgid "Parent Group"
+#~ msgstr "Übergeordnete Gruppe"
+
+#~ msgid "Delegates"
+#~ msgstr "Delegierte"
+
+#~ msgid "Home"
+#~ msgstr "Startseite"
 
 #~ msgid "Table View"
 #~ msgstr "Tabellenansicht"
