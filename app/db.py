@@ -131,6 +131,14 @@ async def _migrate_schema() -> None:
             "ALTER TABLE groups ADD COLUMN leave_until JSON NOT NULL DEFAULT '{}'"
         )
         logger.info("Migrated groups table: added leave_until column")
+    if "start_date" not in group_columns:
+        # Groups stored before the lifecycle was tracked keep a NULL start
+        # date; the group dialog falls back to the oldest recorded role.
+        await database.execute("ALTER TABLE groups ADD COLUMN start_date BIGINT")
+        logger.info("Migrated groups table: added start_date column")
+    if "end_date" not in group_columns:
+        await database.execute("ALTER TABLE groups ADD COLUMN end_date BIGINT")
+        logger.info("Migrated groups table: added end_date column")
 
     user_columns = await _table_columns("users")
     if "authentik_username" not in user_columns:

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-10 08:00+0000\n"
+"POT-Creation-Date: 2026-08-15 14:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,8 +79,8 @@ msgstr ""
 msgid ""
 "Hello {displayname},\n"
 "\n"
-"The protocol [{protocol}]({url}) looks generally fine, but there are some "
-"issues:\n"
+"The protocol [{protocol}]({url}) looks generally fine, but there are some"
+" issues:\n"
 "\n"
 "- {issues}\n"
 "\n"
@@ -134,10 +134,10 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-msgid "Groups"
+msgid "Members"
 msgstr ""
 
-msgid "Members"
+msgid "Groups"
 msgstr ""
 
 msgid "Mentions"
@@ -156,6 +156,9 @@ msgid "With Members"
 msgstr ""
 
 msgid "With Subgroups"
+msgstr ""
+
+msgid "Click a group to see its members and their roles."
 msgstr ""
 
 msgid "Limit to Top Group"
@@ -278,12 +281,30 @@ msgid "inactive"
 msgstr ""
 
 #, python-format
+msgid "On leave until %(date)s — unavailable in all groups"
+msgstr ""
+
+msgid "On leave — unavailable in all groups"
+msgstr ""
+
+msgid "Karenz"
+msgstr ""
+
+#, python-format
+msgid "until %(date)s"
+msgstr ""
+
+#, python-format
 msgid "since %(date)s"
+msgstr ""
+
+msgid "currently on leave"
 msgstr ""
 
 msgid ""
 "Role dates are derived from the group pages' edit history; roles that "
-"existed before the bot started tracking are dated to the page's last change."
+"existed before the bot started tracking are dated to the page's last "
+"change."
 msgstr ""
 
 msgid "Time range"
@@ -387,7 +408,36 @@ msgstr ""
 msgid "No events to display for \"%s\""
 msgstr ""
 
+msgid "Close"
+msgstr ""
+
+msgid "This group no longer exists."
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+msgid "Open in Nextcloud"
+msgstr ""
+
+#, python-format
+msgid "Existed from %(start)s to %(end)s"
+msgstr ""
+
+#, python-format
+msgid "Exists since %(date)s"
+msgstr ""
+
 msgid "Short Names"
+msgstr ""
+
+msgid "Members when it was dissolved"
+msgstr ""
+
+msgid "Recorded in"
+msgstr ""
+
+msgid "This group has no members."
 msgstr ""
 
 msgid "Chat Channels"
@@ -396,17 +446,31 @@ msgstr ""
 msgid "Subgroups"
 msgstr ""
 
-msgid "Close"
-msgstr ""
-
-msgid "No current roles."
+msgid "Former members"
 msgstr ""
 
 #, python-format
 msgid "%(start)s to %(end)s"
 msgstr ""
 
+msgid "Nobody has left this group yet."
+msgstr ""
+
+#, python-format
+msgid "On leave from %(start)s until %(end)s — unavailable in all groups."
+msgstr ""
+
+#, python-format
+msgid "On leave since %(start)s — unavailable in all groups."
+msgstr ""
+
+msgid "No current roles."
+msgstr ""
+
 msgid "No past roles recorded."
+msgstr ""
+
+msgid "Leave"
 msgstr ""
 
 msgid "Mention Details for"
@@ -435,9 +499,6 @@ msgid "latest"
 msgstr ""
 
 msgid "Permalink"
-msgstr ""
-
-msgid "Open in Nextcloud"
 msgstr ""
 
 msgid "You are viewing an older version of this protocol."
@@ -500,6 +561,9 @@ msgstr ""
 msgid "Decision"
 msgstr ""
 
+msgid "Nothing recorded under this name — the group or user no longer exists."
+msgstr ""
+
 msgid "Roles in Groups"
 msgstr ""
 
@@ -516,42 +580,3 @@ msgstr ""
 msgid "Total Mentions: {count}"
 msgstr ""
 
-#, python-format
-msgid "On leave until %(date)s — unavailable in all groups"
-msgstr ""
-
-msgid "On leave — unavailable in all groups"
-msgstr ""
-
-msgid "Karenz"
-msgstr ""
-
-#, python-format
-msgid "until %(date)s"
-msgstr ""
-
-msgid "currently on leave"
-msgstr ""
-
-#, python-format
-msgid "On leave from %(start)s until %(end)s — unavailable in all groups."
-msgstr ""
-
-#, python-format
-msgid "On leave since %(start)s — unavailable in all groups."
-msgstr ""
-
-msgid "Leave"
-msgstr ""
-
-msgid "Click a group to see its members and their roles."
-msgstr ""
-
-msgid "This group has no members."
-msgstr ""
-
-msgid "Nothing recorded under this name — the group or user no longer exists."
-msgstr ""
-
-msgid "Recorded in"
-msgstr ""

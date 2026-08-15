@@ -458,6 +458,7 @@ class TestChatChannelParsing:
         page.file_path = "AG Struktur/README.md"
         page.page_id = 42
         page.emoji = "🏢"
+        page.timestamp = 1735689600
 
         group = Group(name="AG Struktur", page_id=42)
         with patch("app.models.group.bot_config", mock_bot_config):
@@ -520,6 +521,7 @@ class TestChatChannelParsing:
         page.file_path = "AG Struktur/README.md"
         page.page_id = 42
         page.emoji = ""
+        page.timestamp = 1735689600
         with patch("app.models.group.bot_config", mock_bot_config):
             with patch.object(CollectivePage, "get_from_page_id", return_value=page):
                 with patch.object(Group, "store"):

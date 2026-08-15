@@ -12,6 +12,7 @@ from app.services.config import OrganisationConfig
 PARSER = "app.services.collectives_parser"
 
 JAN = 1735689600  # 2025-01-01
+MAR = 1740787200  # 2025-03-01
 
 
 @pytest.fixture
@@ -98,25 +99,35 @@ class TestParseGroups:
         sync_group.assert_not_called()
 
 
-class TestRemoveStaleGroups:
-    def _run(self, groups, pages, patched_config):
-        from app.services.collectives_parser import remove_stale_groups
+class TestRetireStaleGroups:
+    """A retired group is marked inactive, not deleted: its membership and
+    dates are what a link from a past role has to land on."""
 
-        removed = []
+    def _run(self, groups, pages, patched_config):
+        from app.services.collectives_parser import retire_stale_groups
+
+        retired = []
         with patch(f"{PARSER}.bot_config", patched_config):
             with patch.object(Group, "fetch", return_value=groups):
                 with patch.object(CollectivePage, "fetch", return_value=pages):
                     with patch.object(Group, "remove", autospec=True) as remove:
-                        remove.side_effect = lambda self: removed.append(self)
-                        remove_stale_groups()
-        return removed
+                        with patch.object(Group, "store", autospec=True):
+                            with patch.object(GroupRole, "close_for_page") as close:
+                                retire_stale_groups()
+        assert remove.call_count == 0, "groups are kept, only marked inactive"
+        retired = [g for g in groups if not g.is_active]
+        self.closed_pages = [call.args[0] for call in close.call_args_list]
+        return retired
 
     def test_group_without_a_page_is_retired(self, patched_config):
         group = Group(name="AG Haus", page_id=1)
 
-        removed = self._run([group], [], patched_config)
+        retired = self._run([group], [], patched_config)
 
-        assert removed == [group]
+        assert retired == [group]
+        assert group.end_date is not None
+        # its open roles end with it, the history stays
+        assert self.closed_pages == [1]
 
     def test_archived_group_and_its_subgroup_are_retired(self, patched_config):
         haus = Group(name="AG Haus", page_id=1)
@@ -128,15 +139,67 @@ class TestRemoveStaleGroups:
             page(3, "AG Garten", "Koordinationskreis/AG Garten"),
         ]
 
-        removed = self._run([haus, keller, garten], pages, patched_config)
+        retired = self._run([haus, keller, garten], pages, patched_config)
 
-        assert removed == [haus, keller]
+        assert retired == [haus, keller]
+        assert garten.is_active
 
     def test_active_groups_are_kept(self, patched_config):
         group = Group(name="AG Garten", page_id=3)
         pages = [page(3, "AG Garten", "Koordinationskreis/AG Garten")]
 
         assert self._run([group], pages, patched_config) == []
+
+    def test_an_already_retired_group_is_not_touched_again(self, patched_config):
+        group = Group(name="AG Haus", page_id=1, end_date=JAN)
+
+        self._run([group], [], patched_config)
+
+        assert group.end_date == JAN
+        assert self.closed_pages == []
+
+    def test_the_retired_group_keeps_its_membership(self, patched_config):
+        group = Group(name="AG Haus", page_id=1, coordination=["alice"])
+
+        self._run([group], [], patched_config)
+
+        assert group.coordination == ["alice"]
+
+
+class TestRetire:
+    def test_the_end_date_is_never_before_the_start(self):
+        group = Group(name="AG Haus", page_id=1, start_date=MAR)
+
+        with patch.object(Group, "store"):
+            with patch.object(GroupRole, "close_for_page"):
+                group.retire(timestamp=JAN)
+
+        assert group.end_date == MAR
+
+    def test_parsing_the_page_again_revives_the_group(self, patched_config):
+        group = Group(name="AG Haus", page_id=1, end_date=JAN, start_date=JAN)
+        revived = page(1, "AG Haus", "Koordinationskreis/AG Haus")
+        revived.content = "# AG Haus"
+
+        with patch.object(CollectivePage, "fetch_one", return_value=revived):
+            with patch.object(Group, "store"):
+                group.update_from_page()
+
+        assert group.is_active
+        # the original creation date survives the round trip
+        assert group.start_date == JAN
+
+    def test_a_new_group_is_dated_by_its_page(self, patched_config):
+        group = Group(page_id=1)
+        source = page(1, "AG Haus", "Koordinationskreis/AG Haus")
+        source.content = "# AG Haus"
+
+        with patch.object(CollectivePage, "fetch_one", return_value=source):
+            with patch.object(Group, "store"):
+                group.update_from_page()
+
+        assert group.start_date == JAN
+        assert group.is_active
 
 
 class TestMoveDetection:

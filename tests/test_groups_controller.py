@@ -6,10 +6,13 @@ import pytest
 
 from app.controllers import groups as groups_controller
 from app.models.group import Group
+from app.models.group_role import GroupRole
 from app.models.member_leave import MemberLeave
 from app.models.user import NCUser, NCUserList
 
+JAN = 1735689600  # 2025-01-01
 FEB = 1738368000  # 2025-02-01
+MAR = 1740787200  # 2025-03-01
 FAR_FUTURE = 1893456000  # 2030-01-01
 
 
@@ -109,6 +112,163 @@ class TestGroupMemberRows:
         assert rows(Group(name="AG Leer", page_id=2)) == []
 
 
+class TestFormerMemberRows:
+    """The bottom of every group dialog: who was in it before, and when."""
+
+    @staticmethod
+    def role(username, role="member", start=JAN, end=MAR):
+        return GroupRole(
+            username=username,
+            group_name="AG Haus",
+            page_id=1,
+            role=role,
+            start_date=start,
+            end_date=end,
+        )
+
+    def former(self, group, roles):
+        return groups_controller.former_member_rows(group, NCUserList(), roles)
+
+    def test_finished_roles_are_listed_with_their_period(self, group):
+        rows = self.former(group, [self.role("carol", "coordination")])
+
+        assert rows == [
+            {
+                "username": "carol",
+                "displayname": "Carol Curie",
+                "role": "coordination",
+                "role_label": rows[0]["role_label"],
+                "hue": groups_controller.group_hue("AG Haus"),
+                "start": "2025-01-01",
+                "end": "2025-03-01",
+            }
+        ]
+
+    def test_current_roles_are_left_out(self, group):
+        roles = [self.role("carol"), self.role("alice", end=None)]
+
+        assert [row["username"] for row in self.former(group, roles)] == ["carol"]
+
+    def test_every_finished_period_gets_its_own_row(self, group):
+        # bob was a member, left, and came back as coordinator later
+        roles = [
+            self.role("bob", "member", start=JAN, end=FEB),
+            self.role("bob", "coordination", start=FEB, end=MAR),
+        ]
+
+        rows = self.former(group, roles)
+
+        assert [(row["role"], row["start"], row["end"]) for row in rows] == [
+            ("coordination", "2025-02-01", "2025-03-01"),
+            ("member", "2025-01-01", "2025-02-01"),
+        ]
+
+    def test_the_newest_departure_comes_first(self, group):
+        roles = [
+            self.role("carol", start=JAN, end=FEB),
+            self.role("dave", start=JAN, end=MAR),
+        ]
+
+        assert [row["username"] for row in self.former(group, roles)] == [
+            "dave",
+            "carol",
+        ]
+
+    def test_unknown_users_fall_back_to_the_username(self, group):
+        rows = self.former(group, [self.role("nobody")])
+
+        assert rows[0]["displayname"] == "nobody"
+
+    def test_a_group_nobody_ever_left_has_no_rows(self, group):
+        assert self.former(group, []) == []
+
+
+class TestGroupLifetime:
+    def test_an_active_group_reports_its_start(self):
+        group = Group(name="AG Haus", page_id=1, start_date=JAN)
+
+        assert groups_controller.group_lifetime(group, []) == {
+            "active": True,
+            "started": "2025-01-01",
+            "ended": "",
+        }
+
+    def test_a_retired_group_reports_both_dates(self):
+        group = Group(name="AG Haus", page_id=1, start_date=JAN, end_date=MAR)
+
+        assert groups_controller.group_lifetime(group, []) == {
+            "active": False,
+            "started": "2025-01-01",
+            "ended": "2025-03-01",
+        }
+
+    def test_the_oldest_role_dates_a_group_stored_before_the_lifecycle(self):
+        # groups parsed before start_date existed have none
+        group = Group(name="AG Haus", page_id=1)
+        roles = [
+            GroupRole(
+                username="alice",
+                group_name="AG Haus",
+                page_id=1,
+                role="member",
+                start_date=MAR,
+            ),
+            GroupRole(
+                username="carol",
+                group_name="AG Haus",
+                page_id=1,
+                role="member",
+                start_date=JAN,
+                end_date=FEB,
+            ),
+        ]
+
+        assert groups_controller.group_lifetime(group, roles)["started"] == "2025-01-01"
+
+    def test_a_role_predating_the_group_row_wins(self):
+        group = Group(name="AG Haus", page_id=1, start_date=FEB)
+        roles = [
+            GroupRole(
+                username="carol",
+                group_name="AG Haus",
+                page_id=1,
+                role="member",
+                start_date=JAN,
+                end_date=FEB,
+            )
+        ]
+
+        assert groups_controller.group_lifetime(group, roles)["started"] == "2025-01-01"
+
+
+class TestVisibleGroups:
+    """The org chart draws what exists — plus the retired group linked to."""
+
+    @staticmethod
+    def _run(groups, limit_group=""):
+        with patch.object(Group, "fetch", return_value=groups):
+            return groups_controller.visible_groups(limit_group)
+
+    def test_retired_groups_are_left_out(self):
+        haus = Group(name="AG Haus", page_id=1)
+        alt = Group(name="AG Alt", page_id=2, end_date=MAR)
+
+        assert self._run([haus, alt]) == [haus]
+
+    def test_a_retired_group_is_shown_when_the_chart_is_scoped_to_it(self):
+        haus = Group(name="AG Haus", page_id=1)
+        alt = Group(name="AG Alt", page_id=2, end_date=MAR)
+        keller = Group(name="UG Keller", page_id=3, parent_group="AG Alt", end_date=MAR)
+
+        assert self._run([haus, alt, keller], "AG Alt") == [haus, alt, keller]
+
+    def test_scoping_to_an_active_group_keeps_the_retired_ones_out(self):
+        haus = Group(name="AG Haus", page_id=1)
+        alt = Group(name="AG Alt", page_id=2, end_date=MAR)
+
+        assert self._run([haus, alt], "AG Haus") == [haus]
+
+
 class TestRoleBadgeMacro:
     """The badge is one pill with two destinations."""
 
@@ -154,24 +314,36 @@ class TestRoleBadgeMacro:
         assert "</span\n><a" in html
 
 
+def render_group_dialog(**overrides):
+    from jinja2 import Environment, FileSystemLoader
+
+    env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
+    context = {
+        "_": lambda text: text,
+        "_n": lambda singular, plural, n: singular if n == 1 else plural,
+        "group": Group(name="RT Stiegenhaus", page_id=42),
+        "subgroups": [],
+        "members": [],
+        "former_members": [],
+        "hue": 200,
+        "chat_channels": [],
+        "page_url": None,
+        "active": True,
+        "started": "",
+        "ended": "",
+    }
+    return env.get_template("partials/group_detail.html").render(context | overrides)
+
+
 class TestGroupDialogHeader:
     """The dialog links to the wiki page the group is parsed from."""
 
     @staticmethod
     def render(page_url=None, short_names=()):
-        from jinja2 import Environment, FileSystemLoader
-
-        env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
-        return env.get_template("partials/group_detail.html").render(
-            _=lambda text: text,
-            _n=lambda singular, plural, n: singular if n == 1 else plural,
+        return render_group_dialog(
             group=Group(
                 name="RT Stiegenhaus", page_id=42, short_names=list(short_names)
             ),
-            subgroups=[],
-            members=[],
-            hue=200,
-            chat_channels=[],
             page_url=page_url,
         )
 
@@ -195,6 +367,76 @@ class TestGroupDialogHeader:
 
     def test_the_header_row_is_dropped_when_there_is_nothing_to_show(self):
         assert "group-meta" not in self.render()
+
+
+class TestRetiredGroupDialog:
+    """A group that no longer exists still answers who was in it, and when."""
+
+    def test_the_heading_marks_it_as_inactive(self):
+        html = render_group_dialog(
+            active=False, started="2025-01-01", ended="2025-03-01"
+        )
+
+        assert "group-retired" in html
+        assert "Inactive" in html
+
+    def test_the_lifetime_is_shown(self):
+        html = render_group_dialog(
+            active=False, started="2025-01-01", ended="2025-03-01"
+        )
+
+        assert "Existed from 2025-01-01 to 2025-03-01" in html
+
+    def test_an_active_group_shows_its_start_instead(self):
+        html = render_group_dialog(started="2025-01-01")
+
+        assert "Exists since 2025-01-01" in html
+        assert "group-retired" not in html
+
+    def test_the_membership_it_had_is_still_listed(self):
+        html = render_group_dialog(
+            active=False,
+            members=[
+                {
+                    "username": "carol",
+                    "displayname": "Carol Curie",
+                    "role": "coordination",
+                    "role_label": "Koordination",
+                    "hue": 200,
+                    "on_leave": False,
+                    "leave_until": "",
+                    "leave_since": "",
+                    "leave_group": "",
+                }
+            ],
+        )
+
+        assert "Carol Curie" in html
+        # named as history rather than as the current membership
+        assert "Members when it was dissolved" in html
+
+    def test_former_members_are_listed_with_their_period(self):
+        html = render_group_dialog(
+            former_members=[
+                {
+                    "username": "carol",
+                    "displayname": "Carol Curie",
+                    "role": "coordination",
+                    "role_label": "Koordination",
+                    "hue": 200,
+                    "start": "2025-01-01",
+                    "end": "2025-03-01",
+                }
+            ]
+        )
+
+        assert "Former members" in html
+        assert "2025-01-01 to 2025-03-01" in html
+        assert 'hx-get="/members/user/carol"' in html
+        assert "role-badge-past" in html
+
+    def test_a_group_nobody_left_says_so(self):
+        assert "Nobody has left this group yet." in render_group_dialog()
 
 
 class TestRoleDialogHeading:

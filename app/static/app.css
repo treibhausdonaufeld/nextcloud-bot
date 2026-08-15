@@ -1137,6 +1137,24 @@ mark {
   margin: 0 0 0.8rem;
 }
 
+/* A group that no longer exists: its page was archived or deleted. The
+   dialog still shows the membership it had, so the heading has to say that
+   this is history. */
+.group-retired {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 0.6rem;
+  color: var(--pico-muted-color);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 /* The group page a leave was recorded on — secondary to the Karenz badge
    next to it, but still a link into that group. */
 .leave-source {

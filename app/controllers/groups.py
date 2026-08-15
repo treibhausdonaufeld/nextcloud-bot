@@ -7,11 +7,39 @@ from ravyn import JSONResponse, Request, Template, get
 from app.controllers.logbook import group_hue
 from app.controllers.members import leave_fields, role_label
 from app.i18n import activate, template_context
-from app.models import CollectivePage, Group, MemberLeave, Mention, NCUserList
+from app.models import (
+    CollectivePage,
+    Group,
+    GroupRole,
+    MemberLeave,
+    Mention,
+    NCUserList,
+)
+from app.models.base import format_date
 from app.models.group_role import ROLE_FIELDS, ROLES
 from app.settings import user_regex
 
 logger = logging.getLogger(__name__)
+
+
+def visible_groups(limit_group: str = "") -> list[Group]:
+    """The groups the org chart draws: the active ones.
+
+    A retired group is not part of the current structure, but a link into one
+    (from a past role, say) must not land on an empty canvas — so when the
+    chart is scoped to a group that no longer exists, that group and its
+    equally retired subgroups are added back.
+    """
+    groups = Group.fetch(limit=1000)
+    active = [g for g in groups if g.is_active]
+
+    if not limit_group or any(g.name == limit_group for g in active):
+        return active
+
+    retired = [
+        g for g in groups if not g.is_active and limit_group in (g.name, g.parent_group)
+    ]
+    return active + retired
 
 
 def top_group_name() -> str:
@@ -220,6 +248,60 @@ def group_member_rows(group: Group, user_list: NCUserList) -> list[dict]:
     return rows
 
 
+def former_member_rows(
+    group: Group, user_list: NCUserList, roles: list[GroupRole] | None = None
+) -> list[dict]:
+    """Everybody who held a role in this group and does not hold it any more.
+
+    One row per finished period rather than per person, so somebody who left
+    and came back — or moved from member to coordination — shows up with each
+    of their periods and its dates. Newest departure first.
+    """
+    hue = group_hue(group.name)
+    history = roles if roles is not None else GroupRole.for_group_page(group.page_id)
+
+    rows: list[dict] = []
+    for row in history:
+        if row.end_date is None:
+            continue
+        user = user_list.get_user_by_uid(row.username)
+        rows.append(
+            {
+                "username": row.username,
+                "displayname": (user.displayname if user else "") or row.username,
+                "role": row.role,
+                "role_label": role_label(row.role),
+                "hue": hue,
+                "start": row.start_display,
+                "end": row.end_display or "",
+            }
+        )
+
+    # Two passes: the (stable) sort by name only decides the order within one
+    # and the same period.
+    rows.sort(key=lambda row: row["displayname"].lower())
+    rows.sort(key=lambda row: (row["end"], row["start"]), reverse=True)
+    return rows
+
+
+def group_lifetime(group: Group, roles: list[GroupRole]) -> dict:
+    """How long the group has existed, for the dialog's header.
+
+    Groups parsed before the lifecycle was recorded have no start date; the
+    oldest role observed in them is the closest thing to one.
+    """
+    start = group.start_date
+    role_starts = [row.start_date for row in roles if row.start_date]
+    if role_starts:
+        start = min(role_starts) if start is None else min(start, *role_starts)
+
+    return {
+        "active": group.is_active,
+        "started": format_date(start) or "",
+        "ended": group.end_display,
+    }
+
+
 def _checkbox(request: Request, name: str, default: bool) -> bool:
     """Read a checkbox value; unchecked boxes are absent from the query, so
     defaults only apply before the form was submitted at all."""
@@ -241,7 +323,7 @@ def groups_page(
     with_members = _checkbox(request, "with_members", False)
     with_subgroups = _checkbox(request, "with_subgroups", True)
     user_list = NCUserList()
-    all_groups = sorted(Group.fetch(limit=1000))
+    all_groups = sorted(visible_groups(limit_group))
 
     # Only association members are offered in the picker (see
     # `NCUserList.is_member`); the graph itself still shows every person a
@@ -276,7 +358,7 @@ def groups_graph(
     limit_user: str = "",
 ) -> JSONResponse:
     user_list = NCUserList()
-    all_groups = Group.fetch(limit=1000)
+    all_groups = visible_groups(limit_group)
     nodes, edges = build_group_graph(
         all_groups, user_list, with_members, with_subgroups, limit_group, limit_user
     )
@@ -299,28 +381,41 @@ def group_detail(request: Request, node: str = "") -> Template:
         pass
 
     if group:
-        subgroups = sorted([cg for cg in all_groups if cg.parent_group == group.name])
+        # A retired group keeps its subgroups, which were retired with it.
+        subgroups = sorted(
+            [
+                cg
+                for cg in all_groups
+                if cg.parent_group == group.name and cg.is_active == group.is_active
+            ]
+        )
         user_list = NCUserList()
 
         from app.services.matrix_rooms import group_channel_links
 
         # The wiki page behind the group, so the dialog can link to the
-        # original the way the protocol view does.
+        # original the way the protocol view does. A retired group whose page
+        # was deleted has none left.
         page = CollectivePage.get_from_page_id_or_none(group.page_id)
+        roles = GroupRole.for_group_page(group.page_id)
 
         context.update(
             group=group,
             subgroups=subgroups,
             members=group_member_rows(group, user_list),
+            former_members=former_member_rows(group, user_list, roles),
             hue=group_hue(group.name),
-            chat_channels=group_channel_links(group),
+            chat_channels=group_channel_links(group) if group.is_active else [],
             page_url=page.url if page else None,
+            **group_lifetime(group, roles),
         )
         return Template(name="partials/group_detail.html", context=context)
 
-    # person selected, show user details
+    # person selected, show user details; only groups that still exist count
+    # as a current membership.
     username = node.split(":")[-1]
-    context.update(user_detail_context(username, all_groups))
+    active = [g for g in all_groups if g.is_active]
+    context.update(user_detail_context(username, active))
     # A node naming neither a group nor a known user — e.g. the group half of
     # a past-role badge, whose group page has been retired since. Say so
     # instead of rendering an empty user card.

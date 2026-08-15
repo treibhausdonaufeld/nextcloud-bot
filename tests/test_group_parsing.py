@@ -17,6 +17,9 @@ def mock_bot_config():
     return config
 
 
+PAGE_TIME = 1735689600  # 2025-01-01
+
+
 @pytest.fixture
 def mock_page():
     """Create a mock CollectivePage object."""
@@ -26,6 +29,7 @@ def mock_page():
     page.page_id = 12345
     page.file_path = "AG Test Group/README.md"
     page.emoji = "🏢"
+    page.timestamp = PAGE_TIME
     return page
 
 

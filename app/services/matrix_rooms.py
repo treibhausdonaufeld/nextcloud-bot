@@ -351,7 +351,9 @@ def sync_all_groups() -> int:
 
     sync_default_rooms(sync=sync)
 
-    groups = Group.fetch(limit=10000)
+    # Retired groups are skipped: their room stays where it is, but nobody is
+    # invited into a group that no longer exists.
+    groups = Group.fetch_active(limit=10000)
     for group in groups:
         sync_group_rooms(group, sync=sync)
     logger.info("Synced Matrix rooms for %d groups", len(groups))

@@ -38,6 +38,7 @@ def mock_page():
     page.file_path = "AG Test/README.md"
     page.page_id = 1
     page.emoji = ""
+    page.timestamp = NOW
     return page
 
 
