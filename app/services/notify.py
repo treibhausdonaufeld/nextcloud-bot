@@ -8,9 +8,11 @@ Rocket.Chat, ...).
 
 When a channel has no Apprise targets configured, the message is delivered
 into the channel's Matrix room if one exists (see
-:mod:`app.services.matrix_notify`), and otherwise falls back to the legacy
-Rocket.Chat incoming webhook, so existing deployments keep working without
-any config change.
+:mod:`app.services.matrix_notify`) and to the legacy Rocket.Chat incoming
+webhook, so existing deployments keep working without any config change.
+While both chat systems are configured every notification goes to both
+(``NOTIFY_DUAL_SEND``); otherwise Rocket.Chat only receives what Matrix
+could not deliver.
 """
 
 import logging
@@ -18,6 +20,7 @@ import logging
 import apprise
 
 from app.services.config import bot_config
+from app.services.matrix import matrix_enabled
 from app.services.matrix_notify import send_matrix_message
 from app.services.rocketchat import send_rocketchat_message
 from app.settings import settings
@@ -40,6 +43,20 @@ def _resolve_urls(channel: str) -> list[str]:
     return urls
 
 
+def dual_send_enabled() -> bool:
+    """Whether a notification goes to Matrix *and* Rocket.Chat.
+
+    True while both chat systems are configured (and `NOTIFY_DUAL_SEND` is
+    not switched off), which is what a migration period wants: the message
+    reaches the people who already moved to Matrix as well as those still on
+    Rocket.Chat. Otherwise Rocket.Chat stays what it was — the fallback for
+    whatever Matrix could not deliver.
+    """
+    return bool(
+        settings.notify_dual_send and matrix_enabled() and settings.rocketchat.hook_url
+    )
+
+
 def target_channel(channel: str) -> str:
     """Apply the testing overrides to a channel name.
 
@@ -60,9 +77,9 @@ def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
     """Send a notification to ``channel``.
 
     Routes the message to any Apprise targets configured for the channel. If
-    none are configured, falls back to the channel's Matrix room and then to
-    the legacy Rocket.Chat webhook (which routes by channel name in the
-    payload).
+    none are configured, it goes to the channel's Matrix room and to the
+    legacy Rocket.Chat webhook (which routes by channel name in the payload)
+    — to both while both are configured, otherwise to whichever can deliver.
     """
 
     notifier = bot_config.notifier
@@ -72,12 +89,13 @@ def send_message(text: str, channel: str, emoji: str = ":robot:") -> None:
 
     if not urls:
         # No explicit Apprise target: try the channel's Matrix room (every
-        # group has one, see `app.services.matrix_rooms`), then fall back to
-        # the legacy Rocket.Chat webhook.
-        if send_matrix_message(text=text, channel=channel):
-            return
+        # group has one, see `app.services.matrix_rooms`). Rocket.Chat then
+        # either gets a copy of every message (dual send, while both systems
+        # are configured) or only what Matrix could not deliver.
+        delivered = send_matrix_message(text=text, channel=channel)
 
-        send_rocketchat_message(text=text, channel=channel, emoji=emoji)
+        if not delivered or dual_send_enabled():
+            send_rocketchat_message(text=text, channel=channel, emoji=emoji)
         return
 
     apobj = apprise.Apprise()

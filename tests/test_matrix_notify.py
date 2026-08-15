@@ -243,9 +243,16 @@ class TestChannelOverwrite:
 class TestNotifyRouting:
     """`notify.send_message` prefers Apprise, then Matrix, then Rocket.Chat."""
 
-    def route(self, apprise_urls, matrix_delivers):
-        """Run send_message and report which backend was used."""
-        calls = {}
+    def route(
+        self,
+        apprise_urls,
+        matrix_delivers,
+        rocketchat_configured=False,
+        dual_send=True,
+        matrix_configured=None,
+    ):
+        """Run send_message and report the channel each backend was given."""
+        calls: dict[str, list[str]] = {}
         config = MagicMock()
         config.notifier.enabled = True
         config.notifier.channel_overwrite = ""
@@ -258,37 +265,82 @@ class TestNotifyRouting:
         apprise_obj.notify.return_value = True
 
         def matrix(text, channel):
-            calls["matrix"] = channel
+            calls.setdefault("matrix", []).append(channel)
             return matrix_delivers
 
         def rocketchat(**kwargs):
-            calls["rocketchat"] = kwargs["channel"]
+            calls.setdefault("rocketchat", []).append(kwargs["channel"])
 
-        with patch.object(notify, "bot_config", config):
-            with patch.object(notify.apprise, "Apprise", return_value=apprise_obj):
-                with patch.object(notify, "send_matrix_message", matrix):
-                    with patch.object(notify, "send_rocketchat_message", rocketchat):
-                        notify.send_message("hello", "ag-struktur")
+        hook = "https://chat.example/hook" if rocketchat_configured else None
+        # A configured Matrix can still fail to deliver (no room for the
+        # channel), so the two are separate knobs.
+        enabled = matrix_delivers if matrix_configured is None else matrix_configured
+
+        with (
+            patch.object(notify, "bot_config", config),
+            patch.object(notify.settings, "notify_dual_send", dual_send),
+            patch.object(notify.settings, "notify_channel_overwrite", ""),
+            patch.object(notify.settings.rocketchat, "hook_url", hook),
+            patch.object(notify, "matrix_enabled", lambda: enabled),
+            patch.object(notify.apprise, "Apprise", return_value=apprise_obj),
+            patch.object(notify, "send_matrix_message", matrix),
+            patch.object(notify, "send_rocketchat_message", rocketchat),
+        ):
+            notify.send_message("hello", "ag-struktur")
 
         if apprise_obj.notify.called:
-            calls["apprise"] = True
+            calls["apprise"] = ["ag-struktur"]
         return calls
 
     def test_apprise_targets_win(self):
-        calls = self.route(apprise_urls=["json://localhost"], matrix_delivers=True)
+        calls = self.route(
+            apprise_urls=["json://localhost"],
+            matrix_delivers=True,
+            rocketchat_configured=True,
+        )
 
         assert "apprise" in calls
         assert "matrix" not in calls
         assert "rocketchat" not in calls
 
-    def test_matrix_is_used_when_no_apprise_target_exists(self):
+    def test_matrix_only_when_rocketchat_is_not_configured(self):
         calls = self.route(apprise_urls=[], matrix_delivers=True)
 
-        assert calls.get("matrix") == "ag-struktur"
+        assert calls.get("matrix") == ["ag-struktur"]
         assert "rocketchat" not in calls
 
     def test_rocketchat_is_the_last_resort(self):
         calls = self.route(apprise_urls=[], matrix_delivers=False)
 
-        assert calls.get("matrix") == "ag-struktur"
-        assert calls.get("rocketchat") == "ag-struktur"
+        assert calls.get("matrix") == ["ag-struktur"]
+        assert calls.get("rocketchat") == ["ag-struktur"]
+
+    def test_both_receive_the_message_when_both_are_configured(self):
+        calls = self.route(
+            apprise_urls=[], matrix_delivers=True, rocketchat_configured=True
+        )
+
+        assert calls.get("matrix") == ["ag-struktur"]
+        assert calls.get("rocketchat") == ["ag-struktur"]
+
+    def test_dual_send_can_be_switched_off(self):
+        calls = self.route(
+            apprise_urls=[],
+            matrix_delivers=True,
+            rocketchat_configured=True,
+            dual_send=False,
+        )
+
+        assert calls.get("matrix") == ["ag-struktur"]
+        assert "rocketchat" not in calls
+
+    def test_undeliverable_matrix_message_is_not_sent_twice(self):
+        """Matrix is configured but has no room for the channel."""
+        calls = self.route(
+            apprise_urls=[],
+            matrix_delivers=False,
+            matrix_configured=True,
+            rocketchat_configured=True,
+        )
+
+        assert calls.get("rocketchat") == ["ag-struktur"]
