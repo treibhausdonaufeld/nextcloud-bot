@@ -100,6 +100,16 @@ class TestCreateRoom:
         assert payload["visibility"] == "public"
         assert payload["preset"] == "public_chat"
 
+    def test_room_is_local_only(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!new:example.com"}
+        )
+
+        client.create_public_room("ag-struktur", "AG Struktur")
+
+        _, _, payload = responses(client)[0]
+        assert payload["creation_content"] == {"m.federate": False}
+
     def test_taken_alias_falls_back_to_the_existing_room(self, client):
         client.session.request.side_effect = [
             FakeResponse(status_code=400, body={"errcode": "M_ROOM_IN_USE"}),
@@ -110,6 +120,33 @@ class TestCreateRoom:
             client.create_public_room("ag-struktur", "AG Struktur")
             == "!existing:example.com"
         )
+
+
+class TestRoomDirectory:
+    def test_visibility_is_read_from_the_directory(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"visibility": "public"}
+        )
+
+        assert client.directory_visibility("!room:example.com") == "public"
+
+        method, url, _ = responses(client)[0]
+        assert method == "GET"
+        assert url.endswith(
+            "/_matrix/client/v3/directory/list/room/%21room%3Aexample.com"
+        )
+
+    def test_publishing_lists_the_room(self, client):
+        client.session.request.return_value = FakeResponse(body={})
+
+        client.publish_room("!room:example.com")
+
+        method, url, payload = responses(client)[0]
+        assert method == "PUT"
+        assert url.endswith(
+            "/_matrix/client/v3/directory/list/room/%21room%3Aexample.com"
+        )
+        assert payload == {"visibility": "public"}
 
 
 class TestMembersAndInvites:

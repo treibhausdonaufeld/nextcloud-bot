@@ -198,12 +198,14 @@ class MatrixClient:
     def create_public_room(
         self, localpart: str, name: str, topic: str = ""
     ) -> Optional[str]:
-        """Create a public room and publish it in the room directory.
+        """Create a public, server-local room and list it in the directory.
 
         `public_chat` makes the room joinable by anyone on the homeserver
-        without an invite, `visibility: public` lists it in the directory.
-        History stays `shared` (readable by members from the room's start,
-        not by anonymous outsiders).
+        without an invite, `visibility: public` lists it in the room
+        directory so every local user can find it by searching. History stays
+        `shared` (readable by members from the room's start, not by anonymous
+        outsiders), and `m.federate: false` keeps the room on this homeserver
+        — note that this can only be decided at creation time.
 
         Returns the new room id, or the existing one if another process won
         the race for the alias.
@@ -213,6 +215,7 @@ class MatrixClient:
             "name": name,
             "visibility": "public",
             "preset": "public_chat",
+            "creation_content": {"m.federate": False},
             "initial_state": [
                 {
                     "type": "m.room.history_visibility",
@@ -244,6 +247,21 @@ class MatrixClient:
         body = self._request("POST", f"{API}/join/{quote(room_id_or_alias, safe='')}")
         room_id = body.get("room_id")
         return str(room_id) if room_id else None
+
+    def directory_visibility(self, room_id: str) -> str:
+        """Whether the room is listed in this server's public room directory."""
+        body = self._request(
+            "GET", f"{API}/directory/list/room/{quote(room_id, safe='')}"
+        )
+        return str(body.get("visibility", ""))
+
+    def publish_room(self, room_id: str) -> None:
+        """List the room in this server's public room directory."""
+        self._request(
+            "PUT",
+            f"{API}/directory/list/room/{quote(room_id, safe='')}",
+            {"visibility": "public"},
+        )
 
     def room_members(self, room_id: str) -> Dict[str, str]:
         """Map user id -> membership for every member event of the room."""

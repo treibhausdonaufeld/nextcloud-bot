@@ -22,12 +22,14 @@ SERVER = "example.com"
 class FakeClient:
     """In-memory stand-in for `MatrixClient`, recording what was called."""
 
-    def __init__(self, rooms=None, members=None, invite_errors=()):
+    def __init__(self, rooms=None, members=None, invite_errors=(), published=()):
         # alias -> room id
         self.rooms = dict(rooms or {})
         # room id -> {user id: membership}
         self.members = {room: dict(m) for room, m in (members or {}).items()}
         self.invite_errors = set(invite_errors)
+        # room ids listed in the server's public room directory
+        self.published = set(published)
 
         self.server_name = SERVER
         self.user_domain = SERVER
@@ -51,7 +53,14 @@ class FakeClient:
         self.rooms[alias] = room_id
         self.members.setdefault(room_id, {})
         self.created.append((localpart, name))
+        self.published.add(room_id)
         return room_id
+
+    def directory_visibility(self, room_id: str) -> str:
+        return "public" if room_id in self.published else "private"
+
+    def publish_room(self, room_id: str) -> None:
+        self.published.add(room_id)
 
     def join_room(self, room_id_or_alias: str):
         self.joined.append(room_id_or_alias)
@@ -262,6 +271,53 @@ class TestRoomSync:
         assert [slug for slug, _ in client.created] == ["fragen-an-ag-struktur"]
 
 
+class TestRoomDirectory:
+    """Channels stay findable in the local server's room directory."""
+
+    def test_new_rooms_are_published(self, userlist):
+        client = FakeClient()
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.published == {"!ag-struktur:example.com"}
+
+    def test_unlisted_existing_room_is_published(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+        )
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.published == {"!room:example.com"}
+
+    def test_listed_room_is_not_published_again(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+            published=["!room:example.com"],
+        )
+        calls = []
+        client.publish_room = lambda room_id: calls.append(room_id)
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert calls == []
+
+    def test_refused_publication_does_not_stop_invites(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+        )
+
+        def refuse(room_id):
+            raise MatrixError("not allowed", status=403)
+
+        client.publish_room = refuse
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert len(client.invites) == 2
+
+
 class TestDefaultRooms:
     """`MATRIX__DEFAULT_ROOMS`: rooms every member belongs to."""
 
@@ -417,6 +473,30 @@ class TestChatChannelParsing:
         )
 
         assert group.chat_channels == ["Fragen an AG Struktur"]
+
+    def test_markdown_link_keeps_only_the_name(self, mock_bot_config):
+        group = self.parse(
+            "**Chat-Kanäle:** "
+            "[AG Struktur](https://chat.treibhausdonaufeld.at/channel/AG-Struktur)\n",
+            mock_bot_config,
+        )
+
+        assert group.chat_channels == ["AG Struktur"]
+
+    def test_markdown_is_stripped_from_every_entry(self, mock_bot_config):
+        group = self.parse(
+            "Chat-Kanäle: **Termine**, `Bau`, [Fragen](https://chat.example/x)\n",
+            mock_bot_config,
+        )
+
+        assert group.chat_channels == ["Termine", "Bau", "Fragen"]
+
+    def test_entry_that_is_only_a_link_is_dropped(self, mock_bot_config):
+        group = self.parse(
+            "Chat-Kanäle: https://chat.example/channel/x, Termine\n", mock_bot_config
+        )
+
+        assert group.chat_channels == ["Termine"]
 
     def test_multiple_channels(self, mock_bot_config):
         group = self.parse(

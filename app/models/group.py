@@ -7,6 +7,11 @@ from app.models.base import BaseDBModel
 from app.models.collective_page import CollectivePage
 from app.services.config import bot_config
 from app.settings import user_regex
+from app.textnorm import plain_name
+
+# Separates a keyword from its value ("Chat-Kanäle: ..."), ignoring the
+# colon of a URL scheme so a line naming a link still splits correctly.
+keyword_value_regex = re.compile(r":(?!//)")
 
 
 class Group(BaseDBModel):
@@ -226,13 +231,15 @@ class Group(BaseDBModel):
                 continue
             elif first_word in bot_config.organisation.group_chat_channel_keywords:
                 # extra chat channels are split by commas, e.g.
-                # "**Chat-Kanäle:** Fragen an AG Struktur, Termine"
-                if ":" not in line:
+                # "**Chat-Kanäle:** Fragen an AG Struktur, Termine". Entries
+                # are often written as links to the existing chat — only the
+                # name survives (see `plain_name`).
+                # Split on the keyword's colon, not on the one in "https://".
+                parts = keyword_value_regex.split(line, maxsplit=1)
+                if len(parts) < 2:
                     continue
-                channels = line.split(":", 1)[1].split(",")
-                channels = [
-                    name for name in (c.strip(" *_`\t") for c in channels) if name
-                ]
+                channels = parts[1].split(",")
+                channels = [name for name in map(plain_name, channels) if name]
                 self.chat_channels = self.chat_channels + channels
                 continue
 

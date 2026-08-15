@@ -35,6 +35,7 @@ from app.services.matrix import (
     matrix_enabled,
 )
 from app.settings import settings
+from app.textnorm import plain_name
 
 if TYPE_CHECKING:
     from app.models.group import Group
@@ -84,12 +85,18 @@ def channel_slug(name: str) -> str:
 
 
 def channels_for(names: Iterable[str]) -> List[Channel]:
-    """Turn display names into channels, skipping empty and duplicate slugs."""
+    """Turn display names into channels, skipping empty and duplicate slugs.
+
+    Names are reduced to plain text first, so markdown a page author wrote
+    around a channel name never ends up as the room's title (this also fixes
+    up groups parsed before that cleanup existed, without a re-parse).
+    """
     channels: List[Channel] = []
     seen: set[str] = set()
 
-    for name in names:
-        slug = channel_slug(name or "")
+    for raw in names:
+        name = plain_name(raw or "")
+        slug = channel_slug(name)
         if not slug or slug in seen:
             continue
         seen.add(slug)
@@ -175,12 +182,30 @@ class MatrixRoomSync:
 
         room_id = self.client.resolve_alias(alias)
         if room_id:
+            # Rooms created before this ran (or unlisted by hand) are put
+            # back into the directory, so every channel stays findable.
+            self.ensure_published(room_id, alias)
             return room_id
 
         room_id = self.client.create_public_room(channel.slug, channel.name)
         if room_id:
             logger.info("Created Matrix room %s (%s)", alias, room_id)
         return room_id
+
+    def ensure_published(self, room_id: str, alias: str) -> None:
+        """List the room in the server's public directory if it is not yet.
+
+        Publishing can be refused by the homeserver's
+        `room_list_publication_rules`; that must not stop the invitations, so
+        the failure is only logged.
+        """
+        try:
+            if self.client.directory_visibility(room_id) == "public":
+                return
+            self.client.publish_room(room_id)
+            logger.info("Published Matrix room %s in the room directory", alias)
+        except MatrixError as exc:
+            logger.warning("Could not publish %s in the room directory: %s", alias, exc)
 
     def room_members(self, room_id: str, alias: str) -> dict[str, str]:
         """Membership of the room, joining it first if that is what's missing."""

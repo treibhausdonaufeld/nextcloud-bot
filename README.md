@@ -48,10 +48,22 @@ becomes `#ag-struktur:example.com` — and everyone the group page lists
 ```
 
 on the group page creates `#fragen-an-ag-struktur` and `#termine` next to it,
-with the same members. Rooms and invitations are checked whenever the group's
-wiki page changes; the bot only ever adds people — anyone who joined, was
-invited, or left again is left alone, so nobody is removed or pestered with a
-second invitation.
+with the same members. Entries may be written as links —
+`[AG Struktur](https://chat.example.at/channel/AG-Struktur)` — in which case
+only the plain name is used, so the markdown never leaks into the room title;
+an entry that is nothing but a link is ignored.
+
+Rooms and invitations are checked whenever the group's wiki page changes; the
+bot only ever adds people — anyone who joined, was invited, or left again is
+left alone, so nobody is removed or pestered with a second invitation.
+
+The rooms are public, listed in this homeserver's room directory (so every
+local user can find them by searching) and created with `m.federate: false`,
+which keeps them on this server. Every sync re-checks the directory listing
+and restores it if a room was unlisted, but federation is fixed when a room
+is created and cannot be changed afterwards — rooms created before this
+existed stay federated. If the homeserver's `room_list_publication_rules`
+refuse the listing, the sync logs a warning and carries on inviting.
 
 Rooms that everybody belongs to — independent of any group — are configured
 as a comma-separated list. `MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"`
