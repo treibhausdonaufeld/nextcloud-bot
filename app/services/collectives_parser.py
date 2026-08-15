@@ -95,6 +95,31 @@ def remove_stale_groups() -> None:
             group.remove()
 
 
+def dedupe_short_names() -> None:
+    """Repair short name lists that were stored duplicated.
+
+    `update_from_page()` used to append the parsed names to whatever was
+    already stored instead of rebuilding the list, so every re-parse grew it.
+    The parsing side is fixed, but group pages are only re-parsed when they
+    change — without this sweep the duplicates would sit there until somebody
+    edits the page.
+
+    `Group.store()` does the normalising, so this only has to spot the rows
+    that need rewriting; once they are clean it is a read-only pass.
+    """
+    for group in Group.fetch(limit=1000):
+        stored = list(group.short_names or [])
+        cleaned = Group.normalize_short_names(stored)
+        if cleaned == stored:
+            continue
+
+        logger.info(
+            "Cleaning up short names of %s: %s -> %s", group.name, stored, cleaned
+        )
+        group.short_names = cleaned
+        group.store()
+
+
 def sync_member_leaves() -> None:
     """Reconcile the global "Karenz" status with what the group pages say.
 

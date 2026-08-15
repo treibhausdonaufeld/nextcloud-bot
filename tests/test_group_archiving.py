@@ -207,3 +207,40 @@ class TestRolesSurviveRetirement:
         assert rows[0].end_date is not None
         assert rows[0].start_date == JAN
         assert rows[1].end_date == JAN + 86400
+
+
+class TestDedupeShortNames:
+    """One-off repair of short name lists stored before they were deduped."""
+
+    def _run(self, groups):
+        from app.services.collectives_parser import dedupe_short_names
+
+        stored = []
+        with (
+            patch.object(Group, "fetch", return_value=groups),
+            patch("app.models.base.BaseDBModel.store", autospec=True) as store,
+        ):
+            store.side_effect = lambda self, **kwargs: stored.append(self.name)
+            dedupe_short_names()
+        return stored
+
+    def test_duplicates_are_collapsed_and_sorted(self):
+        group = Group(
+            name="AG Haus", page_id=1, short_names=["haus", "ag-haus", "haus"]
+        )
+
+        assert self._run([group]) == ["AG Haus"]
+        assert group.short_names == ["ag-haus", "haus"]
+
+    def test_clean_groups_are_not_rewritten(self):
+        clean = Group(name="AG Garten", page_id=2, short_names=["garten"])
+        empty = Group(name="AG Leer", page_id=3, short_names=[])
+
+        assert self._run([clean, empty]) == []
+
+    def test_a_second_pass_writes_nothing(self):
+        group = Group(name="AG Haus", page_id=1, short_names=["b", "a", "b"])
+
+        self._run([group])
+
+        assert self._run([group]) == []

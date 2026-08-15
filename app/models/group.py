@@ -61,7 +61,15 @@ class Group(BaseDBModel):
         max_len = 30
         return str(self)[:max_len] + ("..." if len(str(self)) > max_len else "")
 
+    @staticmethod
+    def normalize_short_names(names: List[str] | None) -> List[str]:
+        """Lower-cased, deduplicated and alphabetically ordered short names."""
+        return sorted({name.strip().lower() for name in names or [] if name.strip()})
+
     def store(self, skip_set_updated_at: bool = False) -> None:
+        # Enforced here rather than only at the parsing site so no writer can
+        # persist a duplicated or unsorted list.
+        self.short_names = self.normalize_short_names(self.short_names)
         super().store(skip_set_updated_at=skip_set_updated_at)
         Group.invalidate_cache()
 
@@ -236,6 +244,7 @@ class Group(BaseDBModel):
         self.coordination = []
         self.delegate = []
         self.members = []
+        self.short_names = []
         self.chat_channels = []
         self.on_leave = []
         self.leave_until = {}
@@ -266,12 +275,14 @@ class Group(BaseDBModel):
                     line, bot_config.organisation.leave_until_keywords
                 )
             elif first_word in bot_config.organisation.group_shortname_keywords:
-                # shortnames are split by commas
+                # shortnames are split by commas. The list is rebuilt from the
+                # page on every parse (it is reset above), so a name dropped
+                # from the wiki disappears here too; a page naming them on
+                # several lines accumulates across those lines only.
                 shortnames = line.split(":")[-1].strip("*").strip().split(",")
-                shortnames = [
-                    sn.strip().lower() for sn in shortnames if sn.strip() != ""
-                ]
-                self.short_names = self.short_names + sorted(shortnames)
+                self.short_names = self.normalize_short_names(
+                    self.short_names + shortnames
+                )
                 continue
             elif first_word in bot_config.organisation.group_chat_channel_keywords:
                 # extra chat channels are split by commas, e.g.
