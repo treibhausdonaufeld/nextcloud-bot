@@ -405,8 +405,31 @@ msgstr "Ohne Titel"
 msgid "No events to display for \"%s\""
 msgstr "Keine Ereignisse für \"%s\" vorhanden"
 
+msgid "This group no longer exists."
+msgstr "Diese Gruppe besteht nicht mehr."
+
+msgid "Inactive"
+msgstr "Inaktiv"
+
+#, python-format
+msgid "Existed from %(start)s to %(end)s"
+msgstr "Bestand von %(start)s bis %(end)s"
+
+#, python-format
+msgid "Exists since %(date)s"
+msgstr "Besteht seit %(date)s"
+
 msgid "Short Names"
 msgstr "Kurznamen"
+
+msgid "Members when it was dissolved"
+msgstr "Mitglieder bei der Auflösung"
+
+msgid "Former members"
+msgstr "Frühere Mitglieder"
+
+msgid "Nobody has left this group yet."
+msgstr "Bisher hat niemand diese Gruppe verlassen."
 
 msgid "Chat Channels"
 msgstr "Chat-Kanäle"

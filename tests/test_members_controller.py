@@ -157,6 +157,15 @@ class TestMemberRows:
         assert rows["carol"]["past_count"] == 1
         assert rows["alice"]["past_count"] == 0
 
+    def test_a_retired_group_no_longer_grants_a_current_role(self, groups):
+        # The group keeps its last membership, but it does not exist any more
+        # — bob's time in it belongs to the history.
+        groups[1].end_date = MAR
+
+        rows = {row["username"]: row for row in members_controller.member_rows()}
+
+        assert [r["group"] for r in rows["bob"]["roles"]] == ["AG Haus"]
+
     def test_role_filter_keeps_only_holders_of_that_role(self):
         rows = members_controller.member_rows(role_filter="coordination")
 

@@ -97,7 +97,9 @@ def member_rows(
     to every enabled user plus anyone who appears in the role history.
     """
     user_list = NCUserList()
-    groups = sorted(Group.all_cached())
+    # Retired groups keep their last membership, but nobody holds a role in a
+    # group that no longer exists — those periods are in the history instead.
+    groups = sorted(Group.active_cached())
     assignments = current_assignments(groups)
     starts = GroupRole.start_dates_by_key()
     leaves = MemberLeave.current_by_user()
@@ -156,6 +158,8 @@ def member_rows(
 
 def member_history(username: str) -> tuple[list[dict], list[dict]]:
     """Current and past roles of one member, both newest first."""
+    # Retired groups are included: a past role should show the group's current
+    # name (and stay clickable) even after the group was dissolved.
     groups = {g.page_id: g for g in Group.all_cached()}
     current: list[dict] = []
     past: list[dict] = []
@@ -236,7 +240,8 @@ def members_page(
         role = ""
 
     rows = member_rows(role_filter=role, group_filter=group, query=q.strip())
-    group_names = sorted({g.name for g in Group.all_cached()})
+    # The filter works on current roles, so only existing groups are offered.
+    group_names = sorted({g.name for g in Group.active_cached()})
 
     return Template(
         name="members.html",

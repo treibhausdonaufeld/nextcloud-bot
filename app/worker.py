@@ -21,7 +21,7 @@ from app.services.collectives_parser import (
     dedupe_short_names,
     parse_groups,
     parse_protocols,
-    remove_stale_groups,
+    retire_stale_groups,
     sync_member_leaves,
 )
 from app.services.config import BotConfig
@@ -76,10 +76,10 @@ def process_pages(updated_pages: list[CollectivePage], force_save: bool):
     for page in updated_pages:
         parse_groups(page)
 
-    # Groups whose page was deleted or archived are retired here; runs over
-    # all stored groups, since archiving a page does not necessarily touch
-    # its subpages' timestamps.
-    remove_stale_groups()
+    # Groups whose page was deleted or archived are marked inactive here (the
+    # row and its history are kept); runs over all stored groups, since
+    # archiving a page does not necessarily touch its subpages' timestamps.
+    retire_stale_groups()
 
     # Runs over all groups too: "Karenz" is a global status, so it has to be
     # reconciled against every page, not just the changed ones.

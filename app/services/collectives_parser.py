@@ -33,7 +33,7 @@ def parse_groups(page: CollectivePage) -> None:
             page.store()
 
         # A page below an archive page describes a dissolved group; the sweep
-        # in `remove_stale_groups()` retires it (and its subgroups).
+        # in `retire_stale_groups()` retires it (and its subgroups).
         if Group.is_archived_path(page.full_path):
             return
 
@@ -49,25 +49,27 @@ def parse_groups(page: CollectivePage) -> None:
         sync_group_rooms(group)
 
 
-def remove_stale_groups() -> None:
-    """Delete groups whose page is gone or has been archived.
+def retire_stale_groups() -> None:
+    """Mark groups whose page is gone or has been archived as inactive.
 
     Two ways a group ceases to exist: its page is deleted in Nextcloud (the
     page row is already gone by the time this runs, see
     `delete_orphaned_pages`), or the page is moved below an archive page —
     which archives its subpages along with it, so subgroups retire too.
 
-    `Group.before_remove()` ends the roles that were still open, dated by the
-    time the bot noticed: unlike a content edit, moving or deleting a page in
-    Nextcloud does not touch its modification time, so the page timestamp
-    would put the end far too early. The role history itself is kept, so past
-    (and now-ended) roles stay visible on the members page.
+    The row is kept rather than deleted: it carries the membership the group
+    had when it was dissolved, so navigating to it (from a past role, say)
+    still answers who was in it and how long it existed. `Group.retire()`
+    ends the roles that were still open, dated by the time the bot noticed:
+    unlike a content edit, moving or deleting a page in Nextcloud does not
+    touch its modification time, so the page timestamp would put the end far
+    too early.
     """
     config = bot_config or BotConfig.load_config()
     if not config:
         return
 
-    groups = Group.fetch(limit=1000)
+    groups = [group for group in Group.fetch(limit=1000) if group.is_active]
     if not groups:
         return
 
@@ -87,12 +89,12 @@ def remove_stale_groups() -> None:
                 group.name,
                 group.page_id,
             )
-            group.remove()
+            group.retire()
             continue
 
         if Group.is_archived_path(page.full_path):
             logger.info("Retiring archived group %s (%s)", group.name, page.full_path)
-            group.remove()
+            group.retire()
 
 
 def dedupe_short_names() -> None:
@@ -126,9 +128,9 @@ def sync_member_leaves() -> None:
     Unlike roles this cannot be done per page: being on leave is a property
     of the person, so dropping the marker from the one page that carried it
     ends the leave no matter which page was edited. The sweep therefore walks
-    every stored group, exactly like `remove_stale_groups()` — and for the
-    same reason it has to run after it, so a retired group stops marking
-    anybody as unavailable.
+    every stored group, exactly like `retire_stale_groups()` — and for the
+    same reason it has to run after it: a retired group keeps its last known
+    membership, so only the active ones may still mark anybody unavailable.
 
     Leaves start on the day the page announcing them was last edited (the
     page timestamp), matching how roles are dated.
@@ -137,7 +139,7 @@ def sync_member_leaves() -> None:
     if not config:
         return
 
-    groups = Group.fetch(limit=1000)
+    groups = Group.fetch_active()
     timestamps = {
         page.page_id: page.timestamp
         for page in CollectivePage.fetch(
@@ -156,13 +158,16 @@ def backfill_role_history() -> None:
     happens to be edited. Once every stored group has been walked the fact is
     persisted in `KVState`, so later iterations cost a single lookup; groups
     that appear afterwards go through `parse_groups` anyway.
+
+    Retired groups are left alone — their roles are closed, and seeding them
+    from the membership the group had when it was dissolved would reopen them.
     """
     if get_state(ROLE_BACKFILL_STATE_KEY):
         return
 
     known_pages = {row.page_id for row in GroupRole.all_rows()}
 
-    for group in Group.fetch(limit=1000):
+    for group in Group.fetch_active():
         if group.page_id in known_pages:
             continue
         page = CollectivePage.get_from_page_id_or_none(group.page_id)

@@ -1,9 +1,10 @@
 import re
+from datetime import datetime
 from typing import ClassVar, Dict, List, Optional, Set
 
 import edgy
 
-from app.models.base import BaseDBModel
+from app.models.base import BaseDBModel, format_date
 from app.models.collective_page import CollectivePage
 from app.models.member_leave import is_leave_line, parse_until
 from app.services.config import bot_config
@@ -35,6 +36,13 @@ class Group(BaseDBModel):
     on_leave: List[str] = edgy.JSONField(default=list)
     leave_until: Dict[str, int] = edgy.JSONField(default=dict)
 
+    # How long the group existed. `start_date` is the first time the bot saw
+    # its page, `end_date` is set when the group was retired (its page was
+    # archived or deleted) — a row with an end date is kept rather than
+    # deleted, so a past role still links to a group that shows who was in it.
+    start_date: int | None = edgy.BigIntegerField(null=True, index=True)
+    end_date: int | None = edgy.BigIntegerField(null=True, index=True)
+
     natural_key_fields = ("page_id",)
 
     # Class-level cache shared across all instances
@@ -55,6 +63,19 @@ class Group(BaseDBModel):
     def all_members(self) -> List[str]:
         """Return all members, including coordination and delegates."""
         return sorted(set(self.coordination + self.delegate + self.members))
+
+    @property
+    def is_active(self) -> bool:
+        """Whether the group still exists (its page is neither gone nor archived)."""
+        return self.end_date is None
+
+    @property
+    def start_display(self) -> str:
+        return format_date(self.start_date) or ""
+
+    @property
+    def end_display(self) -> str:
+        return format_date(self.end_date) or ""
 
     @property
     def abbreviated(self) -> str:
@@ -84,37 +105,75 @@ class Group(BaseDBModel):
 
         GroupRole.close_for_page(self.page_id)
 
+    def retire(self, timestamp: int | None = None) -> None:
+        """Mark the group as no longer existing, keeping everything it holds.
+
+        The row survives with its last known membership, so a past role still
+        opens a group that can say who was in it and how long it existed. Only
+        the open roles are closed — like `before_remove()`, but without
+        dropping the group itself. Idempotent: a group that is already retired
+        keeps its original end date.
+        """
+        from app.models.group_role import GroupRole
+
+        if not self.is_active:
+            return
+
+        # Clamped once and used for both, so the roles never end before the
+        # group they were held in does.
+        moment = max(timestamp or int(datetime.now().timestamp()), self.start_date or 0)
+        self.end_date = moment
+        self.store()
+        GroupRole.close_for_page(self.page_id, moment)
+
     @classmethod
     def invalidate_cache(cls) -> None:
         cls._cached_groups = None
 
     @classmethod
     def all_cached(cls) -> List["Group"]:
+        """Every stored group, retired ones included."""
         if cls._cached_groups is None:
             cls._cached_groups = cls.fetch(limit=1000)
         return cls._cached_groups
+
+    @classmethod
+    def active_cached(cls) -> List["Group"]:
+        """The groups that currently exist — what "the groups" means for
+        everything describing the present (org chart, current roles, chat
+        rooms, leave); the retired ones are only reachable by name."""
+        return [group for group in cls.all_cached() if group.is_active]
+
+    @classmethod
+    def fetch_active(cls, limit: int = 1000) -> List["Group"]:
+        return cls.fetch(limit=limit, end_date__isnull=True)
 
     @classmethod
     def get_by_name(cls, name: str) -> "Group":
         """
         Get a Group by its name case insensitive.
         If no exact match is found, try to lookup by short names.
+
+        Retired groups stay resolvable so their dialog can be opened from a
+        past role, but an active group of the same name always wins.
         """
         groups = cls.all_cached()
 
-        docs = [g for g in groups if g.name.lower() == name.lower()]
+        for candidates in ([g for g in groups if g.is_active], groups):
+            docs = [g for g in candidates if g.name.lower() == name.lower()]
 
-        if not docs:
-            # try short names
-            docs = [
-                g
-                for g in groups
-                if name.lower() in {sn.lower() for sn in g.short_names}
-            ]
+            if not docs:
+                # try short names
+                docs = [
+                    g
+                    for g in candidates
+                    if name.lower() in {sn.lower() for sn in g.short_names}
+                ]
 
-        if not docs:
-            raise ValueError(f"Group with name '{name}' not found")
-        return docs[0]
+            if docs:
+                return docs[0]
+
+        raise ValueError(f"Group with name '{name}' not found")
 
     @classmethod
     def find_in_text(cls, text: str) -> Optional["Group"]:
@@ -123,7 +182,8 @@ class Group(BaseDBModel):
         Used to route a calendar event such as "AG Struktur Treffen" to its
         own chat channel. Matches on word boundaries (so "IT" does not match
         inside "Sitzung") and prefers the longest match, so a subgroup wins
-        over the parent group it is named after.
+        over the parent group it is named after. Retired groups are ignored:
+        they have no chat room to route anything to.
         """
         haystack = (text or "").lower()
         if not haystack:
@@ -132,7 +192,7 @@ class Group(BaseDBModel):
         best: Optional["Group"] = None
         best_length = 0
 
-        for group in cls.all_cached():
+        for group in cls.active_cached():
             for candidate in [group.name, *group.short_names]:
                 needle = (candidate or "").strip().lower()
                 if len(needle) <= best_length:
@@ -236,6 +296,13 @@ class Group(BaseDBModel):
 
         self.name = group_names[0]
         self.emoji = page.emoji or ""
+
+        # The page is being parsed, so the group exists: this either records
+        # when it first showed up or revives a group whose page came back out
+        # of the archive.
+        if not self.start_date:
+            self.start_date = page.timestamp or int(datetime.now().timestamp())
+        self.end_date = None
 
         # parse content now
         lines = page.content.splitlines()

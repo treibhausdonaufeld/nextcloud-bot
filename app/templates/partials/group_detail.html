@@ -4,12 +4,21 @@
      onclick="event.preventDefault(); var d = this.closest('dialog'); if (d) d.close();">✕</a>
   {# The parent is a link back up the tree, so a dialog reached from a
      subgroup is not a dead end. #}
-  <h3>{% if group.parent_group %}{{ badges.group_link(group.parent_group, "group-crumb") }} <span aria-hidden="true">➡️</span> {% endif %}{{ group.name }}</h3>
+  <h3>{% if group.parent_group %}{{ badges.group_link(group.parent_group, "group-crumb") }} <span aria-hidden="true">➡️</span> {% endif %}{{ group.name }}{% if not active %}
+    {# The group is gone (its page was archived or deleted); everything below
+       describes how it looked when that happened. #}
+    <span class="group-retired" title="{{ _('This group no longer exists.') }}">{{ _("Inactive") }}</span>
+  {% endif %}</h3>
 
-  {% if page_url or group.short_names %}
+  {% if page_url or group.short_names or started or ended %}
     <p class="meta group-meta">
       {% if page_url %}
         <a href="{{ page_url }}" target="_blank" rel="noopener noreferrer">{{ _("Open in Nextcloud") }} ↗</a>
+      {% endif %}
+      {% if not active %}
+        <span>{{ _("Existed from %(start)s to %(end)s") | format(start=started or "?", end=ended or "?") }}</span>
+      {% elif started %}
+        <span>{{ _("Exists since %(date)s") | format(date=started) }}</span>
       {% endif %}
       {% if group.short_names %}
         <span>{{ _("Short Names") }}: {{ group.short_names | join(", ") }}</span>
@@ -17,7 +26,7 @@
     </p>
   {% endif %}
 
-  <h4>{{ _("Members") }} ({{ members | length }})</h4>
+  <h4>{% if active %}{{ _("Members") }}{% else %}{{ _("Members when it was dissolved") }}{% endif %} ({{ members | length }})</h4>
   {% if members %}
     <ul class="role-history">
       {% for member in members %}
@@ -72,5 +81,33 @@
         </li>
       {% endfor %}
     </ul>
+  {% endif %}
+
+  {# Everybody who was in the group before, with the period they were in it —
+     one entry per finished role, so a member who later became coordinator
+     appears with both. #}
+  <h4>{{ _("Former members") }}</h4>
+  {% if former_members %}
+    <ul class="role-history">
+      {% for member in former_members %}
+        <li>
+          <a
+            href="#detail"
+            hx-get="/members/user/{{ member.username | urlencode }}"
+            hx-target="#detail"
+          >{{ member.displayname }}</a>
+          <a
+            class="role-badge role-badge-past role-{{ member.role }}"
+            style="--group-hue: {{ member.hue if member.hue is not none else 0 }}"
+            href="#detail"
+            hx-get="/members/role/{{ member.role }}?group={{ group.name | urlencode }}"
+            hx-target="#detail"
+          >{{ member.role_label }}</a>
+          <span class="role-period">{{ _("%(start)s to %(end)s") | format(start=member.start, end=member.end) }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="meta">{{ _("Nobody has left this group yet.") }}</p>
   {% endif %}
 </article>
