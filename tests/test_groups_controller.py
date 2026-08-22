@@ -495,3 +495,52 @@ class TestGraphDefaults:
             query_params = {"submitted": "1", "with_members": "true"}
 
         assert groups_controller._checkbox(Submitted(), "with_members", False) is True
+
+
+class TestGroupsPageScript:
+    """The org chart fetches /groups/graph.json with the same limit_group the
+    page was scoped to. A "&" in the group name must survive that round trip
+    untouched, or the fetch is scoped to a name that matches no group and the
+    chart renders empty."""
+
+    @staticmethod
+    def render(limit_group="", limit_user=""):
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
+        context = {
+            "_": lambda text: text,
+            "settings": type("Settings", (), {"name": "Bot"})(),
+            "current_path": "/groups",
+            "available_languages": {"de": "Deutsch"},
+            "lang": "de",
+            "all_groups": [],
+            "users": [],
+            "with_members": False,
+            "with_subgroups": True,
+            "limit_group": limit_group,
+            "limit_user": limit_user,
+            "solver": "forceAtlas2Based",
+            "height": 500,
+        }
+        return env.get_template("groups.html").render(context)
+
+    def test_an_ampersand_in_the_group_name_survives_the_script(self):
+        import json
+        import re
+
+        html = self.render(limit_group="AG Garten & Bau")
+
+        match = re.search(r"limit_group:\s*(\"(?:[^\"\\]|\\.)*\")", html)
+        assert match, html
+        assert json.loads(match.group(1)) == "AG Garten & Bau"
+
+    def test_the_value_is_never_html_escaped_inside_the_script(self):
+        # "&amp;" inside the JS string literal is a corrupted value, not the
+        # literal group name — the fetch would go out with the wrong scope.
+        # (Elsewhere on the page, e.g. the hidden form fields, "&amp;" is the
+        # correct HTML-attribute escaping — this checks the <script> only.)
+        html = self.render(limit_group="AG Garten & Bau")
+        script = html.split("<script src=")[-1]
+
+        assert "&amp;" not in script
