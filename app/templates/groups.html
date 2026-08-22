@@ -74,11 +74,16 @@
 
   <script src="/static/vis-network.min.js"></script>
   <script>
+    {# tojson JSON-encodes each value (and HTML-escapes the JSON for safe
+       embedding in <script>), unlike raw string interpolation below — which
+       would have Jinja's autoescaping turn a "&" in the name into "&amp;",
+       corrupting the JS string and sending a limit_group that matches no
+       group. #}
     const params = new URLSearchParams({
-      with_members: '{{ "true" if with_members else "false" }}',
-      with_subgroups: '{{ "true" if with_subgroups else "false" }}',
-      limit_group: '{{ limit_group }}',
-      limit_user: '{{ limit_user }}',
+      with_members: {{ ("true" if with_members else "false") | tojson }},
+      with_subgroups: {{ ("true" if with_subgroups else "false") | tojson }},
+      limit_group: {{ limit_group | tojson }},
+      limit_user: {{ limit_user | tojson }},
     });
     const fontColor = window.matchMedia('(prefers-color-scheme: dark)').matches ? '#E0E0E0' : '#2C2C2C';
 
