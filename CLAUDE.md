@@ -8,7 +8,7 @@ A community/association ("Verein") automation bot around a Nextcloud instance. I
 
 ## Commands
 
-Dependency management is via `uv` (Python 3.13, see `.python-version`).
+Dependency management is via `uv` (Python 3.14, see `.python-version`).
 
 ```bash
 uv sync --dev                     # install all deps incl. dev group
