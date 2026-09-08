@@ -269,6 +269,104 @@ class TestVisibleGroups:
         assert self._run([haus, alt], "AG Haus") == [haus]
 
 
+class TestGroupLeaveRows:
+    """The Karenz section lists everyone on leave who belongs to the group,
+    not just the group's members — a "**Karenz:**" section records a leave
+    without conferring membership, so the group that carries the marker has
+    to be able to show it."""
+
+    def test_a_member_on_leave_is_listed(self, group):
+        leave = MemberLeave(
+            username="bob",
+            group_name="AG Garten",
+            page_id=9,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        with patch.object(MemberLeave, "open_rows", return_value=[leave]):
+            rows = groups_controller.group_leave_rows(group, NCUserList())
+
+        assert [row["username"] for row in rows] == ["bob"]
+        assert rows[0]["on_leave"] is True
+        assert rows[0]["leave_group"] == "AG Garten"
+
+    def test_someone_only_marked_here_is_listed_too(self, group):
+        # erin is not a member of the group (only named in its Karenz
+        # section), yet the section must show her on this very page.
+        leave = MemberLeave(
+            username="erin",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        group.on_leave = ["erin"]
+        with patch.object(MemberLeave, "open_rows", return_value=[leave]):
+            rows = groups_controller.group_leave_rows(group, NCUserList())
+
+        assert [row["username"] for row in rows] == ["erin"]
+        assert rows[0]["on_leave"] is True
+        assert rows[0]["leave_group"] == "AG Haus"
+
+    def test_a_member_marked_here_is_not_duplicated(self, group):
+        # carol is a member AND stands in the group's own Karenz section.
+        leave = MemberLeave(
+            username="carol",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        group.on_leave = ["carol"]
+        with patch.object(MemberLeave, "open_rows", return_value=[leave]):
+            rows = groups_controller.group_leave_rows(group, NCUserList())
+
+        assert [row["username"] for row in rows] == ["carol"]
+        assert rows[0]["role"] == "member"
+
+    def test_an_expired_leave_is_not_listed(self, group):
+        leave = MemberLeave(
+            username="erin",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FEB,
+        )
+        group.on_leave = ["erin"]
+        with patch.object(MemberLeave, "open_rows", return_value=[leave]):
+            rows = groups_controller.group_leave_rows(group, NCUserList())
+
+        assert rows == []
+
+    def test_a_current_leave_stays_current_even_when_it_was_closed_in_storage(
+        self, group
+    ):
+        # The sync closes a leave once the announced end passes; the group's
+        # page may still carry the marker. `current_by_user()` re-checks on
+        # read, so a fresh row wins.
+        expired = MemberLeave(
+            username="erin",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FEB,
+            end_date=FEB,
+        )
+        running = MemberLeave(
+            username="erin",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        group.on_leave = ["erin"]
+        with patch.object(MemberLeave, "open_rows", return_value=[expired, running]):
+            rows = groups_controller.group_leave_rows(group, NCUserList())
+
+        assert [row["username"] for row in rows] == ["erin"]
+        assert rows[0]["on_leave"] is True
+
+
 class TestRoleBadgeMacro:
     """The badge is one pill with two destinations."""
 

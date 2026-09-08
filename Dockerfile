@@ -3,7 +3,7 @@
 ########################################
 # Builder — resolve deps into a venv
 ########################################
-FROM python:3.13-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -11,8 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never
 
-# Pinned uv (reproducible builds — avoid :latest drift)
-COPY --from=ghcr.io/astral-sh/uv:0.11.17 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:debian /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -29,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ########################################
 # Runtime — minimal, non-root
 ########################################
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

@@ -149,8 +149,8 @@ msgstr "Logbuch"
 msgid "Protocols"
 msgstr "Protokolle"
 
-msgid "Groups"
-msgstr "Gruppen"
+msgid "Organigram"
+msgstr "Organigramm"
 
 msgid "Members"
 msgstr "Mitglieder"

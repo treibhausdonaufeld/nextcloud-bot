@@ -216,7 +216,11 @@ def user_detail_context(username: str, all_groups: list[Group]) -> dict:
     }
 
 
-def group_member_rows(group: Group, user_list: NCUserList) -> list[dict]:
+def group_member_rows(
+    group: Group,
+    user_list: NCUserList,
+    leaves: dict | None = None,
+) -> list[dict]:
     """The group's members with the role each of them holds in it.
 
     One row per person — `Group.members` already excludes coordination and
@@ -224,7 +228,7 @@ def group_member_rows(group: Group, user_list: NCUserList) -> list[dict]:
     members overview uses for its badges (role key, translated label, group
     hue, leave status), so both pages render them identically.
     """
-    leaves = MemberLeave.current_by_user()
+    leaves = leaves if leaves is not None else MemberLeave.current_by_user()
     hue = group_hue(group.name)
 
     rows: list[dict] = []
@@ -300,6 +304,44 @@ def group_lifetime(group: Group, roles: list[GroupRole]) -> dict:
         "started": format_date(start) or "",
         "ended": group.end_display,
     }
+
+
+def group_leave_rows(
+    group: Group, user_list: NCUserList, leaves: dict | None = None
+) -> list[dict]:
+    """Everyone currently on leave who belongs to this group.
+
+    That is the group's members who are on leave, plus the people this page
+    itself marks as being on leave — a "**Karenz:**" section does not make
+    anyone a member of the group, so without this addition the very group
+    that records a leave would not list it.
+    """
+    leaves = leaves if leaves is not None else MemberLeave.current_by_user()
+    rows: list[dict] = []
+    seen: set[str] = set()
+
+    for row in group_member_rows(group, user_list, leaves):
+        if row["on_leave"]:
+            rows.append(row)
+            seen.add(row["username"])
+
+    for username in group.on_leave or []:
+        if username in seen:
+            continue
+        leave = leaves.get(username)
+        if leave is None:
+            continue
+        user = user_list.get_user_by_uid(username)
+        rows.append(
+            {
+                "username": username,
+                "displayname": (user.displayname if user else "") or username,
+            }
+            | leave_fields(leave)
+        )
+
+    rows.sort(key=lambda row: row["displayname"].lower())
+    return rows
 
 
 def _checkbox(request: Request, name: str, default: bool) -> bool:
@@ -399,10 +441,14 @@ def group_detail(request: Request, node: str = "") -> Template:
         page = CollectivePage.get_from_page_id_or_none(group.page_id)
         roles = GroupRole.for_group_page(group.page_id)
 
+        members = group_member_rows(group, user_list)
+        leave_members = group_leave_rows(group, user_list)
+
         context.update(
             group=group,
             subgroups=subgroups,
-            members=group_member_rows(group, user_list),
+            members=members,
+            leave_members=leave_members,
             former_members=former_member_rows(group, user_list, roles),
             hue=group_hue(group.name),
             chat_channels=group_channel_links(group) if group.is_active else [],

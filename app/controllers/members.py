@@ -161,9 +161,10 @@ def member_history(username: str) -> tuple[list[dict], list[dict]]:
     # Retired groups are included: a past role should show the group's current
     # name (and stay clickable) even after the group was dissolved.
     groups = {g.page_id: g for g in Group.all_cached()}
+    rows = GroupRole.for_user(username)
     current: list[dict] = []
     past: list[dict] = []
-    for row in GroupRole.for_user(username):
+    for row in rows:
         group = groups.get(row.page_id)
         entry = {
             "group": group.name if group else row.group_name,
@@ -176,6 +177,36 @@ def member_history(username: str) -> tuple[list[dict], list[dict]]:
         }
         (current if row.is_current else past).append(entry)
     past.sort(key=lambda entry: entry["end"] or "", reverse=True)
+
+    # Being on leave does not end the role: the group that recorded the leave
+    # stays a current role of the member, even though the wiki usually moves
+    # the name out of the role sections into a "**Karenz:**" section (which
+    # does not confer membership, so `GroupRole.sync_group` closed the row).
+    leave = MemberLeave.current_by_user().get(username)
+    if leave is not None and leave.page_id is not None:
+        group = groups.get(leave.page_id)
+        if group is None and leave.group_name:
+            group = next(
+                (g for g in groups.values() if g.name == leave.group_name), None
+            )
+        if group is not None and not any(
+            entry["page_id"] == group.page_id for entry in current
+        ):
+            held = next(
+                (r for r in rows if r.page_id == group.page_id),
+                None,
+            )
+            current.append(
+                {
+                    "group": group.name,
+                    "page_id": group.page_id,
+                    "role": held.role if held else "member",
+                    "role_label": role_label(held.role if held else "member"),
+                    "hue": group_hue(group.name),
+                    "start": held.start_display if held else leave.start_display,
+                    "end": None,
+                }
+            )
     return current, past
 
 

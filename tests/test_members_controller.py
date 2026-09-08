@@ -290,6 +290,74 @@ class TestMemberHistory:
         assert current[0]["end"] is None
         assert current[0]["role"] == "coordination"
 
+    def test_a_leave_keeps_the_group_that_recorded_it_a_current_role(self, history):
+        # bob's role in AG Haus was closed when the wiki moved him into its
+        # Karenz section; being on leave does not end the role.
+        closed = GroupRole(
+            username="bob",
+            group_name="AG Haus",
+            page_id=1,
+            role="member",
+            start_date=FEB,
+            end_date=MAR,
+        )
+        running = MemberLeave(
+            username="bob",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=MAR,
+            until_date=FAR_FUTURE,
+        )
+        with (
+            patch.object(GroupRole, "for_user", return_value=[closed]),
+            patch.object(MemberLeave, "open_rows", return_value=[running]),
+        ):
+            current, past = members_controller.member_history("bob")
+
+        assert past[0]["group"] == "AG Haus"
+        assert [role["group"] for role in current] == ["AG Haus"]
+        assert current[0]["end"] is None
+        assert (
+            current[0]["start"] == "2025-02-01"
+        )  # original role start, not leave start
+
+    def test_a_leave_group_without_prior_role_falls_back_to_member(self, history):
+        # dave never held a role in AG Haus, but AG Haus records his leave.
+        running = MemberLeave(
+            username="dave",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=MAR,
+            until_date=FAR_FUTURE,
+        )
+        with (
+            patch.object(GroupRole, "for_user", return_value=[]),
+            patch.object(MemberLeave, "open_rows", return_value=[running]),
+        ):
+            current, past = members_controller.member_history("dave")
+
+        assert past == []
+        assert current[0]["group"] == "AG Haus"
+        assert current[0]["role"] == "member"
+        assert current[0]["start"] == "2025-03-01"
+
+    def test_a_current_role_in_the_leave_group_is_not_duplicated(self, history):
+        # bob still holds his AG Haus role; the leave adds nothing.
+        running = MemberLeave(
+            username="bob",
+            group_name="AG Haus",
+            page_id=1,
+            start_date=FEB,
+            until_date=FAR_FUTURE,
+        )
+        with (
+            patch.object(GroupRole, "for_user", return_value=history[1:3]),
+            patch.object(MemberLeave, "open_rows", return_value=[running]),
+        ):
+            current, _ = members_controller.member_history("bob")
+
+        assert [role["group"] for role in current].count("AG Haus") == 1
+
 
 class TestRoleHolders:
     def test_lists_current_and_previous_holders(self, history):
