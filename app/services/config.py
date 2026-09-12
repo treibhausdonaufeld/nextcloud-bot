@@ -234,6 +234,37 @@ class MailerConfig(BaseModel):
         return [email.lower() for email in v]
 
 
+class StormAlertConfig(BaseModel):
+    """Send a storm warning when the wind forecast exceeds a threshold.
+
+    The forecast is fetched from Open-Meteo (free, no API key) for the
+    configured location (Vienna by default). Whenever any hour in the next
+    ``forecast_hours`` predicts wind above ``wind_threshold_kmh``, the alarm
+    goes out through ``app.services.notify``, which delivers to both Matrix and
+    Rocket.Chat while both are configured. Alerts are de-duplicated per local
+    day so the message is not re-sent on every worker iteration.
+    """
+
+    enabled: bool = True
+
+    # Logical channel the alarm is sent to (see ``app.services.notify``). Falls
+    # back to Rocket.Chat / Matrix like every other notification.
+    channel: str = "allgemein"
+
+    location_name: str = "Wien"
+    latitude: float = 48.2082
+    longitude: float = 16.3738
+
+    # Wind speed (km/h) above which a storm warning is raised. The task asks
+    # for 45 km/h.
+    wind_threshold_kmh: float = 45.0
+
+    # How far into the future the forecast is scanned for storm winds.
+    forecast_hours: int = 24
+
+    timezone: str = "Europe/Vienna"
+
+
 class NotifierConfig(BaseModel):
     """Configuration for generic notifications sent via Apprise.
 
@@ -272,6 +303,7 @@ class BotConfig(BaseModel):
     avatare: AvatarConfig = AvatarConfig()
     deck_reminder: DeckReminderConfig = DeckReminderConfig()
     calendar_notifier: CalendarNotifierConfig = CalendarNotifierConfig()
+    storm_alert: StormAlertConfig = StormAlertConfig()
     mailer: MailerConfig = MailerConfig()
     notifier: NotifierConfig = NotifierConfig()
 
