@@ -155,3 +155,25 @@ calendar_notifier:
   # is the group's own Matrix room). Set to false to notify only the
   # channels mapped above.
   group_channel_fallback: true
+
+storm_alert:
+  # Post a storm warning to Rocket.Chat and Matrix when the wind forecast for
+  # the configured location exceeds the threshold. Open-Meteo is used (free,
+  # no API key). The notification goes out through the generic notifier, so it
+  # is delivered to both chat systems while both are configured.
+  enabled: true
+
+  # Logical channel the alarm is sent to (falls back like any notification).
+  channel: allgemein
+
+  location_name: Wien
+  latitude: 48.2082
+  longitude: 16.3738
+
+  # Wind speed (km/h) above which the warning is raised.
+  wind_threshold_kmh: 45
+
+  # How many hours into the future the forecast is scanned.
+  forecast_hours: 24
+
+  timezone: Europe/Vienna

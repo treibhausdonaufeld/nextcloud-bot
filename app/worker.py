@@ -27,6 +27,7 @@ from app.services.collectives_parser import (
 from app.services.config import BotConfig
 from app.services.deck_reminder import DeckReminder
 from app.services.mail_fetcher import MailFetcher
+from app.services.storm_alert import StormAlert
 from app.services.matrix_rooms import sync_default_rooms
 from app.settings import settings
 
@@ -110,6 +111,7 @@ def run_periodic_tasks(userlist: NCUserList, fetcher: MailFetcher, config: BotCo
 
     Notifier(config=config.calendar_notifier).notify_upcoming_events()
     DeckReminder(config=config.deck_reminder).remind_card_due_dates()
+    StormAlert(config=config.storm_alert).check_forecast()
 
 
 def run_iteration(
