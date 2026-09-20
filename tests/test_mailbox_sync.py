@@ -220,12 +220,14 @@ def test_provisioner_applies_revokes_and_records_credentials(tmp_path):
         "share-remove office@treibhausdonaufeld.at exmember@treibhausdonaufeld.at"
     ]
 
-    prune_calls = [
-        line
-        for line in (tmp_path / "configure_args.log").read_text().splitlines()
-        if line.startswith("--prune")
+    configure_calls = (tmp_path / "configure_args.log").read_text().splitlines()
+    assert configure_calls == [
+        "uuid-1 office@treibhausdonaufeld.at",
+        "uuid-2 office@treibhausdonaufeld.at",
+        "--prune office@treibhausdonaufeld.at uuid-1 uuid-2",
     ]
-    assert prune_calls == ["--prune office@treibhausdonaufeld.at uuid-1 uuid-2"]
+    # Accounts are only created when missing, never updated.
+    assert not any("--update" in call for call in configure_calls)
 
     passwords = (tmp_path / "mailboxes.passwords.txt").read_text()
     assert "fabian.helm@treibhausdonaufeld.at\tpw-fabian.helm" in passwords

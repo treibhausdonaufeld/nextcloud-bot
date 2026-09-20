@@ -224,14 +224,12 @@ def ensure_nextcloud_account(
     dry_run: bool,
     timeout: int,
 ) -> tuple[bool, str]:
-    """Create or update the user's Nextcloud Mail account; return (ok, stdout)."""
+    """Ensure the user's Nextcloud Mail account exists; return (ok, stdout).
+
+    `mailbox_configure.sh` creates an account only when it is missing, so an
+    account that is already configured is left untouched (no update pass).
+    """
     uid = user["username"]
-    ok, _, stdout, _ = run(
-        [str(configure), "--update", uid, address], cwd, env, dry_run, timeout
-    )
-    if ok:
-        return True, stdout
-    # No existing account (or only the "update" path failed): create it.
     ok, _, stdout, _ = run([str(configure), uid, address], cwd, env, dry_run, timeout)
     return ok, stdout
 
