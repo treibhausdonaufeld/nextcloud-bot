@@ -123,6 +123,19 @@ distribution:
       groups:
         - Nicht-Mitglied
 
+# Shared mailboxes. The bot does not create these itself (it runs without
+# access to the host's docker/occ); it publishes the desired state to
+# `mailbox_state_file` (env MAILBOX_STATE_FILE), and the host-side
+# scripts/mailbox_provisioner.py applies it via the IaC scripts
+# (mailbox_ctl.sh + mailbox_configure.sh). `users` entries may be a Nextcloud
+# uid, an authentik username or a display name.
+mailbox:
+  office@treibhausdonaufeld.at:
+    name: Treibhaus Donaufeld
+    users:
+      - fabian.helm
+      - gabriele.adebisi-schuster
+
 # Generic notifications via Apprise (https://github.com/caronc/apprise).
 # Each logical channel name is mapped to one or more Apprise service URLs.
 # Channels without any Apprise target fall back to the Rocket.Chat webhook

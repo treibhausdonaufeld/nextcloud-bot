@@ -129,6 +129,39 @@ class NCUserList:
             None,
         )
 
+    def resolve_user(self, identifier: str) -> NCUser | None:
+        """Resolve a user by uid, authentik username, email or display name.
+
+        Returns None when nothing matches or when a display name is ambiguous
+        (several users share it), so a wrong entry cannot silently target the
+        wrong person.
+        """
+        identifier = (identifier or "").strip()
+        if not identifier:
+            return None
+        if identifier in self.users:
+            return self.users[identifier]
+
+        lower = identifier.lower()
+        for user in self.users.values():
+            if user.authentik_username and user.authentik_username.lower() == lower:
+                return user
+        by_email = self.get_user_by_email(identifier)
+        if by_email is not None:
+            return by_email
+
+        matches = [
+            u
+            for u in self.users.values()
+            if u.displayname and u.displayname.lower() == lower
+        ]
+        exact = [u for u in matches if u.displayname == identifier]
+        if len(exact) == 1:
+            return exact[0]
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
     def display_name(self, username: str) -> str:
         """Full display name of a user, falling back to the raw username."""
         user = self.users.get(username)

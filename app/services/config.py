@@ -292,6 +292,18 @@ class StormAlertConfig(BaseModel):
     timezone: str = "Europe/Vienna"
 
 
+class MailboxItem(BaseModel):
+    """A mailbox from the bot config and the people who should access it.
+
+    ``users`` entries may be a Nextcloud uid, an authentik username or a
+    display name (see ``NCUserList.resolve_user``); the privileged side is
+    applied by the host-side provisioner, not by the bot itself.
+    """
+
+    name: str = ""
+    users: List[str] = Field(default_factory=list)
+
+
 class NotifierConfig(BaseModel):
     """Configuration for generic notifications sent via Apprise.
 
@@ -332,6 +344,9 @@ class BotConfig(BaseModel):
     calendar_notifier: CalendarNotifierConfig = CalendarNotifierConfig()
     storm_alert: StormAlertConfig = StormAlertConfig()
     mailer: MailerConfig = MailerConfig()
+    # Shared mailboxes (address -> name + people) published as a desired-state
+    # file for the host-side mailbox provisioner; see app/services/mailbox_sync.
+    mailbox: Dict[str, MailboxItem] = Field(default_factory=dict)
     notifier: NotifierConfig = NotifierConfig()
 
     data: Dict = {}

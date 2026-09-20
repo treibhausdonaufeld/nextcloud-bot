@@ -27,6 +27,7 @@ from app.services.collectives_parser import (
 from app.services.config import BotConfig
 from app.services.deck_reminder import DeckReminder
 from app.services.mail_fetcher import MailFetcher
+from app.services.mailbox_sync import sync_mailboxes
 from app.services.storm_alert import StormAlert
 from app.services.matrix_rooms import sync_default_rooms
 from app.settings import settings
@@ -105,6 +106,10 @@ def run_periodic_tasks(userlist: NCUserList, fetcher: MailFetcher, config: BotCo
     # rooms, which are synced in `parse_groups`), so they are reconciled once
     # per iteration — this is what picks up newly joined members.
     sync_default_rooms(userlist)
+
+    # Publish the desired mailbox state; the host-side provisioner applies it
+    # (the bot container cannot run occ or docker-mailserver commands).
+    sync_mailboxes(userlist, config)
 
     if settings.mailinglist.imap_server:
         fetcher.fetch_maildata(userlist, config.mailer)

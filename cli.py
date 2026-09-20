@@ -62,6 +62,22 @@ def sync_matrix() -> None:
 
 
 @cli.command()
+def mailboxes() -> None:
+    """Publish the desired mailbox state for the host-side provisioner.
+
+    The privileged part is applied by scripts/mailbox_provisioner.py on the
+    host, which reads the file written here.
+    """
+    from app.models.user import NCUserList
+    from app.services.config import BotConfig
+    from app.services.mailbox_sync import sync_mailboxes
+
+    config = BotConfig.load_config()
+    sync_mailboxes(NCUserList(), config)
+    click.echo(f"Wrote mailbox state to {settings.mailbox_state_file}")
+
+
+@cli.command()
 @click.argument("xlsx_path", type=click.Path(exists=True))
 def import_xlsx(xlsx_path: str) -> None:
     """Import logbook decisions from an XLSX file."""

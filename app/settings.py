@@ -234,6 +234,11 @@ class Settings(BaseSettings):
     # attachments can easily be pruned by date when space runs low.
     media_folder: str = "/data/media"
 
+    # Where the bot publishes the desired mailbox state for the host-side
+    # provisioner (env var MAILBOX_STATE_FILE). Must be on a volume the host
+    # can read, e.g. /data/mailboxes.json -> /mnt/thd-data/log/data/...
+    mailbox_state_file: str = "/data/mailboxes.json"
+
     auth: AuthSettings = AuthSettings()
     nextcloud: NextcloudSettings = NextcloudSettings()
     matrix: MatrixSettings = MatrixSettings()
