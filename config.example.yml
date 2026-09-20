@@ -89,6 +89,12 @@ distribution:
   # the number of recipients each has. Set to "" to disable the overview.
   list_info_address: list@treibhausdonaufeld.at
 
+  # Senders from these domains are always accepted: they get the list
+  # overview without being an active user, and they may post to any list
+  # even while restrict_sender is on.
+  allowed_domains:
+    - treibhausdonaufeld.at
+
   lists:
     list@cloud.domain:
       prefix: '[THD]'

@@ -234,6 +234,11 @@ class MailerConfig(BaseModel):
     # be enabled users in the database. Set to "" to disable the overview.
     list_info_address: str = "list@treibhausdonaufeld.at"
 
+    # Domains whose senders are always accepted, without being an entry in
+    # the database (for the overview) or in `additional_allowed_senders`
+    # (for distribution). Example: ["treibhausdonaufeld.at"].
+    allowed_domains: List[str] = Field(default_factory=list)
+
     @field_validator("additional_allowed_senders", mode="before")
     def to_lower(cls, v: List[str]) -> List[str]:
         return [email.lower() for email in v]
@@ -241,6 +246,19 @@ class MailerConfig(BaseModel):
     @field_validator("list_info_address", mode="before")
     def info_address_to_lower(cls, v: str) -> str:
         return v.lower() if isinstance(v, str) else v
+
+    @field_validator("allowed_domains", mode="before")
+    def normalize_domains(cls, v: List[str]) -> List[str]:
+        if not isinstance(v, list):
+            return v
+        return [domain.strip().lower().lstrip("@") for domain in v if domain.strip()]
+
+    def allows_domain(self, email: str) -> bool:
+        """Whether the mail address' domain is on the whitelist."""
+        if not email or "@" not in email:
+            return False
+        domain = email.rsplit("@", 1)[1].lower()
+        return domain in self.allowed_domains
 
 
 class StormAlertConfig(BaseModel):

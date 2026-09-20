@@ -160,6 +160,35 @@ def test_info_address_ignores_unknown_sender(sent, forwarded):
     assert forwarded == []
 
 
+def test_info_address_allows_whitelisted_domain(sent, forwarded):
+    users = FakeUserList([], {"Mitglieder": {"a@example.com"}})
+    config = make_config(allowed_domains=["treibhausdonaufeld.at"])
+
+    MailFetcher().distribute_mail(
+        make_message(INFO_ADDRESS, sender="Someone <someone@treibhausdonaufeld.at>"),
+        users,
+        config,
+    )
+
+    assert len(sent) == 1
+    assert sent[0][1] == "someone@treibhausdonaufeld.at"
+    assert INFO_ADDRESS in sent[0][0].get_content()
+
+
+def test_info_address_rejects_domain_not_on_whitelist(sent, forwarded):
+    users = FakeUserList([], {"Mitglieder": {"a@example.com"}})
+    config = make_config(allowed_domains=["treibhausdonaufeld.at"])
+
+    MailFetcher().distribute_mail(
+        make_message(INFO_ADDRESS, sender="Someone <someone@example.com>"),
+        users,
+        config,
+    )
+
+    assert sent == []
+    assert forwarded == []
+
+
 def test_info_address_can_be_disabled(sent, forwarded):
     sender = NCUser(username="sender", email="sender@example.com", enabled=True)
     users = FakeUserList([sender], {"Mitglieder": {"sender@example.com"}})
@@ -188,3 +217,36 @@ def test_other_lists_still_distribute(sent, forwarded):
 
     assert sent == []
     assert forwarded == [{"ka@example.com"}]
+
+
+def test_restrict_sender_allows_whitelisted_domain(sent, forwarded):
+    users = FakeUserList([], {"AG KA": {"ka@example.com"}})
+    config = make_config(
+        restrict_sender=True, allowed_domains=["treibhausdonaufeld.at"]
+    )
+
+    MailFetcher().distribute_mail(
+        make_message(
+            "list+ka@treibhausdonaufeld.at",
+            sender="Someone <someone@treibhausdonaufeld.at>",
+        ),
+        users,
+        config,
+    )
+
+    assert forwarded == [{"ka@example.com"}]
+
+
+def test_restrict_sender_rejects_other_domain(sent, forwarded):
+    users = FakeUserList([], {"AG KA": {"ka@example.com"}})
+    config = make_config(
+        restrict_sender=True, allowed_domains=["treibhausdonaufeld.at"]
+    )
+
+    MailFetcher().distribute_mail(
+        make_message("list+ka@treibhausdonaufeld.at", sender="Someone <x@example.com>"),
+        users,
+        config,
+    )
+
+    assert forwarded == []

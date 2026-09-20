@@ -95,7 +95,10 @@ class MailFetcher:
                 config.additional_allowed_senders
             )
 
-            if original_sender_email.lower() not in all_emails:
+            if (
+                original_sender_email.lower() not in all_emails
+                and not config.allows_domain(original_sender_email)
+            ):
                 logging.warning(
                     "Ignoring message from unauthorized sender %s",
                     original_sender_email,
@@ -155,7 +158,8 @@ class MailFetcher:
         cannot be pulled by anybody who happens to know the address.
         """
         sender = nc_users.get_user_by_email(sender_email)
-        if sender is None or not sender.enabled:
+        is_active_user = sender is not None and sender.enabled
+        if not is_active_user and not config.allows_domain(sender_email):
             logging.warning(
                 "Ignoring list overview request from unknown or inactive sender %s",
                 sender_email,
