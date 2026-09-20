@@ -229,9 +229,18 @@ class MailerConfig(BaseModel):
     send_to_sender: bool = False
     lists: Dict[str, MailerListItem] = Field(default_factory=dict)
 
+    # Address that answers with an overview of every configured list and how
+    # many recipients it has, instead of distributing the mail. Senders must
+    # be enabled users in the database. Set to "" to disable the overview.
+    list_info_address: str = "list@treibhausdonaufeld.at"
+
     @field_validator("additional_allowed_senders", mode="before")
     def to_lower(cls, v: List[str]) -> List[str]:
         return [email.lower() for email in v]
+
+    @field_validator("list_info_address", mode="before")
+    def info_address_to_lower(cls, v: str) -> str:
+        return v.lower() if isinstance(v, str) else v
 
 
 class StormAlertConfig(BaseModel):

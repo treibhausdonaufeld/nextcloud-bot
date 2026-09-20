@@ -3,7 +3,7 @@ import imaplib
 import logging
 import re
 from dataclasses import dataclass
-from email.message import Message
+from email.message import EmailMessage, Message
 from typing import List, Set
 
 from app.services.config import MailerConfig
@@ -83,6 +83,13 @@ class MailFetcher:
             logging.warning("Ignoring autoreply message: %s", message["From"])
             return
 
+        info_address = (config.list_info_address or "").lower()
+        if info_address and info_address in target_mailinglists:
+            self._reply_with_list_overview(
+                original_sender_email, sender_name, nc_users, config
+            )
+            return
+
         if config.restrict_sender:
             all_emails = nc_users.get_all_emails() | set(
                 config.additional_allowed_senders
@@ -134,6 +141,58 @@ class MailFetcher:
                 len(new_recipients),
             )
             self.forward_message(message, new_recipients)
+
+    def _reply_with_list_overview(
+        self,
+        sender_email: str,
+        sender_name: str,
+        nc_users: NCUserList,
+        config: MailerConfig,
+    ) -> None:
+        """Answer a request to the info address with every list and its size.
+
+        Only enabled users from the database get an answer, so the overview
+        cannot be pulled by anybody who happens to know the address.
+        """
+        sender = nc_users.get_user_by_email(sender_email)
+        if sender is None or not sender.enabled:
+            logging.warning(
+                "Ignoring list overview request from unknown or inactive sender %s",
+                sender_email,
+            )
+            return
+
+        lines = [
+            f"Hallo {sender_name},",
+            "",
+            "hier ist die Übersicht aller verfügbaren Mailinglisten:",
+            "",
+        ]
+        for list_addr, list_config in sorted(config.lists.items()):
+            group_mails = {
+                name: nc_users.mails_for_group(name) - {""}
+                for name in list_config.groups
+            }
+            recipients = set().union(*group_mails.values()) if group_mails else set()
+            prefix = f"{list_config.prefix} " if list_config.prefix else ""
+            lines.append(f"{prefix}{list_addr} – {len(recipients)} Empfänger:innen")
+            for name, mails in group_mails.items():
+                lines.append(f"    – {name}: {len(mails)}")
+        lines += [
+            "",
+            "Um an eine Liste zu schreiben, sende eine E-Mail an die jeweilige Adresse.",
+        ]
+
+        reply = EmailMessage()
+        reply["From"] = settings.mailinglist.from_address
+        reply["To"] = sender_email
+        reply["Subject"] = "Übersicht der Mailinglisten"
+        reply.set_content("\n".join(lines))
+
+        try:
+            MailSender().send(reply, sender_email)
+        except Exception:
+            logging.exception("Failed to send list overview to %s", sender_email)
 
     def _delete_original_headers(self, message):
         # delete all original message headers

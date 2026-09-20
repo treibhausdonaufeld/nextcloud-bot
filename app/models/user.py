@@ -119,6 +119,16 @@ class NCUserList:
         """Get a user by their uid."""
         return self.users.get(uid, None)
 
+    def get_user_by_email(self, email: str) -> NCUser | None:
+        """Get the first user whose mail address matches (case-insensitive)."""
+        email = (email or "").lower()
+        if not email:
+            return None
+        return next(
+            (u for u in self.users.values() if u.email and u.email.lower() == email),
+            None,
+        )
+
     def display_name(self, username: str) -> str:
         """Full display name of a user, falling back to the raw username."""
         user = self.users.get(username)
@@ -258,27 +268,35 @@ class NCUserList:
         if updated:
             logger.info("Updated authentik data for %d users", updated)
 
-    def mails_for_groups(self, group_names: List[str]) -> Set[str]:
+    def mails_for_group(self, group_name: str) -> Set[str]:
         """
-        Return mail addresses for all users in given list of groups
+        Return mail addresses for all users in a single group
         Can be either member of Group or nextcloud group specified on user
         """
         from app.models.group import Group
 
         user_emails: Set[str] = set()
 
-        for name in group_names:
-            try:
-                group = Group.get_by_name(name)
-                user_emails |= {
-                    self.users[username].email
-                    for username in group.all_members
-                    if username in self.users
-                }
-            except ValueError:
-                pass
+        try:
+            group = Group.get_by_name(group_name)
+            user_emails |= {
+                self.users[username].email
+                for username in group.all_members
+                if username in self.users
+            }
+        except ValueError:
+            pass
 
-            user_emails |= {u.email for u in self.users.values() if name in u.groups}
+        user_emails |= {u.email for u in self.users.values() if group_name in u.groups}
+
+        return user_emails
+
+    def mails_for_groups(self, group_names: List[str]) -> Set[str]:
+        """Return the combined mail addresses for a list of groups."""
+        user_emails: Set[str] = set()
+
+        for name in group_names:
+            user_emails |= self.mails_for_group(name)
 
         return user_emails
 

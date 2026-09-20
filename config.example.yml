@@ -84,6 +84,11 @@ distribution:
   # from-address skeleton to be adapted with original sender and recipients
   from_addr: ORIGINAL_SENDER via Treibhaus Donaufeld Mailinglist LIST_NAME
 
+  # Mail sent to this address is not distributed: the sender (who must be an
+  # enabled user in the database) instead gets an overview of all lists with
+  # the number of recipients each has. Set to "" to disable the overview.
+  list_info_address: list@treibhausdonaufeld.at
+
   lists:
     list@cloud.domain:
       prefix: '[THD]'
