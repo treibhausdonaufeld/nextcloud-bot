@@ -48,7 +48,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 DEFAULT_STATE_FILE = "/mnt/thd-data/log/data/mailboxes.json"
+DEFAULT_MAIL_DOMAIN = "treibhausdonaufeld.at"
 CREDENTIAL_RE = re.compile(r"^(?P<address>\S+@\S+)\t(?P<password>\S+)\s*$")
+# `doveadm acl get` entries look like "... user=name@domain lookup read ...".
+USER_RE = re.compile(r"user=([^\s]+)")
 
 
 def log(message: str) -> None:
@@ -89,6 +92,28 @@ def run(command: list[str], cwd: Path, env: dict, dry_run: bool, timeout: int):
     )
 
 
+def to_email(name: str, mail_domain: str) -> str:
+    """Mirror mailbox_ctl.sh's to_email(): append the domain to a local part."""
+    return name if "@" in name else f"{name}@{mail_domain}"
+
+
+def current_acl(
+    address: str,
+    ctl: Path,
+    cwd: Path,
+    env: dict,
+    dry_run: bool,
+    timeout: int,
+) -> set[str] | None:
+    """Return the mail addresses currently granted access, or None on error."""
+    ok, _, stdout, _ = run(
+        [str(ctl), "share-list", address], cwd, env, dry_run, timeout
+    )
+    if not ok:
+        return None
+    return {match.group(1).lower() for match in USER_RE.finditer(stdout)}
+
+
 def ensure_shared_mailbox(
     item: dict,
     ctl: Path,
@@ -96,8 +121,14 @@ def ensure_shared_mailbox(
     env: dict,
     dry_run: bool,
     timeout: int,
-) -> tuple[bool, str]:
-    """Ensure the shared mailbox and ACLs; return (ok, captured stdout)."""
+    mail_domain: str,
+) -> tuple[bool, str, list[str]]:
+    """Ensure the shared mailbox and ACLs.
+
+    Returns (ok, captured stdout, revoked addresses). Access that is no longer
+    in the desired users is revoked, so removing a user from the config also
+    removes it on the mailserver.
+    """
     address = item["address"]
     # Use the internal username (authentik handle, e.g. "fabian.helm"), not the
     # user's mail address: mailbox_ctl.sh appends the mail domain itself, so a
@@ -112,14 +143,76 @@ def ensure_shared_mailbox(
         [str(ctl), "create-shared", address], cwd, env, dry_run, timeout
     )
     if not ok:
-        return False, created_out
+        return False, created_out, []
 
     if not logins:
-        return True, created_out
+        return True, created_out, []
+
     ok, _, share_out, _ = run(
         [str(ctl), "share-add", address, *logins], cwd, env, dry_run, timeout
     )
-    return ok, created_out + share_out
+    output = created_out + share_out
+    if not ok:
+        return False, output, []
+
+    # Never revoke while a configured user is unresolved: their entry is
+    # missing from `logins`, so reconciliation would drop a valid grantee.
+    if item.get("unresolved"):
+        log("  not revoking access: unresolved users present")
+        return True, output, []
+
+    acl = current_acl(address, ctl, cwd, env, dry_run, timeout)
+    if acl is None:
+        log("  ! could not read current access, skipping revocation")
+        return False, output, []
+
+    # The mailbox itself is never a grantee to revoke.
+    acl.discard(address.lower())
+
+    desired = {to_email(login, mail_domain).lower() for login in logins}
+    revoked: list[str] = []
+    for address_to_revoke in sorted(acl - desired):
+        ok, _, revoke_out, _ = run(
+            [str(ctl), "share-remove", address, address_to_revoke],
+            cwd,
+            env,
+            dry_run,
+            timeout,
+        )
+        if not ok:
+            return False, output, revoked
+        output += revoke_out
+        revoked.append(address_to_revoke)
+        log(f"  revoked access for {address_to_revoke}")
+
+    return True, output, revoked
+
+
+def prune_nextcloud_accounts(
+    item: dict,
+    address: str,
+    configure: Path,
+    cwd: Path,
+    env: dict,
+    dry_run: bool,
+    timeout: int,
+) -> bool:
+    """Delete Mail accounts of users no longer in the config for this mailbox."""
+    if item.get("unresolved"):
+        # An unresolved entry would look like a removed user: do not prune.
+        log("  not pruning Mail accounts: unresolved users present")
+        return True
+
+    uids = [user["username"] for user in item.get("users", [])]
+    if not uids:
+        # No usable uid list: never mass-delete accounts for the mailbox.
+        log("  not pruning Mail accounts: no resolved users")
+        return True
+
+    ok, *_ = run(
+        [str(configure), "--prune", address, *uids], cwd, env, dry_run, timeout
+    )
+    return ok
 
 
 def ensure_nextcloud_account(
@@ -236,6 +329,9 @@ def main(argv: list[str] | None = None) -> int:
         env["MAIL_DOMAIN"] = args.mail_domain
     if args.accounts_csv:
         env["ACCOUNTS_CSV"] = args.accounts_csv
+    # Must match the domain mailbox_ctl.sh uses; without an explicit
+    # --mail-domain both fall back to the same default.
+    mail_domain = args.mail_domain or DEFAULT_MAIL_DOMAIN
 
     selected = set(address.lower() for address in args.only)
     mailboxes = [
@@ -260,8 +356,8 @@ def main(argv: list[str] | None = None) -> int:
         if item.get("unresolved"):
             log(f"  unresolved users skipped: {', '.join(item['unresolved'])}")
 
-        ok, shared_out = ensure_shared_mailbox(
-            item, ctl, mailserver_dir, env, args.dry_run, args.timeout
+        ok, shared_out, revoked = ensure_shared_mailbox(
+            item, ctl, mailserver_dir, env, args.dry_run, args.timeout, mail_domain
         )
         collect_credentials(shared_out, credentials)
 
@@ -276,6 +372,12 @@ def main(argv: list[str] | None = None) -> int:
                 ok = False
                 log(f"  ! Nextcloud Mail account failed for {user['username']}")
 
+        if ok and not prune_nextcloud_accounts(
+            item, address, configure, nextcloud_dir, env, args.dry_run, args.timeout
+        ):
+            ok = False
+            log("  ! pruning Nextcloud Mail accounts failed")
+
         if not ok:
             failed += 1
         results.append(
@@ -284,6 +386,7 @@ def main(argv: list[str] | None = None) -> int:
                 "ok": ok,
                 "users": user_results,
                 "unresolved": item.get("unresolved", []),
+                "revoked": revoked,
             }
         )
 
