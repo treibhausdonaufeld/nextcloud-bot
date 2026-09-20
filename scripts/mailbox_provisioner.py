@@ -99,10 +99,13 @@ def ensure_shared_mailbox(
 ) -> tuple[bool, str]:
     """Ensure the shared mailbox and ACLs; return (ok, captured stdout)."""
     address = item["address"]
+    # Use the internal username (authentik handle, e.g. "fabian.helm"), not the
+    # user's mail address: mailbox_ctl.sh appends the mail domain itself, so a
+    # foreign/alias address would create the wrong personal mailbox.
     logins = [
-        user["email"] or user["handle"]
+        user["handle"] or user["email"]
         for user in item.get("users", [])
-        if user.get("email") or user.get("handle")
+        if user.get("handle") or user.get("email")
     ]
 
     ok, _, created_out, _ = run(

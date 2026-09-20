@@ -118,13 +118,19 @@ def write_fake_scripts(tmp_path: Path) -> tuple[Path, Path]:
     mailserver_dir.mkdir()
     nextcloud_dir.mkdir()
 
+    args_log = tmp_path / "ctl_args.log"
     ctl = mailserver_dir / "mailbox_ctl.sh"
     ctl.write_text(
         "#!/bin/sh\n"
         'cmd="$1"; shift\n'
         'case "$cmd" in\n'
-        '  create-shared) echo "created $1" ;;\n'
-        '  share-add) printf "%s\\tpw-%s\\n" "$2" "$2" ;;\n'
+        f'  create-shared) echo "create-shared $*" >> "{args_log}"; echo "created $1" ;;\n'
+        f"  share-add)\n"
+        f'    echo "share-add $*" >> "{args_log}"\n'
+        '    for login in "$@"; do\n'
+        '      printf "%s\\tpw-%s\\n" "$login@treibhausdonaufeld.at" "$login"\n'
+        "    done\n"
+        "    ;;\n"
         "esac\n"
         "exit 0\n",
         encoding="utf-8",
@@ -189,9 +195,19 @@ def test_provisioner_applies_and_records_credentials(tmp_path):
     assert status["mailboxes"][0]["ok"] is True
     assert all(user["ok"] for user in status["mailboxes"][0]["users"])
 
+    share_args = [
+        line
+        for line in (tmp_path / "ctl_args.log").read_text().splitlines()
+        if line.startswith("share-add")
+    ]
+    assert share_args == [
+        "share-add office@treibhausdonaufeld.at fabian.helm gabriele.adebisi-schuster"
+    ]
+
     passwords = (tmp_path / "mailboxes.passwords.txt").read_text()
+    assert "fabian.helm@treibhausdonaufeld.at\tpw-fabian.helm" in passwords
     assert (
-        "fabian.helm@treibhausdonaufeld.at\tpw-fabian.helm@treibhausdonaufeld.at"
+        "gabriele.adebisi-schuster@treibhausdonaufeld.at\tpw-gabriele.adebisi-schuster"
         in passwords
     )
     assert (tmp_path / "mailboxes.passwords.txt").stat().st_mode & 0o777 == 0o600
