@@ -95,6 +95,11 @@ distribution:
   allowed_domains:
     - treibhausdonaufeld.at
 
+  # Processed mails are moved out of the inbox (to this folder), so they are
+  # never distributed twice. Empty = use the server's \Trash folder, falling
+  # back to "Trash". Set e.g. "INBOX.Trash" if your server uses another layout.
+  trash_folder: ''
+
   lists:
     list@cloud.domain:
       prefix: '[THD]'

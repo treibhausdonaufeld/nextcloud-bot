@@ -41,8 +41,18 @@ class MailFetcher:
         mails_to_process = self._fetch_messages()
 
         for mail_message in mails_to_process:
-            self.distribute_mail(mail_message.message, nc_users, config)
-            self.move_to_archive(mail_message.uid)
+            try:
+                self.distribute_mail(mail_message.message, nc_users, config)
+            except Exception:
+                # A message left in the inbox is processed (and possibly sent)
+                # again on the next iteration, so it is moved out no matter
+                # what happened while handling it.
+                logger.exception(
+                    "Error handling message uid=%s, removing it from the inbox",
+                    mail_message.uid,
+                )
+            finally:
+                self.move_to_trash(mail_message.uid, config)
 
     def _fetch_messages(self) -> List[MailMessage]:
         """Fetch message objects from server which should be handled"""
@@ -221,19 +231,103 @@ class MailFetcher:
         for recipient in recipients:
             mailer.send(message, recipient)
 
-    def move_to_archive(self, uid: str):
-        """Move processed message to archive"""
+    # Conventional trash mailbox name used when the server does not flag one
+    # via SPECIAL-USE (RFC 6154). DMS/Dovecot uses "/" as hierarchy separator
+    # here (see the mailserver's dovecot.cf), so it is a top-level "Trash" and
+    # not "INBOX.Trash".
+    DEFAULT_TRASH_FOLDER = "Trash"
+
+    def move_to_trash(self, uid: str, config: MailerConfig):
+        """Move a processed message out of the inbox.
+
+        Runs for every fetched message - whether it was forwarded, answered,
+        ignored or failed - so it is not handled (and sent) again. The
+        message goes to Trash when possible and is permanently deleted
+        otherwise; either way it leaves the inbox.
+        """
         mail = self._login_imap()
+        try:
+            folder = self._trash_folder(mail, config)
+            if self._uid_move(mail, uid, folder):
+                logger.info("Moved message %s to %s", uid, folder)
+            else:
+                logger.warning(
+                    "Could not move message %s to %s, deleting it instead",
+                    uid,
+                    folder,
+                )
+                mail.uid("STORE", uid, "+FLAGS", "(\\Deleted)")
+            mail.expunge()
+        except Exception:
+            logger.exception("Failed to remove processed message uid=%s", uid)
+        finally:
+            try:
+                mail.close()
+            except Exception:
+                logger.debug("Failed to close mailbox after processing %s", uid)
+            mail.logout()
 
-        archive_folder = "INBOX.Archive"
-        apply_lbl_msg = mail.uid("COPY", uid, archive_folder)
-        if apply_lbl_msg[0] == "OK":
-            logging.info("Message moved to folder %s", archive_folder)
-            mail.uid("STORE", uid, "+FLAGS", "(\\Deleted)")
+    def _trash_folder(self, mail, config: MailerConfig) -> str:
+        """Resolve the mailbox processed messages should be moved to."""
+        if config.trash_folder:
+            return config.trash_folder
+        return self._special_use_folder(mail, "\\Trash") or self.DEFAULT_TRASH_FOLDER
 
-        mail.expunge()
-        mail.close()
-        mail.logout()
+    def _special_use_folder(self, mail, flag: str) -> str | None:
+        """Return the folder the server advertises for a SPECIAL-USE flag."""
+        try:
+            status, folders = mail.list('""', "*")
+        except imaplib.IMAP4.error:
+            return None
+        if status != "OK" or not folders:
+            return None
+
+        for entry in folders:
+            if not entry:
+                continue
+            line = (
+                entry.decode("utf-8", "replace")
+                if isinstance(entry, bytes)
+                else str(entry)
+            )
+            if flag not in line:
+                continue
+            match = re.match(r'\([^)]*\)\s+"[^"]*"\s+(?P<name>.+)', line)
+            if match:
+                return match.group("name").strip().strip('"')
+        return None
+
+    def _uid_move(self, mail, uid: str, folder: str) -> bool:
+        """Move the message with UID `uid` to `folder`; return whether it did."""
+        self._ensure_folder(mail, folder)
+        target = self._quote(folder)
+
+        try:
+            status, _ = mail.uid("MOVE", uid, target)
+            if status == "OK":
+                return True
+        except imaplib.IMAP4.error:
+            # Server without the MOVE extension: fall back to COPY + delete.
+            logger.debug("UID MOVE unsupported, falling back to COPY")
+
+        status, _ = mail.uid("COPY", uid, target)
+        if status != "OK":
+            return False
+        mail.uid("STORE", uid, "+FLAGS", "(\\Deleted)")
+        return True
+
+    @staticmethod
+    def _ensure_folder(mail, folder: str) -> None:
+        try:
+            mail.create(MailFetcher._quote(folder))
+        except imaplib.IMAP4.error:
+            # Already exists (or creating is not permitted); the move itself
+            # will report the truth if the folder is unusable.
+            pass
+
+    @staticmethod
+    def _quote(name: str) -> str:
+        return '"' + name.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
     def _extract_recipients(self, mail_data: Message) -> Set[str]:
         """Return set of all recipients of the message"""

@@ -239,6 +239,11 @@ class MailerConfig(BaseModel):
     # (for distribution). Example: ["treibhausdonaufeld.at"].
     allowed_domains: List[str] = Field(default_factory=list)
 
+    # IMAP folder processed mails are moved to so they are not handled again.
+    # Empty = use the folder the server flags as \Trash, falling back to
+    # "Trash". Set e.g. "INBOX.Trash" for servers with a different layout.
+    trash_folder: str = ""
+
     @field_validator("additional_allowed_senders", mode="before")
     def to_lower(cls, v: List[str]) -> List[str]:
         return [email.lower() for email in v]

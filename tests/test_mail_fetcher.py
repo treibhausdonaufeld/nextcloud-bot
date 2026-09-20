@@ -1,6 +1,7 @@
 """Tests for MailFetcher mailing-list distribution and the overview reply."""
 
 import email
+import imaplib
 from email.message import Message
 
 import pytest
@@ -8,7 +9,7 @@ import pytest
 from app.models.user import NCUser
 from app.services.config import MailerConfig, MailerListItem
 from app.services import mail_fetcher
-from app.services.mail_fetcher import MailFetcher
+from app.services.mail_fetcher import MailFetcher, MailMessage
 
 INFO_ADDRESS = "list@treibhausdonaufeld.at"
 
@@ -250,3 +251,169 @@ def test_restrict_sender_rejects_other_domain(sent, forwarded):
     )
 
     assert forwarded == []
+
+
+class FakeIMAP:
+    """Minimal IMAP stand-in recording what the fetch/move code does."""
+
+    def __init__(self, trash_flagged=True, move_supported=True, copy_ok=True):
+        self.trash_flagged = trash_flagged
+        self.move_supported = move_supported
+        self.copy_ok = copy_ok
+        self.created = []
+        self.moved = []
+        self.copied = []
+        self.stored = []
+        self.expunged = False
+        self.closed = False
+        self.logged_out = False
+        self.selected = None
+
+    def login(self, username, password):
+        return "OK", [b""]
+
+    def select(self, mailbox="INBOX"):
+        self.selected = mailbox
+        return "OK", [b"1"]
+
+    def list(self, reference, pattern):
+        if self.trash_flagged:
+            return "OK", [b'(\\HasNoChildren \\Trash) "/" Trash']
+        return "OK", [b'(\\HasNoChildren \\Sent) "/" Sent']
+
+    def create(self, name):
+        self.created.append(name)
+        return "OK", [b""]
+
+    def uid(self, command, *args):
+        command = command.upper()
+        if command == "MOVE":
+            if not self.move_supported:
+                raise imaplib.IMAP4.error("MOVE unsupported")
+            self.moved.append(args)
+            return "OK", [b""]
+        if command == "COPY":
+            if not self.copy_ok:
+                return "NO", [b"failed"]
+            self.copied.append(args)
+            return "OK", [b""]
+        if command == "STORE":
+            self.stored.append(args)
+            return "OK", [b""]
+        return "OK", [b""]
+
+    def expunge(self):
+        self.expunged = True
+        return "OK", [b""]
+
+    def close(self):
+        self.closed = True
+
+    def logout(self):
+        self.logged_out = True
+
+
+class FakeImapFetcher(MailFetcher):
+    """MailFetcher whose IMAP connection is a fake."""
+
+    def __init__(self, fake: FakeIMAP):
+        super().__init__()
+        self.fake = fake
+
+    def _login_imap(self):
+        return self.fake
+
+
+class RecordingFetcher(MailFetcher):
+    """MailFetcher with stubbed distribution that records moved uids."""
+
+    def __init__(self, messages, distribute):
+        super().__init__()
+        self.messages = messages
+        self.distribute = distribute
+        self.moved = []
+
+    def _fetch_messages(self):
+        return self.messages
+
+    def distribute_mail(self, message, nc_users, config):
+        return self.distribute(message, nc_users, config)
+
+    def move_to_trash(self, uid, config):
+        self.moved.append(uid)
+
+
+def fetcher_with(fake: FakeIMAP) -> MailFetcher:
+    return FakeImapFetcher(fake)
+
+
+def test_move_to_trash_uses_special_use_folder():
+    fake = FakeIMAP(trash_flagged=True)
+
+    fetcher_with(fake).move_to_trash("42", MailerConfig())
+
+    assert fake.moved == [("42", '"Trash"')]
+    assert fake.stored == []
+    assert fake.expunged and fake.closed and fake.logged_out
+
+
+def test_move_to_trash_uses_configured_folder_and_creates_it():
+    fake = FakeIMAP(trash_flagged=False)
+
+    fetcher_with(fake).move_to_trash("7", MailerConfig(trash_folder="My Trash"))
+
+    assert fake.created == ['"My Trash"']
+    assert fake.moved == [("7", '"My Trash"')]
+
+
+def test_move_to_trash_defaults_to_trash_without_special_use():
+    fake = FakeIMAP(trash_flagged=False)
+
+    fetcher_with(fake).move_to_trash("1", MailerConfig())
+
+    assert fake.moved == [("1", '"Trash"')]
+
+
+def test_move_to_trash_falls_back_to_copy_without_move():
+    fake = FakeIMAP(move_supported=False)
+
+    fetcher_with(fake).move_to_trash("9", MailerConfig())
+
+    assert fake.copied == [("9", '"Trash"')]
+    assert ("9", "+FLAGS", "(\\Deleted)") in fake.stored
+    assert fake.expunged
+
+
+def test_move_to_trash_deletes_when_move_and_copy_fail():
+    fake = FakeIMAP(move_supported=False, copy_ok=False)
+
+    fetcher_with(fake).move_to_trash("11", MailerConfig())
+
+    assert fake.copied == []
+    assert ("11", "+FLAGS", "(\\Deleted)") in fake.stored
+    assert fake.expunged
+
+
+def test_fetch_maildata_removes_message_even_when_distribution_fails():
+    def boom(message, nc_users, config):
+        raise RuntimeError("smtp down")
+
+    fetcher = RecordingFetcher(
+        [MailMessage(uid="5", message=email.message_from_string("From: a@b\n\nbody"))],
+        boom,
+    )
+
+    fetcher.fetch_maildata(FakeUserList([], {}), MailerConfig())
+
+    assert fetcher.moved == ["5"]
+
+
+def test_fetch_maildata_removes_message_when_recipient_is_ignored():
+    fetcher = RecordingFetcher(
+        [MailMessage(uid="6", message=email.message_from_string("From: a@b\n\nbody"))],
+        lambda message, nc_users, config: None,
+    )
+
+    fetcher.fetch_maildata(FakeUserList([], {}), MailerConfig())
+
+    assert fetcher.moved == ["6"]
