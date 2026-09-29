@@ -7,6 +7,11 @@ each worker iteration writes ``mailboxes.json`` (see ``mailbox_state_file``),
 and the host-side applier ``scripts/mailbox_provisioner.py`` reads it and does
 the privileged work with the existing IaC scripts. The file is only rewritten
 when its content changes, so a host timer can poll it cheaply.
+
+As a side effect the authentik mail group (``AUTH__MAIL_GROUP_NAME``) is kept
+in sync with the mailbox users — that group is what grants access to the mail
+app, so everybody with a shared mailbox is added and whoever lost their last
+mailbox is removed again; see ``app.services.authentik``.
 """
 
 import json
@@ -15,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.models.user import NCUserList
+from app.services.authentik import sync_members
 from app.services.config import BotConfig
 from app.settings import settings
 
@@ -67,6 +73,17 @@ def build_state(nc_users: NCUserList, config: BotConfig) -> dict:
     }
 
 
+def mail_group_members(state: dict) -> list[str]:
+    """Nextcloud uids (authentik uuids) of everybody with a shared mailbox."""
+    return sorted(
+        {
+            user["username"]
+            for mailbox in state["mailboxes"]
+            for user in mailbox["users"]
+        }
+    )
+
+
 def sync_mailboxes(nc_users: NCUserList, config: BotConfig) -> None:
     """Write the desired mailbox state to disk if it changed.
 
@@ -84,6 +101,16 @@ def sync_mailboxes(nc_users: NCUserList, config: BotConfig) -> None:
             "Mailbox users that could not be resolved: %s",
             ", ".join(state["unresolved"]),
         )
+
+    # Mirror the mail group onto the mailbox users: everybody with a shared
+    # mailbox gets mail app access, and whoever lost their last mailbox loses
+    # it again. Removals are skipped while a config entry is unresolved, so a
+    # typo cannot strip access from everyone else.
+    sync_members(
+        settings.auth.mail_group_name,
+        mail_group_members(state),
+        remove_missing=not state["unresolved"],
+    )
 
     path = Path(settings.mailbox_state_file)
     serialized = json.dumps(state, indent=2, ensure_ascii=False) + "\n"

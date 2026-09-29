@@ -20,6 +20,9 @@ services:
       # authentik group whose members are listed on /members and offered in
       # the user pickers. Set to '' to show every user.
       AUTH__MEMBER_GROUP_NAME: 'Mitglieder'
+      # authentik group kept in sync with the shared mailboxes (grants mail
+      # app access). Set to '' to disable the sync.
+      AUTH__MAIL_GROUP_NAME: 'Mail'
 
       NEXTCLOUD__BASE_URL: 'https://wir.example.com'
       NEXTCLOUD__ADMIN_USERNAME: 'admin'

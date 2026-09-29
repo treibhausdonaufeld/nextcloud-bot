@@ -3,13 +3,24 @@
 import importlib.util
 import json
 from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 
 from app.models.user import NCUser, NCUserList
 from app.services.config import BotConfig, MailboxItem
-from app.services.mailbox_sync import build_state, sync_mailboxes
+from app.services.mailbox_sync import build_state, mail_group_members, sync_mailboxes
 from app.settings import settings
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
+
+
+@pytest.fixture(autouse=True)
+def no_authentik_calls(monkeypatch):
+    """Keep the tests off the network; the sync has its own test."""
+    monkeypatch.setattr(
+        "app.services.mailbox_sync.sync_members", lambda *args, **kwargs: (0, 0)
+    )
 
 
 def load_provisioner():
@@ -100,6 +111,39 @@ def test_sync_mailboxes_writes_file(tmp_path, monkeypatch):
     assert state["version"] == 1
     assert len(state["mailboxes"]) == 1
     assert not (tmp_path / "mailboxes.json.tmp").exists()
+
+
+def test_mail_group_members_dedupes_across_mailboxes():
+    state = {
+        "mailboxes": [
+            {"users": [{"username": "uuid-1"}, {"username": "uuid-2"}]},
+            {"users": [{"username": "uuid-1"}]},
+        ]
+    }
+    assert mail_group_members(state) == ["uuid-1", "uuid-2"]
+
+
+def test_sync_mailboxes_syncs_mail_group(tmp_path, monkeypatch):
+    path = tmp_path / "mailboxes.json"
+    monkeypatch.setattr(settings, "mailbox_state_file", str(path))
+    monkeypatch.setattr(settings.auth, "mail_group_name", "Mail")
+    sync = Mock(return_value=(0, 0))
+    monkeypatch.setattr("app.services.mailbox_sync.sync_members", sync)
+
+    sync_mailboxes(sample_users(), sample_config())
+
+    sync.assert_called_once_with("Mail", ["uuid-1", "uuid-2"], remove_missing=True)
+
+
+def test_sync_mailboxes_skips_removals_with_unresolved_users(tmp_path, monkeypatch):
+    path = tmp_path / "mailboxes.json"
+    monkeypatch.setattr(settings, "mailbox_state_file", str(path))
+    sync = Mock(return_value=(0, 0))
+    monkeypatch.setattr("app.services.mailbox_sync.sync_members", sync)
+
+    sync_mailboxes(sample_users(), sample_config(users=["fabian.helm", "ghost"]))
+
+    sync.assert_called_once_with("Mail", ["uuid-1"], remove_missing=False)
 
 
 def test_sync_mailboxes_leaves_file_alone_when_unconfigured(tmp_path, monkeypatch):

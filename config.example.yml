@@ -133,7 +133,9 @@ distribution:
 # `mailbox_state_file` (env MAILBOX_STATE_FILE), and the host-side
 # scripts/mailbox_provisioner.py applies it via the IaC scripts
 # (mailbox_ctl.sh + mailbox_configure.sh). `users` entries may be a Nextcloud
-# uid, an authentik username or a display name.
+# uid, an authentik username or a display name. The authentik group named by
+# AUTH__MAIL_GROUP_NAME (default "Mail") is kept in sync with this list: it
+# grants mail app access and loses it again once the last mailbox is gone.
 mailbox:
   office@treibhausdonaufeld.at:
     name: Treibhaus Donaufeld

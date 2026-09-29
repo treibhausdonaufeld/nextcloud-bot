@@ -83,6 +83,12 @@ class AuthSettings(BaseModel):
     # Set AUTH__MEMBER_GROUP_NAME to an empty string to show every user.
     member_group_name: str = "Mitglieder"
 
+    # This authentik group is kept in sync with the shared mailboxes: it
+    # typically grants access to the mail app, so everybody listed on a
+    # mailbox is made a member and removed again once their last mailbox is
+    # gone. Set AUTH__MAIL_GROUP_NAME to an empty string to disable the sync.
+    mail_group_name: str = "Mail"
+
     @model_validator(mode="after")
     def set_authentik_base_url(self) -> "AuthSettings":
         # Field validators do not run for unset defaults, so the fallback has
