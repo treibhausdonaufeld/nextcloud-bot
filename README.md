@@ -59,7 +59,9 @@ left alone, so nobody is removed or pestered with a second invitation.
 
 The rooms are public, listed in this homeserver's room directory (so every
 local user can find them by searching) and created with `m.federate: false`,
-which keeps them on this server. Every sync re-checks the directory listing
+which keeps them on this server. Membership is not restricted: every member
+may add other users (`invite` is pinned to power level 0), and anyone on the
+server may join a room on their own. Every sync re-checks the directory listing
 and restores it if a room was unlisted, but federation is fixed when a room
 is created and cannot be changed afterwards — rooms created before this
 existed stay federated. If the homeserver refuses the listing, the sync logs

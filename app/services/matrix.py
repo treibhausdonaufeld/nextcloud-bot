@@ -207,6 +207,9 @@ class MatrixClient:
         outsiders), and `m.federate: false` keeps the room on this homeserver
         — note that this can only be decided at creation time.
 
+        `power_level_content_override` pins `invite` to 0, so every member can
+        add other users; the homeserver still grants the creator 100.
+
         Returns the new room id, or the existing one if another process won
         the race for the alias.
         """
@@ -216,6 +219,7 @@ class MatrixClient:
             "visibility": "public",
             "preset": "public_chat",
             "creation_content": {"m.federate": False},
+            "power_level_content_override": {"invite": 0},
             "initial_state": [
                 {
                     "type": "m.room.history_visibility",

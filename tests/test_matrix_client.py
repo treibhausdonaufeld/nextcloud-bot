@@ -110,6 +110,16 @@ class TestCreateRoom:
         _, _, payload = responses(client)[0]
         assert payload["creation_content"] == {"m.federate": False}
 
+    def test_every_member_may_invite(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!new:example.com"}
+        )
+
+        client.create_public_room("ag-struktur", "AG Struktur")
+
+        _, _, payload = responses(client)[0]
+        assert payload["power_level_content_override"]["invite"] == 0
+
     def test_taken_alias_falls_back_to_the_existing_room(self, client):
         client.session.request.side_effect = [
             FakeResponse(status_code=400, body={"errcode": "M_ROOM_IN_USE"}),
