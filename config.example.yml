@@ -182,6 +182,14 @@ calendar_notifier:
 
   # channels where to post the events
   channel_keywords:
+    # Matching: an event goes to the first entry (in the order written here)
+    # with a keyword contained in its title, case-insensitive.
+    #
+    # `keywords` and `notify_before` are independent lists, not pairs: the
+    # keywords only decide WHETHER an event goes to this entry, and EVERY
+    # lead time in `notify_before` then applies to EVERY matched event (one
+    # reminder per lead time). The two lists can have any length.
+
     # short form: keywords only, uses the default lead time above
     channel-name: [kw1, keyword2]
 
@@ -192,16 +200,20 @@ calendar_notifier:
       notify_before: 10d
       agenda_deadline: 5d
 
-    garten:
-      keywords: [gießen, gartentag]
-      notify_before: [3d, 2h]
-
-    # the key is just a name; `channel` routes several entries (with
-    # different lead times) into the same room
-    garten-kurzfristig:
+    # Different lead times for keywords of the same room: split them into
+    # separate entries. The key is then just a name, and `channel` names the
+    # room both post to. Put the more specific entry first, since the first
+    # match wins: "Ernte und Gießen" gets only the 12h reminder here.
+    garten-ernte:
       channel: garten
       keywords: [ernte]
       notify_before: 12h
+
+    # "Gießen Hochbeete" and "Gartentag" both get two reminders: 3 days and
+    # 2 hours before the event.
+    garten:
+      keywords: [gießen, gartentag]
+      notify_before: [3d, 2h]
 
   # When no keyword above matches, post the event in the channel of the
   # group named in its title ("AG Struktur Treffen" -> ag-struktur, which
