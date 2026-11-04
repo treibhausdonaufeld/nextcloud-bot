@@ -3,7 +3,7 @@ import random
 import time
 from datetime import date as dt_date
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, NamedTuple, Optional
 
 import caldav
 import pytz
@@ -45,6 +45,14 @@ kann_nicht = [
 ]
 
 
+class Route(NamedTuple):
+    """Where an event is announced and how long in advance."""
+
+    channel: str
+    notify_before: list[timedelta]
+    agenda_deadline: Optional[timedelta] = None
+
+
 class Notifier:
     config: CalendarNotifierConfig
 
@@ -61,9 +69,11 @@ class Notifier:
 
         self.events = get_state(self.processed_events_key, {"events": {}})
 
-        # cleanup events processed
+        # cleanup events processed: an entry is needed until its event has
+        # started, which is at most the longest lead time after it was sent
         oldest = (
-            time.time() - timedelta(days=cal_config.search_end_days + 1).total_seconds()
+            time.time()
+            - (cal_config.max_lead_time() + timedelta(days=1)).total_seconds()
         )
         self.events["events"] = {
             uid: timestamp
@@ -145,13 +155,14 @@ class Notifier:
         return cur
 
     def notify_upcoming_events(self) -> None:
-        """Send notifications to rocketchat for upcoming events to channels"""
+        """Send reminders for upcoming events to their channels."""
         if not self.calendar:
             return
 
+        now = datetime.now(pytz.UTC)
         events: list[Any] = self.calendar.search(
-            start=datetime.now() + timedelta(days=self.config.search_start_days or 0),
-            end=datetime.now() + timedelta(days=self.config.search_end_days or 7),
+            start=now,
+            end=now + self.config.max_lead_time(),
             expand=True,
             event=True,
         )
@@ -161,26 +172,98 @@ class Notifier:
                 if component.name != "VEVENT":
                     continue
 
-                event_data = self.fill_event(component)
-
-                if event_data["uid"] not in self.events["events"]:
-                    self.check_event(event_data)
+                self.check_event(self.fill_event(component), now=now)
 
         set_state(self.processed_events_key, self.events)
 
-    def check_event(self, event_data):
-        summary = event_data["summary"]
-        if not summary:
-            return
+    def route(self, summary: str) -> Optional[Route]:
+        """The channel (and its lead times) an event with this title goes to.
 
-        for channel, keywords in self.config.channel_keywords.items():
-            if any(s in summary.lower() for s in keywords):
-                self.send_event_notification(channel, event_data)
-                return
+        Only the title (SUMMARY) is matched, against the configured keywords
+        and the group names alike; description, location and other fields
+        never route an event, so a keyword mentioned in passing in the
+        description does not pull it into an unrelated channel.
+        """
+        if not summary:
+            return None
+
+        lowered = summary.lower()
+        for name, entry in self.config.channel_keywords.items():
+            if any(keyword in lowered for keyword in entry.keywords):
+                return Route(
+                    channel=entry.channel or name,
+                    notify_before=(
+                        entry.notify_before or self.config.default_notify_before()
+                    ),
+                    agenda_deadline=entry.agenda_deadline,
+                )
 
         channel = self.group_channel(summary)
         if channel:
-            self.send_event_notification(channel, event_data)
+            return Route(
+                channel=channel,
+                notify_before=(
+                    self.config.group_channel_notify_before
+                    or self.config.default_notify_before()
+                ),
+            )
+        return None
+
+    def _aware(self, value: Any) -> Optional[datetime]:
+        """Event start as an aware datetime; all-day and floating times are
+        read in the calendar's timezone."""
+        if value is None:
+            return None
+        if hasattr(value, "dt"):
+            value = value.dt
+        if isinstance(value, dt_date) and not isinstance(value, datetime):
+            value = datetime.combine(value, datetime.min.time())
+        if not isinstance(value, datetime):
+            return None
+        if value.tzinfo is None:
+            value = pytz.timezone(self.config.timezone).localize(value)
+        return value
+
+    def check_event(self, event_data, now: Optional[datetime] = None) -> None:
+        """Send the reminder for this event instance if one is due.
+
+        Every lead time of the event's channel is one reminder, remembered
+        under `uid|start|lead` so each occurrence of a recurring event (they
+        share the uid) and each lead time is sent exactly once. When several
+        reminders are due at once (the event was created at short notice),
+        only one message goes out and the others count as sent.
+        """
+        route = self.route(event_data["summary"])
+        if route is None:
+            return
+
+        now = now or datetime.now(pytz.UTC)
+        start = self._aware(event_data.get("start"))
+        if start is None or start <= now:
+            return
+
+        uid = event_data["uid"]
+        processed = self.events["events"]
+        # Upgrade from the uid-only state: a reminder that was already due
+        # when that old announcement went out counts as sent.
+        announced_at = processed.get(uid)
+
+        due: list[str] = []
+        unsent = False
+        for lead in route.notify_before:
+            remind_at = start - lead
+            key = f"{uid}|{start.isoformat()}|{int(lead.total_seconds())}"
+            if remind_at > now or key in processed:
+                continue
+            due.append(key)
+            if announced_at is None or remind_at.timestamp() > announced_at:
+                unsent = True
+
+        if unsent:
+            self.send_event_notification(route.channel, event_data, route)
+
+        for key in due:
+            processed[key] = time.time()
 
     def group_channel(self, summary: str) -> str:
         """Channel of the group named in the event, e.g. "ag-struktur".
@@ -207,7 +290,9 @@ class Notifier:
 
         return channel_slug(group.name)
 
-    def send_event_notification(self, channel, event_data):
+    def send_event_notification(
+        self, channel: str, event_data, route: Optional[Route] = None
+    ) -> None:
         text = (
             f"Nächster Termin: **{event_data['summary']}**"
             f"\n - Start: **{self._local_datetime(event_data['start'])}**"
@@ -219,21 +304,17 @@ class Notifier:
         if event_data.get("description"):
             text += f"\n\n {event_data['description']}"
 
-        if channel in ("wichtigstes", "general"):
-            text += "\n---\n\n_Agendapunkte bitte bis 5 Tage vorher eintragen! "
-            # Prefer 'start' (set in fill_event). Some calendars may not provide
-            # 'dtstart' explicitly, so handle missing values safely.
-            start_dt = event_data.get("start")
+        agenda_deadline = route.agenda_deadline if route else None
+        start_dt = event_data.get("start")
+        if agenda_deadline and start_dt is not None:
+            if hasattr(start_dt, "dt"):
+                start_dt = start_dt.dt
             try:
-                if start_dt:
-                    reminder_dt = start_dt - timedelta(days=5)
-                    text += f"{self._local_datetime(reminder_dt)}_\n"
-                else:
-                    # Fallback: no start date available
-                    text += f"{self._local_datetime(None)}_\n"
+                deadline = self._local_datetime(start_dt - agenda_deadline)
             except Exception:
-                # If subtraction or formatting fails, fall back to an empty string
-                text += f"{self._local_datetime(None)}_\n"
+                logger.exception("Could not compute the agenda deadline")
+            else:
+                text += f"\n---\n\n_Agendapunkte bitte bis {deadline} eintragen!_\n"
 
         text += f"\n---\n 💪 : {random.choice(vor_ort_dabei)}"
 
@@ -246,5 +327,3 @@ class Notifier:
         text += f"\n 😖 : {random.choice(kann_nicht)}"
 
         send_message(text, channel)
-
-        self.events["events"][event_data["uid"]] = time.time()
