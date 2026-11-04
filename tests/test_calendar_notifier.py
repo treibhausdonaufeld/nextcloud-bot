@@ -16,11 +16,21 @@ class DummyChannel:
 
 
 class DummyComponent:
-    def __init__(self, start=None, end=None, summary="Test", uid="uid"):
+    def __init__(
+        self,
+        start=None,
+        end=None,
+        summary="Test",
+        uid="uid",
+        description=None,
+        location=None,
+    ):
         self.start = start
         self.end = end
         self._summary = summary
         self._uid = uid
+        self._description = description
+        self._location = location
 
     def get(self, key):
         if key == "summary":
@@ -28,7 +38,9 @@ class DummyComponent:
         if key == "uid":
             return self._uid
         if key == "description":
-            return None
+            return self._description
+        if key == "location":
+            return self._location
         if key == "dtstamp":
             return type("T", (), {"dt": datetime.now()})
         return None
@@ -185,6 +197,32 @@ class TestEventChannelRouting:
         )
 
         assert channels == []
+
+    def test_only_the_title_is_matched(self, monkeypatch):
+        from app.models.group import Group
+
+        Group._cached_groups = [Group(name="AG Struktur", page_id=1, short_names=[])]
+        sent = []
+        monkeypatch.setattr(
+            calendar_notifier,
+            "send_message",
+            lambda text, channel: sent.append(channel),
+        )
+        notifier = self.notifier(channel_keywords={"wichtigstes": ["plenum"]})
+        start = datetime.now(pytz.UTC) + timedelta(hours=1)
+
+        notifier.check_event(
+            notifier.fill_event(
+                DummyComponent(
+                    start=start,
+                    summary="Zahnarzt",
+                    description="Danach zum Plenum, Notizen für AG Struktur",
+                    location="Plenum-Raum",
+                )
+            )
+        )
+
+        assert sent == []
 
     def test_event_without_summary_is_ignored(self, monkeypatch):
         channels = self.route(monkeypatch, "", groups=[self.group("AG Struktur")])

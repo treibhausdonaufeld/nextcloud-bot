@@ -177,7 +177,13 @@ class Notifier:
         set_state(self.processed_events_key, self.events)
 
     def route(self, summary: str) -> Optional[Route]:
-        """The channel (and its lead times) an event with this title goes to."""
+        """The channel (and its lead times) an event with this title goes to.
+
+        Only the title (SUMMARY) is matched, against the configured keywords
+        and the group names alike; description, location and other fields
+        never route an event, so a keyword mentioned in passing in the
+        description does not pull it into an unrelated channel.
+        """
         if not summary:
             return None
 
