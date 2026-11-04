@@ -172,20 +172,44 @@ notifier:
 calendar_notifier:
   caldav_url: https://example.nextcloud/remote.php/dav/calendars/user/personal/
   enabled: true
-  search_start_days: 0
-  search_end_days: 7
   timezone: Europe/Vienna
-  processed_storage: processed_events.json
+
+  # Default lead time: how long before an event the reminder is posted.
+  # Durations like "7d", "36h", "2d12h", "1w" or "90m"; a plain number means
+  # days. A list ([7d, 1d]) posts one reminder per lead time. Without it the
+  # legacy `search_end_days` (default 8) is used.
+  notify_before: 7d
 
   # channels where to post the events
   channel_keywords:
+    # short form: keywords only, uses the default lead time above
     channel-name: [kw1, keyword2]
+
+    # long form: own lead time(s) and an optional agenda deadline note
+    # ("Agendapunkte bitte bis <start - 5 days> eintragen!")
+    wichtigstes:
+      keywords: [koordinationskreis, plenum]
+      notify_before: 10d
+      agenda_deadline: 5d
+
+    garten:
+      keywords: [gießen, gartentag]
+      notify_before: [3d, 2h]
+
+    # the key is just a name; `channel` routes several entries (with
+    # different lead times) into the same room
+    garten-kurzfristig:
+      channel: garten
+      keywords: [ernte]
+      notify_before: 12h
 
   # When no keyword above matches, post the event in the channel of the
   # group named in its title ("AG Struktur Treffen" -> ag-struktur, which
   # is the group's own Matrix room). Set to false to notify only the
   # channels mapped above.
   group_channel_fallback: true
+  # lead time(s) for those group channels; defaults to `notify_before`
+  group_channel_notify_before: 3d
 
 storm_alert:
   # Post a storm warning to Rocket.Chat and Matrix when the wind forecast for
