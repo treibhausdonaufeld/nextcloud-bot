@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 import time
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 import yaml
@@ -203,18 +204,127 @@ class DeckReminderConfig(BaseModel):
     deck_channel_mapping: List[DeckChannelMappingItem] = Field(default_factory=list)
 
 
+_DURATION_RE = re.compile(
+    r"^(?:(?P<w>\d+)w)?(?:(?P<d>\d+)d)?(?:(?P<h>\d+)h)?(?:(?P<m>\d+)m(?:in)?)?$"
+)
+
+
+def parse_duration(value: object) -> timedelta:
+    """A lead time from the bot config: "7d", "36h", "2d12h", "1w", "90m".
+
+    A plain number means days, so `notify_before: 7` keeps reading naturally.
+    """
+    if isinstance(value, timedelta):
+        return value
+    if isinstance(value, bool):
+        raise ValueError(f"Invalid duration: {value!r}")
+    if isinstance(value, (int, float)):
+        return timedelta(days=value)
+    if isinstance(value, str):
+        text = value.strip().lower().replace(" ", "")
+        if re.fullmatch(r"\d+(?:\.\d+)?", text):
+            return timedelta(days=float(text))
+        match = _DURATION_RE.fullmatch(text)
+        if text and match:
+            parts = {k: int(v or 0) for k, v in match.groupdict().items()}
+            return timedelta(
+                weeks=parts["w"], days=parts["d"], hours=parts["h"], minutes=parts["m"]
+            )
+    raise ValueError(
+        f"Invalid duration {value!r}, expected e.g. '7d', '36h', '2d12h' or '90m'"
+    )
+
+
+def parse_durations(value: object) -> Optional[List[timedelta]]:
+    """One lead time or a list of them, deduplicated and longest first."""
+    if value is None:
+        return None
+    items = value if isinstance(value, (list, tuple)) else [value]
+    durations = sorted({parse_duration(item) for item in items}, reverse=True)
+    if not durations:
+        return None
+    if any(d <= timedelta(0) for d in durations):
+        raise ValueError("Lead times must be positive")
+    return durations
+
+
+class CalendarChannelConfig(BaseModel):
+    """One `channel_keywords` entry of the calendar notifier.
+
+    The short form `channel: [kw1, kw2]` is turned into this with only
+    `keywords` set, so it inherits the notifier-wide lead time.
+    """
+
+    keywords: List[str] = Field(default_factory=list)
+    # Room to post to; defaults to the entry's key. Lets several entries
+    # (with different lead times) share one channel.
+    channel: Optional[str] = None
+    # How long before the event the reminder goes out; a list sends one
+    # reminder per lead time. None = the notifier's `notify_before`.
+    notify_before: Optional[List[timedelta]] = None
+    # Adds "please add agenda items until <start - agenda_deadline>".
+    agenda_deadline: Optional[timedelta] = None
+
+    @field_validator("keywords", mode="before")
+    def lower_keywords(cls, v):
+        if isinstance(v, str):
+            v = [v]
+        return [str(keyword).lower() for keyword in v or []]
+
+    @field_validator("notify_before", mode="before")
+    def to_durations(cls, v):
+        return parse_durations(v)
+
+    @field_validator("agenda_deadline", mode="before")
+    def to_duration(cls, v):
+        return None if v is None else parse_duration(v)
+
+
 class CalendarNotifierConfig(BaseModel):
     caldav_url: Optional[str] = None
     enabled: bool = True
-    search_start_days: int = 0
+    # Legacy: the lead time used to be the end of the search window. It is
+    # still the default when `notify_before` is not set.
     search_end_days: int = 8
     timezone: str = "Europe/Vienna"
-    channel_keywords: Dict[str, List[str]] = Field(default_factory=dict)
+
+    # Default lead time(s) for every channel that doesn't set its own.
+    notify_before: Optional[List[timedelta]] = None
+
+    channel_keywords: Dict[str, CalendarChannelConfig] = Field(default_factory=dict)
 
     # When no channel_keywords entry matches, announce the event in the
     # channel of the group named in its title ("AG Struktur Treffen" ->
     # ag-struktur). Set to false to only notify the mapped channels.
     group_channel_fallback: bool = True
+    # Lead time(s) for those group channels; None = `notify_before`.
+    group_channel_notify_before: Optional[List[timedelta]] = None
+
+    @field_validator("notify_before", "group_channel_notify_before", mode="before")
+    def to_durations(cls, v):
+        return parse_durations(v)
+
+    @field_validator("channel_keywords", mode="before")
+    def short_form(cls, v):
+        if not v:
+            return {}
+        return {
+            name: {"keywords": entry} if isinstance(entry, (list, str)) else entry
+            for name, entry in v.items()
+        }
+
+    def default_notify_before(self) -> List[timedelta]:
+        return self.notify_before or [timedelta(days=self.search_end_days)]
+
+    def all_lead_times(self) -> List[timedelta]:
+        leads = list(self.default_notify_before())
+        leads += self.group_channel_notify_before or []
+        for entry in self.channel_keywords.values():
+            leads += entry.notify_before or []
+        return leads
+
+    def max_lead_time(self) -> timedelta:
+        return max(self.all_lead_times())
 
 
 class MailerListItem(BaseModel):
