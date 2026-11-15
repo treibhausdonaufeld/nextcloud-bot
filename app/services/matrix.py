@@ -34,6 +34,12 @@ MAX_RATE_LIMIT_RETRIES = 3
 # left alone instead of being invited again on the next page edit.
 KNOWN_MEMBERSHIPS = ("join", "invite", "knock", "leave", "ban")
 
+# Power level of every member in a bot-created room. The homeserver grants the
+# creator 100; setting `users_default` to the same makes all members full
+# admins (change name/topic, kick, ban, redact, edit power levels), so the
+# rooms are not administered by the bot alone.
+MEMBER_POWER_LEVEL = 100
+
 
 class MatrixError(RuntimeError):
     """A Matrix API call failed."""
@@ -207,8 +213,10 @@ class MatrixClient:
         outsiders), and `m.federate: false` keeps the room on this homeserver
         — note that this can only be decided at creation time.
 
-        `power_level_content_override` pins `invite` to 0, so every member can
-        add other users; the homeserver still grants the creator 100.
+        `power_level_content_override` pins `invite` to 0 so every member can
+        add other users, and `users_default` to `MEMBER_POWER_LEVEL` so every
+        member is a full admin of the room just like the bot (the homeserver
+        grants the creator 100).
 
         Returns the new room id, or the existing one if another process won
         the race for the alias.
@@ -219,7 +227,10 @@ class MatrixClient:
             "visibility": "public",
             "preset": "public_chat",
             "creation_content": {"m.federate": False},
-            "power_level_content_override": {"invite": 0},
+            "power_level_content_override": {
+                "invite": 0,
+                "users_default": MEMBER_POWER_LEVEL,
+            },
             "initial_state": [
                 {
                     "type": "m.room.history_visibility",
@@ -277,6 +288,29 @@ class MatrixClient:
             if user_id and membership:
                 members[str(user_id)] = str(membership)
         return members
+
+    def get_state_event(self, room_id: str, event_type: str) -> Dict[str, Any]:
+        """Content of a room state event with an empty state key; `{}` if unset."""
+        try:
+            return self._request(
+                "GET",
+                f"{API}/rooms/{quote(room_id, safe='')}"
+                f"/state/{quote(event_type, safe='')}",
+            )
+        except MatrixError as exc:
+            if exc.status == 404 or exc.errcode == "M_NOT_FOUND":
+                return {}
+            raise
+
+    def put_state_event(
+        self, room_id: str, event_type: str, content: Dict[str, Any]
+    ) -> None:
+        """Replace a room state event with an empty state key."""
+        self._request(
+            "PUT",
+            f"{API}/rooms/{quote(room_id, safe='')}/state/{quote(event_type, safe='')}",
+            content,
+        )
 
     def send_message(self, room_id: str, body: str, formatted_body: str = "") -> None:
         """Send an `m.text` message into the room.

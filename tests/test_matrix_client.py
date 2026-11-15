@@ -120,6 +120,16 @@ class TestCreateRoom:
         _, _, payload = responses(client)[0]
         assert payload["power_level_content_override"]["invite"] == 0
 
+    def test_every_member_is_a_room_admin(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!new:example.com"}
+        )
+
+        client.create_public_room("ag-struktur", "AG Struktur")
+
+        _, _, payload = responses(client)[0]
+        assert payload["power_level_content_override"]["users_default"] == 100
+
     def test_taken_alias_falls_back_to_the_existing_room(self, client):
         client.session.request.side_effect = [
             FakeResponse(status_code=400, body={"errcode": "M_ROOM_IN_USE"}),
@@ -196,6 +206,42 @@ class TestMembersAndInvites:
         assert method == "POST"
         assert url.endswith("/_matrix/client/v3/rooms/%21room%3Aexample.com/invite")
         assert payload == {"user_id": "@alice:example.com"}
+
+
+class TestStateEvents:
+    def test_state_event_content_is_read(self, client):
+        client.session.request.return_value = FakeResponse(body={"users_default": 100})
+
+        assert client.get_state_event("!room:example.com", "m.room.power_levels") == {
+            "users_default": 100
+        }
+
+        method, url, _ = responses(client)[0]
+        assert method == "GET"
+        assert url.endswith(
+            "/_matrix/client/v3/rooms/%21room%3Aexample.com/state/m.room.power_levels"
+        )
+
+    def test_unset_state_event_returns_empty(self, client):
+        client.session.request.return_value = FakeResponse(
+            status_code=404, body={"errcode": "M_NOT_FOUND", "error": "Not found"}
+        )
+
+        assert client.get_state_event("!room:example.com", "m.room.power_levels") == {}
+
+    def test_state_event_is_replaced(self, client):
+        client.session.request.return_value = FakeResponse(body={})
+
+        client.put_state_event(
+            "!room:example.com", "m.room.power_levels", {"users_default": 100}
+        )
+
+        method, url, payload = responses(client)[0]
+        assert method == "PUT"
+        assert url.endswith(
+            "/_matrix/client/v3/rooms/%21room%3Aexample.com/state/m.room.power_levels"
+        )
+        assert payload == {"users_default": 100}
 
 
 class TestRateLimiting:

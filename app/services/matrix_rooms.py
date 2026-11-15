@@ -30,6 +30,7 @@ from urllib.parse import quote
 
 from app.services.matrix import (
     KNOWN_MEMBERSHIPS,
+    MEMBER_POWER_LEVEL,
     MatrixClient,
     MatrixError,
     matrix_enabled,
@@ -220,6 +221,30 @@ class MatrixRoomSync:
             self.client.join_room(alias)
             return self.client.room_members(room_id)
 
+    def ensure_member_admin(self, room_id: str, alias: str) -> None:
+        """Give every member the same rights as the bot (`users_default`).
+
+        New rooms are created with `users_default` set to `MEMBER_POWER_LEVEL`;
+        this updates rooms created before that rule, so their members become
+        full admins on the next sync. The rest of the `m.room.power_levels`
+        event (explicit per-user levels in particular) is kept as it is. A bot
+        that may not change the event (e.g. a room it did not create) only
+        logs the failure — the invitation sync must not stop because of it.
+        """
+        try:
+            content = self.client.get_state_event(room_id, "m.room.power_levels")
+            if content.get("users_default") == MEMBER_POWER_LEVEL:
+                return
+            content["users_default"] = MEMBER_POWER_LEVEL
+            self.client.put_state_event(room_id, "m.room.power_levels", content)
+            logger.info("Granted every member admin rights in Matrix room %s", alias)
+        except MatrixError as exc:
+            logger.warning(
+                "Could not grant member admin rights in Matrix room %s: %s",
+                alias,
+                exc,
+            )
+
     def sync_channel(self, channel: Channel, member_ids: List[str]) -> int:
         """Create the room if needed and invite everyone who isn't in it yet.
 
@@ -233,6 +258,7 @@ class MatrixRoomSync:
             return 0
 
         members = self.room_members(room_id, alias)
+        self.ensure_member_admin(room_id, alias)
 
         invited = 0
         for user_id in member_ids:

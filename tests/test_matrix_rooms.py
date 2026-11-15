@@ -22,7 +22,14 @@ SERVER = "example.com"
 class FakeClient:
     """In-memory stand-in for `MatrixClient`, recording what was called."""
 
-    def __init__(self, rooms=None, members=None, invite_errors=(), published=()):
+    def __init__(
+        self,
+        rooms=None,
+        members=None,
+        invite_errors=(),
+        published=(),
+        power_levels=None,
+    ):
         # alias -> room id
         self.rooms = dict(rooms or {})
         # room id -> {user id: membership}
@@ -30,6 +37,10 @@ class FakeClient:
         self.invite_errors = set(invite_errors)
         # room ids listed in the server's public room directory
         self.published = set(published)
+        # room id -> m.room.power_levels content
+        self.power_levels = {
+            room: dict(content) for room, content in (power_levels or {}).items()
+        }
 
         self.server_name = SERVER
         self.user_domain = SERVER
@@ -68,6 +79,12 @@ class FakeClient:
 
     def room_members(self, room_id: str):
         return dict(self.members.get(room_id, {}))
+
+    def get_state_event(self, room_id: str, event_type: str):
+        return dict(self.power_levels.get(room_id, {"users_default": 0}))
+
+    def put_state_event(self, room_id: str, event_type: str, content) -> None:
+        self.power_levels[room_id] = dict(content)
 
     def invite(self, room_id: str, user_id: str) -> None:
         if user_id in self.invite_errors:
@@ -269,6 +286,64 @@ class TestRoomSync:
         make_sync(client, userlist).sync_group(group)
 
         assert [slug for slug, _ in client.created] == ["fragen-an-ag-struktur"]
+
+
+class TestMemberRights:
+    """Bot-created rooms are administered by all members, not just the bot."""
+
+    def test_new_rooms_grant_every_member_admin_rights(self, userlist):
+        client = FakeClient()
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.power_levels["!ag-struktur:example.com"]["users_default"] == 100
+
+    def test_existing_rooms_get_admin_rights_for_every_member(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+            power_levels={
+                "!room:example.com": {
+                    "users_default": 0,
+                    "users": {"@bot:example.com": 100},
+                }
+            },
+        )
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.power_levels["!room:example.com"] == {
+            "users_default": 100,
+            "users": {"@bot:example.com": 100},
+        }
+
+    def test_rooms_that_already_grant_admin_rights_are_left_alone(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+            power_levels={"!room:example.com": {"users_default": 100}},
+        )
+        calls = []
+        client.put_state_event = lambda *args: calls.append(args)
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert calls == []
+
+    def test_failing_power_level_update_does_not_stop_invites(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {}},
+        )
+
+        def refuse(room_id, event_type, content):
+            raise MatrixError("not allowed", status=403)
+
+        client.put_state_event = refuse
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert len(client.invites) == 2
 
 
 class TestRoomDirectory:
