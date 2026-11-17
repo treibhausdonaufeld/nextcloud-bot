@@ -1649,3 +1649,61 @@ mark {
 .attachment-download:hover {
   border-color: var(--pico-primary);
 }
+
+/* ---------- External API documentation ---------- */
+
+.api-docs h1 {
+  margin-bottom: 0.25rem;
+}
+
+.api-operation {
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.api-operation h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.api-method {
+  display: inline-block;
+  min-width: 3.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.api-auth {
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: 0.25rem 1.25rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.api-hint {
+  color: var(--pico-muted-color);
+  font-size: 0.875rem;
+}
+
+.api-result {
+  margin-top: 0.75rem;
+  max-height: 30rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.api-schema {
+  margin-bottom: 0.5rem;
+}

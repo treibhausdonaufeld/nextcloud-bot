@@ -33,6 +33,7 @@
               <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon">⌛</span> {{ _("Functions") }}</a></li>
               <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon">🚩</span> {{ _("Milestones") }}</a></li>
               <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon">📣</span> {{ _("Mentions") }}</a></li>
+              <li><a href="/api/docs" {% if current_path.startswith('/api') %}aria-current="page"{% endif %}><span class="icon">🔌</span> API</a></li>
             </ul>
           </nav>
           <form class="sidebar-lang" action="/lang" method="get">
@@ -49,7 +50,7 @@
         <main class="container-fluid">{% block content %}{% endblock %}</main>
       </div>
     </div>
-    {% set others_active = current_path.startswith('/functions') or current_path.startswith('/milestones') or current_path.startswith('/mentions') %}
+    {% set others_active = current_path.startswith('/functions') or current_path.startswith('/milestones') or current_path.startswith('/mentions') or current_path.startswith('/api') %}
     <nav class="bottom-nav" id="bottom-nav" aria-label="{{ _('Bottom navigation') }}">
       <a href="/logbook" class="bottom-nav-item" {% if current_path.startswith('/logbook') %}aria-current="page"{% endif %}>
         <span class="icon" aria-hidden="true">✅</span>
@@ -82,6 +83,7 @@
           <li><a href="/functions" {% if current_path.startswith('/functions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">⌛</span> {{ _("Functions") }}</a></li>
           <li><a href="/milestones" {% if current_path.startswith('/milestones') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🚩</span> {{ _("Milestones") }}</a></li>
           <li><a href="/mentions" {% if current_path.startswith('/mentions') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">📣</span> {{ _("Mentions") }}</a></li>
+          <li><a href="/api/docs" {% if current_path.startswith('/api') %}aria-current="page"{% endif %}><span class="icon" aria-hidden="true">🔌</span> API</a></li>
         </ul>
       </div>
     </nav>

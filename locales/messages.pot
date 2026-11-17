@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-15 14:53+0000\n"
+"POT-Creation-Date: 2026-11-17 08:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,41 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
+
+#, python-format
+msgid "%(name)s external API"
+msgstr ""
+
+msgid ""
+"Read-only access to the current group and member assignments. Access is "
+"controlled by the deployment's single sign-on; historical data (past "
+"roles and leaves) is not exposed."
+msgstr ""
+
+msgid "Available to anyone who can access this deployment."
+msgstr ""
+
+msgid "List all groups with their current members"
+msgstr ""
+
+msgid ""
+"Every active group with its parent group and the members that currently "
+"hold a role in it. Retired groups are not included."
+msgstr ""
+
+msgid "Current groups and their members"
+msgstr ""
+
+msgid "List all members with their current groups"
+msgstr ""
+
+msgid ""
+"Every current member with the groups and roles they hold right now. "
+"Members without a current group are included with an empty list."
+msgstr ""
+
+msgid "Current members and their groups"
+msgstr ""
 
 msgid "No Title"
 msgstr ""
@@ -125,6 +160,32 @@ msgstr ""
 msgid "Please manually a post in the channel #{protocols}"
 msgstr ""
 
+msgid "API documentation"
+msgstr ""
+
+msgid "OpenAPI document"
+msgstr ""
+
+msgid "Access"
+msgstr ""
+
+msgid ""
+"This API uses the same single sign-on as the rest of the application. "
+"Anyone who can access this deployment can read the current assignments."
+msgstr ""
+
+msgid "Endpoints"
+msgstr ""
+
+msgid "Try it out"
+msgstr ""
+
+msgid "Schemas"
+msgstr ""
+
+msgid "Example"
+msgstr ""
+
 msgid "Toggle navigation"
 msgstr ""
 
@@ -137,7 +198,7 @@ msgstr ""
 msgid "Members"
 msgstr ""
 
-msgid "Groups"
+msgid "Organigram"
 msgstr ""
 
 msgid "Mentions"

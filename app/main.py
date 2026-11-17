@@ -10,6 +10,12 @@ from ravyn import Gateway, Ravyn, Request, StaticFilesConfig, get
 from ravyn.core.config.template import TemplateConfig
 from ravyn.responses import RedirectResponse
 
+from app.controllers.api import (
+    api_docs,
+    api_groups,
+    api_members,
+    api_openapi,
+)
 from app.controllers.dashboard import search_results
 from app.controllers.groups import group_detail, groups_graph, groups_page
 from app.controllers.logbook import index, logbook_page
@@ -79,6 +85,10 @@ app = Ravyn(
     routes=[
         Gateway(handler=health),
         Gateway(handler=switch_language),
+        Gateway(handler=api_groups),
+        Gateway(handler=api_members),
+        Gateway(handler=api_openapi),
+        Gateway(handler=api_docs),
         Gateway(handler=index),
         Gateway(handler=search_results),
         Gateway(handler=groups_page),

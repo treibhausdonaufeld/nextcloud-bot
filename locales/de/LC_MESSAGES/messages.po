@@ -599,6 +599,77 @@ msgstr "Unter diesem Namen ist nichts gespeichert – die Gruppe oder der Benutz
 msgid "Recorded in"
 msgstr "Eingetragen in"
 
+#, python-format
+msgid "%(name)s external API"
+msgstr "Externe API von %(name)s"
+
+msgid ""
+"Read-only access to the current group and member assignments. Access is "
+"controlled by the deployment's single sign-on; historical data (past roles "
+"and leaves) is not exposed."
+msgstr ""
+"Schreibgeschützter Zugriff auf die aktuellen Gruppen- und Mitgliedszuordnungen. "
+"Der Zugriff wird durch das Single Sign-on der Installation geregelt; "
+"historische Daten (frühere Rollen und Karenzen) werden nicht bereitgestellt."
+
+msgid "Available to anyone who can access this deployment."
+msgstr "Für alle zugänglich, die auf diese Installation zugreifen können."
+
+msgid "List all groups with their current members"
+msgstr "Alle Gruppen mit ihren aktuellen Mitgliedern auflisten"
+
+msgid ""
+"Every active group with its parent group and the members that currently hold "
+"a role in it. Retired groups are not included."
+msgstr ""
+"Jede aktive Gruppe mit ihrer übergeordneten Gruppe und den Mitgliedern, die "
+"derzeit eine Rolle darin haben. Aufgelöste Gruppen sind nicht enthalten."
+
+msgid "Current groups and their members"
+msgstr "Aktuelle Gruppen und ihre Mitglieder"
+
+msgid "List all members with their current groups"
+msgstr "Alle Mitglieder mit ihren aktuellen Gruppen auflisten"
+
+msgid ""
+"Every current member with the groups and roles they hold right now. Members "
+"without a current group are included with an empty list."
+msgstr ""
+"Jedes aktuelle Mitglied mit den Gruppen und Rollen, die es derzeit hat. "
+"Mitglieder ohne aktuelle Gruppe werden mit einer leeren Liste ausgegeben."
+
+msgid "Current members and their groups"
+msgstr "Aktuelle Mitglieder und ihre Gruppen"
+
+msgid "API documentation"
+msgstr "API-Dokumentation"
+
+msgid "OpenAPI document"
+msgstr "OpenAPI-Dokument"
+
+msgid "Access"
+msgstr "Zugriff"
+
+msgid ""
+"This API uses the same single sign-on as the rest of the application. Anyone "
+"who can access this deployment can read the current assignments."
+msgstr ""
+"Diese API verwendet dasselbe Single Sign-on wie der Rest der Anwendung. Alle, "
+"die auf diese Installation zugreifen können, können die aktuellen Zuordnungen "
+"lesen."
+
+msgid "Endpoints"
+msgstr "Endpunkte"
+
+msgid "Try it out"
+msgstr "Ausprobieren"
+
+msgid "Schemas"
+msgstr "Schemata"
+
+msgid "Example"
+msgstr "Beispiel"
+
 #~ msgid "Hierarchical layout"
 #~ msgstr "Hierarchische Darstellung"
 

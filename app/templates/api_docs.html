@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ _("API documentation") }} – {{ settings.name }}{% endblock %}
+{% block content %}
+<article class="api-docs">
+  <header>
+    <h1>{{ spec.info.title }}</h1>
+    <p>{{ spec.info.description }}</p>
+    <p>
+      <a href="/api/openapi.json">{{ _("OpenAPI document") }}</a>
+    </p>
+  </header>
+
+  <section class="api-auth">
+    <h2>{{ _("Access") }}</h2>
+    <p>
+      {{ _("This API uses the same single sign-on as the rest of the application. Anyone who can access this deployment can read the current assignments.") }}
+    </p>
+  </section>
+
+  <section>
+    <h2>{{ _("Endpoints") }}</h2>
+    {% for path, item in spec.paths.items() %}
+      {% for method, operation in item.items() %}
+        <section class="api-operation">
+          <h3>
+            <span class="api-method api-method-{{ method }}">{{ method|upper }}</span>
+            <code>{{ path }}</code>
+          </h3>
+          <p><strong>{{ operation.summary }}</strong></p>
+          <p>{{ operation.description }}</p>
+          <button type="button" data-api-try data-path="{{ path }}" data-method="{{ method }}">
+            {{ _("Try it out") }}
+          </button>
+          <pre class="api-result" hidden></pre>
+        </section>
+      {% endfor %}
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2>{{ _("Schemas") }}</h2>
+    {% for name, schema in spec.components.schemas.items() %}
+      <details class="api-schema">
+        <summary><code>{{ name }}</code></summary>
+        <pre>{{ schema | tojson(indent=2) }}</pre>
+      </details>
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2>{{ _("Example") }}</h2>
+    <pre><code>curl {{ base_url }}/api/v1/groups</code></pre>
+  </section>
+</article>
+
+<script>
+  (function () {
+    document.querySelectorAll('[data-api-try]').forEach(function (button) {
+      button.addEventListener('click', async function () {
+        const result = button.parentElement.querySelector('.api-result');
+
+        result.hidden = false;
+        result.textContent = '…';
+
+        try {
+          const response = await fetch(button.dataset.path, {
+            method: button.dataset.method.toUpperCase(),
+            headers: { Accept: 'application/json' },
+          });
+          const text = await response.text();
+          let body = text;
+          try {
+            body = JSON.stringify(JSON.parse(text), null, 2);
+          } catch (error) {
+            /* keep the raw response */
+          }
+          result.textContent = 'HTTP ' + response.status + '\n\n' + body;
+        } catch (error) {
+          result.textContent = String(error);
+        }
+      });
+    });
+  })();
+</script>
+{% endblock %}

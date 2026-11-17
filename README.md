@@ -13,11 +13,37 @@ Features:
 - Protocol summaries
 - Logbook
 - Matrix chat rooms per group
+- Read-only external API for current group/member assignments
 
 A single [Ravyn](https://www.ravyn.dev/) application serves the web UI
 (Jinja2 + htmx + Pico.css) and runs the background sync/notification worker
 in-process. Data is stored in a SQLite file ([Edgy](https://edgy.dymmond.com/)
 ORM), with full-text search via SQLite FTS5.
+
+## External API
+
+Other programs can fetch the current group/member assignments over a read-only
+OpenAPI 3.1 API. Only the present is exposed — retired groups, past roles and
+leave history are not part of the response.
+
+The API uses the same single sign-on as the rest of the deployment: whoever
+can reach the application can call the endpoints. No separate token is
+required.
+
+The machine endpoints are served under `/api/v1/`:
+
+| Endpoint              | Contents                                                                                                                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/groups`  | Every active group with its `parent_group` and the members currently holding a role (`coordination`, `delegate`, `member`).  |
+| `GET /api/v1/members` | Every current member with the groups and roles they currently hold; members without a group are included with an empty list. |
+
+```bash
+curl https://nc-bot.example.com/api/v1/groups
+```
+
+The interactive documentation is at `/api/docs` (linked as **API** in the
+sidebar) and the raw OpenAPI document at `/api/openapi.json`. Both are behind
+the same login as the rest of the UI.
 
 TODOs:
 
