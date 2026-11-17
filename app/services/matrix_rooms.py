@@ -31,6 +31,7 @@ from urllib.parse import quote
 from app.services.matrix import (
     KNOWN_MEMBERSHIPS,
     MEMBER_POWER_LEVEL,
+    OPEN_JOIN_RULE,
     PERMISSIVE_EVENT_POWER_LEVELS,
     MatrixClient,
     MatrixError,
@@ -329,11 +330,11 @@ class MatrixRoomSync:
 
         Members may change name/topic/avatar, invite others and moderate
         content, but the address (`m.room.canonical_alias`), power levels,
-        encryption and federation-related state stay with the bot. Existing
-        explicit user levels are preserved; the bot is always made an admin.
-        A bot that may not change the event (e.g. a room it did not create)
-        only logs the failure — the invitation sync must not stop because of
-        it.
+        join rules, encryption and federation-related state stay with the bot.
+        Existing explicit user levels are preserved; the bot is always made an
+        admin. A bot that may not change the event (e.g. a room it did not
+        create) only logs the failure — the invitation sync must not stop
+        because of it.
         """
         try:
             content = self.client.get_state_event(room_id, "m.room.power_levels")
@@ -390,6 +391,31 @@ class MatrixRoomSync:
         except MatrixError as exc:
             logger.warning("Could not inspect Matrix room %s: %s", alias, exc)
 
+    def ensure_joinable(self, room_id: str, alias: str) -> None:
+        """Make sure members can join the room/space without an invite.
+
+        Rooms the bot creates already start out public, but a room or space
+        that existed before the sync (created by hand, imported, or left over
+        from an older setup) may still be invite-only or restricted. Matrix
+        lets us change `m.room.join_rules` after creation, so every sync
+        reopens it. Whether a *local* account may use that public join rule is
+        decided by the homeserver policy (the `group_gate` module), not here.
+        Failures are only logged: the invitation sync must not stop because of
+        a room the bot does not control.
+        """
+        try:
+            content = self.client.get_state_event(room_id, "m.room.join_rules")
+            if content.get("join_rule") == OPEN_JOIN_RULE:
+                return
+            self.client.put_state_event(
+                room_id, "m.room.join_rules", {"join_rule": OPEN_JOIN_RULE}
+            )
+            logger.info(
+                "Opened Matrix room %s to members (join_rule=%s)", alias, OPEN_JOIN_RULE
+            )
+        except MatrixError as exc:
+            logger.warning("Could not open Matrix room %s to members: %s", alias, exc)
+
     def ensure_chat_room(self, channel: Channel) -> Optional[str]:
         """Create/resolve a room and apply the membership/permission policy.
 
@@ -407,6 +433,7 @@ class MatrixRoomSync:
         if not self.ensure_joined(room_id, alias):
             return None
         self.ensure_permissions(room_id, alias)
+        self.ensure_joinable(room_id, alias)
         self.check_room_policy(room_id, alias)
         return room_id
 
@@ -439,6 +466,7 @@ class MatrixRoomSync:
                 return None
 
         self.ensure_permissions(room_id, alias)
+        self.ensure_joinable(room_id, alias)
         self.check_room_policy(room_id, alias)
         return room_id
 
@@ -489,7 +517,10 @@ class MatrixRoomSync:
             logger.warning("Could not create or resolve Matrix room %s", alias)
             return 0
 
+        if not self.ensure_joined(room_id, alias):
+            return 0
         self.ensure_permissions(room_id, alias)
+        self.ensure_joinable(room_id, alias)
         self.check_room_policy(room_id, alias)
         return self.invite_members(room_id, alias, member_ids)
 

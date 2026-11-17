@@ -90,11 +90,13 @@ which keeps them on this server. Membership is not restricted: every member
 may invite other users (`invite` is pinned to power level 0), and anyone on the
 server may join a room on their own. Members may also change the room title,
 topic and avatar, kick or ban, and redact messages. The room **address**
-(`m.room.canonical_alias`), power levels, encryption and federation-related
-state stay with the bot (admin power level 100). Rooms created before this
-policy are upgraded on the next sync; explicit per-user levels in an existing
-`m.room.power_levels` event are kept. Every sync re-checks the directory
-listing and restores it if a room was unlisted.
+(`m.room.canonical_alias`), power levels, join rule, encryption and
+federation-related state stay with the bot (admin power level 100). Rooms
+created before this policy are upgraded on the next sync; explicit per-user
+levels in an existing `m.room.power_levels` event are kept, and a room or space
+that was left invite-only or restricted is reopened (`m.room.join_rules:
+public`) so members can join it from the space tree. Every sync re-checks the
+directory listing and restores it if a room was unlisted.
 
 Federation and encryption are fixed when a room is created: Matrix has no
 supported way to un-federate or un-encrypt an existing room. New rooms are

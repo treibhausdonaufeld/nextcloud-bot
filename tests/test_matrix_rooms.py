@@ -31,6 +31,7 @@ class FakeClient:
         published=(),
         power_levels=None,
         spaces=(),
+        join_rules=None,
     ):
         # alias -> room id
         self.rooms = dict(rooms or {})
@@ -42,6 +43,10 @@ class FakeClient:
         # room id -> m.room.power_levels content
         self.power_levels = {
             room: dict(content) for room, content in (power_levels or {}).items()
+        }
+        # room id -> m.room.join_rules content
+        self.join_rules = {
+            room: dict(content) for room, content in (join_rules or {}).items()
         }
         self.spaces = set(spaces)
         self.create_content = {
@@ -77,6 +82,7 @@ class FakeClient:
         self.rooms[alias] = room_id
         self.members.setdefault(room_id, {"@bot:example.com": "join"})
         self.create_content[room_id] = {"m.federate": False}
+        self.join_rules[room_id] = {"join_rule": "public"}
         self.created.append((localpart, name))
         self.published.add(room_id)
         return room_id
@@ -87,6 +93,7 @@ class FakeClient:
         self.rooms[alias] = room_id
         self.members.setdefault(room_id, {"@bot:example.com": "join"})
         self.create_content[room_id] = {"m.federate": False, "type": "m.space"}
+        self.join_rules[room_id] = {"join_rule": "public"}
         self.spaces.add(room_id)
         self.created_spaces.append((localpart, name))
         self.published.add(room_id)
@@ -134,6 +141,8 @@ class FakeClient:
     def get_state_event(self, room_id: str, event_type: str, state_key: str = ""):
         if event_type == "m.room.power_levels":
             return dict(self.power_levels.get(room_id, {}))
+        if event_type == "m.room.join_rules":
+            return dict(self.join_rules.get(room_id, {}))
         if event_type == "m.room.create":
             return dict(self.create_content.get(room_id, {"m.federate": False}))
         if event_type == "m.room.encryption":
@@ -156,6 +165,8 @@ class FakeClient:
     def put_state_event(self, room_id: str, event_type: str, content) -> None:
         if event_type == "m.room.power_levels":
             self.power_levels[room_id] = dict(content)
+        elif event_type == "m.room.join_rules":
+            self.join_rules[room_id] = dict(content)
         elif event_type == "m.room.create":
             self.create_content[room_id] = dict(content)
         elif event_type == "m.room.encryption":
@@ -395,6 +406,51 @@ class TestMemberRights:
         assert levels["events"]["m.room.power_levels"] == 100
         # newer room versions reject the creator inside `users`
         assert "@bot:example.com" not in levels.get("users", {})
+
+    def test_new_rooms_are_open_to_members(self, userlist):
+        client = FakeClient()
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.join_rules["!ag-struktur:example.com"] == {"join_rule": "public"}
+
+    def test_existing_invite_only_room_is_reopened(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {"@bot:example.com": "join"}},
+            join_rules={"!room:example.com": {"join_rule": "invite"}},
+        )
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.join_rules["!room:example.com"] == {"join_rule": "public"}
+
+    def test_existing_restricted_room_is_reopened(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {"@bot:example.com": "join"}},
+            join_rules={
+                "!room:example.com": {
+                    "join_rule": "restricted",
+                    "allow": [
+                        {"type": "m.room_membership", "room_id": "!x:example.com"}
+                    ],
+                }
+            },
+        )
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert client.join_rules["!room:example.com"] == {"join_rule": "public"}
+
+    def test_members_may_not_change_the_join_rule(self, userlist):
+        client = FakeClient()
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        levels = client.power_levels["!ag-struktur:example.com"]
+        assert levels["events"]["m.room.join_rules"] == 100
+        assert levels["events"]["m.room.guest_access"] == 100
 
     def test_existing_rooms_are_upgraded_to_the_policy(self, userlist):
         client = FakeClient(
@@ -663,6 +719,18 @@ class TestChatStructure:
         assert levels["users_default"] == 50
         assert levels["invite"] == 0
         assert levels["events"]["m.room.canonical_alias"] == 100
+
+    def test_existing_private_space_is_opened(self, userlist):
+        client = FakeClient(
+            rooms={"#alle:example.com": "!alle:example.com"},
+            spaces={"!alle:example.com"},
+            members={"!alle:example.com": {"@bot:example.com": "join"}},
+            join_rules={"!alle:example.com": {"join_rule": "invite"}},
+        )
+
+        self._run(client, userlist, root_space="Alle")
+
+        assert client.join_rules["!alle:example.com"] == {"join_rule": "public"}
 
     def test_extra_spaces_become_spaces_with_regular_rooms(self, userlist):
         client = FakeClient()

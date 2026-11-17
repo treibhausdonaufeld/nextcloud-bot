@@ -134,6 +134,29 @@ class TestCreateRoom:
         assert levels["events"]["m.room.topic"] == 0
         assert levels["events"]["m.room.canonical_alias"] == 100
         assert levels["events"]["m.room.power_levels"] == 100
+        assert levels["events"]["m.room.join_rules"] == 100
+        assert levels["events"]["m.room.guest_access"] == 100
+
+    def test_room_is_created_joinable(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!new:example.com"}
+        )
+
+        client.create_public_room("ag-struktur", "AG Struktur")
+
+        _, _, payload = responses(client)[0]
+        join_rules = [
+            state
+            for state in payload["initial_state"]
+            if state["type"] == "m.room.join_rules"
+        ]
+        assert join_rules == [
+            {
+                "type": "m.room.join_rules",
+                "state_key": "",
+                "content": {"join_rule": "public"},
+            }
+        ]
 
     def test_room_is_created_without_encryption(self, client):
         client.session.request.return_value = FakeResponse(

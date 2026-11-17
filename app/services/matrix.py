@@ -41,8 +41,15 @@ KNOWN_MEMBERSHIPS = ("join", "invite", "knock", "leave", "ban")
 ADMIN_POWER_LEVEL = 100
 MEMBER_POWER_LEVEL = 50
 
+# Join rule of every bot-managed room/space. `public` means anybody on this
+# homeserver may join without an invite; who is allowed to do so is a Synapse
+# policy question (see the `group_gate` module), not a per-room one.
+OPEN_JOIN_RULE = "public"
+
 # State events a normal member may change. `m.room.canonical_alias` is pinned
-# to the admin level so the address stays stable.
+# to the admin level so the address stays stable, and `m.room.join_rules` /
+# `m.room.guest_access` so a member cannot accidentally close the room to
+# everybody else.
 PERMISSIVE_EVENT_POWER_LEVELS: Dict[str, int] = {
     "m.room.name": 0,
     "m.room.topic": 0,
@@ -52,6 +59,8 @@ PERMISSIVE_EVENT_POWER_LEVELS: Dict[str, int] = {
     "m.room.encryption": ADMIN_POWER_LEVEL,
     "m.room.tombstone": ADMIN_POWER_LEVEL,
     "m.room.server_acl": ADMIN_POWER_LEVEL,
+    "m.room.join_rules": ADMIN_POWER_LEVEL,
+    "m.room.guest_access": ADMIN_POWER_LEVEL,
 }
 
 
@@ -286,6 +295,11 @@ class MatrixClient:
             "creation_content": creation_content,
             "power_level_content_override": permissive_power_levels(),
             "initial_state": [
+                {
+                    "type": "m.room.join_rules",
+                    "state_key": "",
+                    "content": {"join_rule": OPEN_JOIN_RULE},
+                },
                 {
                     "type": "m.room.history_visibility",
                     "state_key": "",
