@@ -11,6 +11,11 @@ nextcloud:
   avatar_refresh_seconds: 86400
 
 organisation:
+  # Authentik groups that decide who counts as a member. Anyone in one of
+  # these groups may be invited to Matrix rooms and is listed on /members;
+  # everyone else is skipped, even when a wiki page still names them. Empty
+  # falls back to AUTH__MEMBER_GROUP_NAME (default "Mitglieder").
+  authentik_group_membership_required: [Mitglieder, Kinder]
   # Keywords that introduce additional Matrix chat channels on a group page,
   # e.g. "Chat-Kanäle: Fragen an AG Struktur, Termine". Each name becomes a
   # public room next to the group's own one (#fragen-an-ag-struktur, ...).
@@ -64,6 +69,12 @@ chat:
     - Dinge Teilen
     - Füreinander da
     - Protokolle
+
+  # Invite every member (everyone in the authentik groups listed in
+  # organisation.authentik_group_membership_required) to the root space and
+  # the root channels. Matrix only supports inviting someone — the bot cannot
+  # join them — and users who left or declined are not invited again.
+  root_channels_autojoin: true
 
   # Give each top-level group from the organigram (the configured top group
   # plus parentless groups, excluding the visual "Großgruppe") its own

@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 
 class OrganisationConfig(BaseModel):
     group_prefixes: List[str] = Field(default_factory=lambda: ["AG", "UG", "PG"])
+    # Names of the authentik groups that decide who counts as a member of the
+    # association. Someone in any of these groups is listed on /members and is
+    # the only kind of user invited to a Matrix room; everybody else (e.g. a
+    # former member still named on a wiki page) is skipped. Empty falls back
+    # to `AUTH__MEMBER_GROUP_NAME`, so existing deployments keep working.
+    authentik_group_membership_required: List[str] = Field(default_factory=list)
     group_shortname_keywords: List[str] = Field(
         default_factory=lambda: ["schlagwörter", "kurznamen", "shortnames"]
     )
@@ -461,6 +467,13 @@ class ChatConfig(BaseModel):
     # General rooms placed directly in the root space.
     root_channels: List[str] = Field(default_factory=list)
 
+    # Invite every member (the same authentik-filtered set as the group rooms)
+    # to the root space and to each `root_channels` room. Matrix only lets the
+    # bot *invite* foreign users — it cannot join them — so they still accept
+    # the invite. Existing membership events are respected: somebody who left
+    # or declined is not invited again.
+    root_channels_autojoin: bool = False
+
     # Give every top-level group from the organigram its own space
     # ("AG Haus" -> "AG Haus-space").
     space_per_toplevel_group: bool = False
@@ -485,6 +498,7 @@ class ChatConfig(BaseModel):
         aliases = {
             "root-space": "root_space",
             "root-channels": "root_channels",
+            "root-channels-autojoin": "root_channels_autojoin",
             "space-per-toplevel-group": "space_per_toplevel_group",
             "room-per-group": "room_per_group",
             "extra-spaces": "extra_spaces",

@@ -112,6 +112,7 @@ chat:
   root_channels:
     - Treibhaus Allgemein
     - Wichtigstes
+  root_channels_autojoin: true
   space_per_toplevel_group: true
   extra_spaces:
     Koordinations-Space:
@@ -128,6 +129,13 @@ chat:
   user promote itself, so the sync logs a warning instead.
 - `root_channels` are created as regular public rooms if needed and placed
   directly in the root space.
+- With `root_channels_autojoin: true`, every member is invited to the root
+  space and to each `root_channels` room. "Member" is the same authentik
+  group-filtered set as everywhere else (see
+  `organisation.authentik_group_membership_required`). Matrix only lets the
+  bot _invite_ another user, not join them, so the invite still has to be
+  accepted; existing membership events are respected, so someone who left or
+  declined is not invited again. It is off by default.
 - With `space_per_toplevel_group: true`, every top-level group from the
   organigram gets `<group>-space` (e.g. `AG Haus-space`). "Top-level" here
   means the configured top group (`organisation.top_group_name`, default
@@ -149,8 +157,9 @@ chat:
 The structure is reconciled with `uv run python cli.py sync-matrix` and once
 per worker iteration. Existing links are only written when they actually
 changed, so the sync does not flood the rooms with state events. Rooms created
-this way are public and not auto-joined by every member; users can join them
-through their space or the room directory.
+this way are public. Without `root_channels_autojoin` no member is invited to
+the root space or these channels; users can join them through their space or
+the room directory.
 
 #### Letting the bot publish rooms (Synapse)
 
@@ -179,13 +188,16 @@ rooms created while publication was denied are fixed without recreating
 them. `enable_room_list_search` must stay `true` as well, otherwise the
 directory search returns nothing regardless of what is published.
 
-Rooms that everybody belongs to — independent of any group — are configured
-as a comma-separated list. `MATRIX__DEFAULT_ROOMS="Allgemein, Ankündigungen"`
-creates `#allgemein` and `#ankuendigungen` and invites every member to them.
-These are reconciled once per worker iteration (not per page change), which
-is what picks up newly joined members. "Member" here means the same set the
-`/members` page shows: everyone in `AUTH__MEMBER_GROUP_NAME`, i.e. every
-enabled user when that setting is empty.
+The rooms everyone should be in are the `root_channels` of the `chat` block;
+with `root_channels_autojoin: true` the sync invites every member to them and
+to the root space, once per worker iteration (not per page change), which is
+what picks up newly joined members. "Member" here means the same set the
+`/members` page shows: everyone in one of the authentik groups listed in
+`organisation.authentik_group_membership_required` on the bot-config page. If
+that list is empty, `AUTH__MEMBER_GROUP_NAME` (default `Mitglieder`) is used;
+with both empty every enabled user counts as a member. The same filter applies
+to the group rooms: a person still named on a group page but no longer in a
+required authentik group is not invited.
 
 The feature is off until a homeserver and an access token are configured:
 
@@ -195,7 +207,6 @@ MATRIX__ADMIN_TOKEN=syt_...            # may create rooms and invite users
 MATRIX__SERVER_NAME=example.com        # alias domain, defaults to the URL host
 MATRIX__USER_DOMAIN=example.com        # user id domain, defaults to SERVER_NAME
 MATRIX__ROOM_PREFIX=                   # optional alias prefix, e.g. "thd-"
-MATRIX__DEFAULT_ROOMS=                 # rooms every member is invited to
 ```
 
 Invited user ids are built from the authentik username (the same handle used

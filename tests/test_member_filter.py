@@ -1,5 +1,6 @@
-"""Membership is decided by an authentik group (`AUTH__MEMBER_GROUP_NAME`)."""
+"""Membership is decided by the authentik groups in the bot config."""
 
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -40,49 +41,61 @@ def user_list(users):
     return NCUserList()
 
 
-def configured(group: str = "Mitglieder", base_url: str | None = AUTHENTIK_URL):
-    """Patch the member group and authentik connection settings."""
-    return (
-        patch.object(settings.auth, "member_group_name", group),
+@contextmanager
+def configured(
+    groups=("Mitglieder",),
+    base_url: str | None = AUTHENTIK_URL,
+    legacy_group: str = "Mitglieder",
+):
+    """Patch the required authentik groups, the connection and the legacy env."""
+    config = MagicMock()
+    config.organisation.authentik_group_membership_required = list(groups)
+    with (
+        patch("app.models.user.bot_config", config),
         patch.object(settings.auth, "authentik_base_url", base_url),
-    )
+        patch.object(settings.auth, "member_group_name", legacy_group),
+    ):
+        yield config
 
 
 class TestIsMember:
     def test_only_users_in_the_group_are_members(self, user_list, users):
-        group, url = configured()
-        with group, url:
+        with configured():
             assert user_list.is_member(users["alice"]) is True
             assert user_list.is_member(users["bob"]) is False
 
     def test_empty_group_name_lets_everyone_through(self, user_list, users):
-        group, url = configured(group="")
-        with group, url:
+        with configured(groups=(), legacy_group=""):
             assert user_list.member_filter_enabled() is False
             assert user_list.is_member(users["bob"]) is True
 
     def test_without_authentik_everyone_is_a_member(self, user_list, users):
-        group, url = configured(base_url=None)
-        with group, url:
+        with configured(base_url=None):
             assert user_list.member_filter_enabled() is False
             assert user_list.is_member(users["bob"]) is True
 
     def test_other_group_name_is_honoured(self, user_list, users):
-        group, url = configured(group="Vorstand")
-        with group, url:
+        with configured(groups=("Vorstand",)):
             assert user_list.is_member(users["alice"]) is True
             assert user_list.is_member(users["bob"]) is False
+
+    def test_any_of_several_required_groups_counts(self, user_list, users):
+        with configured(groups=("Mitglieder", "Kinder")):
+            assert user_list.is_member(users["alice"]) is True
+
+    def test_empty_bot_config_falls_back_to_the_env_group(self, user_list, users):
+        with configured(groups=(), legacy_group="Vorstand"):
+            assert user_list.required_authentik_groups() == ["Vorstand"]
+            assert user_list.is_member(users["alice"]) is True
 
 
 class TestGetMemberUsers:
     def test_disabled_users_are_excluded(self, user_list):
-        group, url = configured()
-        with group, url:
+        with configured():
             assert user_list.get_member_usernames() == ["alice"]
 
     def test_unfiltered_list_keeps_every_enabled_user(self, user_list):
-        group, url = configured(group="")
-        with group, url:
+        with configured(groups=(), legacy_group=""):
             assert user_list.get_member_usernames() == ["alice", "bob"]
 
     def test_without_synced_group_data_nobody_is_filtered_out(self, users):
@@ -94,11 +107,23 @@ class TestGetMemberUsers:
         NCUserList._cached_users = users
         user_list = NCUserList()
 
-        group, url = configured()
-        with group, url:
+        with configured():
             assert user_list.member_filter_configured() is True
             assert user_list.member_filter_enabled() is False
             assert user_list.get_member_usernames() == ["alice", "bob"]
+
+
+class TestFilterMembers:
+    def test_disabled_and_unknown_users_are_dropped(self, user_list):
+        with configured():
+            assert user_list.filter_members(["alice", "bob", "carol", "nobody"]) == [
+                "alice"
+            ]
+
+    def test_order_and_second_required_group_are_honoured(self, user_list, users):
+        users["bob"].authentik_groups = ["Kinder"]
+        with configured(groups=("Mitglieder", "Kinder")):
+            assert user_list.filter_members(["bob", "alice"]) == ["bob", "alice"]
 
 
 class TestUpdateFromAuthentik:
@@ -116,8 +141,7 @@ class TestUpdateFromAuthentik:
                 "groups_obj": [{"name": "Mitglieder"}, {"name": "Vorstand"}],
             }
         ]
-        group, url = configured()
-        with group, url:
+        with configured():
             with patch.object(settings.auth, "authentik_token", "token"):
                 with patch("app.models.user.requests.get") as get:
                     get.return_value = self._response(results)
@@ -130,8 +154,7 @@ class TestUpdateFromAuthentik:
 
     def test_missing_groups_key_keeps_the_stored_groups(self, user_list, users):
         results = [{"uuid": "bob", "username": "bob.berger"}]
-        group, url = configured()
-        with group, url:
+        with configured():
             with patch.object(settings.auth, "authentik_token", "token"):
                 with patch("app.models.user.requests.get") as get:
                     get.return_value = self._response(results)
@@ -148,8 +171,7 @@ class TestUpdateFromAuthentik:
                 "groups_obj": [{"name": "Interessierte"}],
             }
         ]
-        group, url = configured()
-        with group, url:
+        with configured():
             with patch.object(settings.auth, "authentik_token", "token"):
                 with patch("app.models.user.requests.get") as get:
                     get.return_value = self._response(results)

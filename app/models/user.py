@@ -1,11 +1,12 @@
 import logging
-from typing import Dict, List, Set
+from typing import ClassVar, Dict, Iterable, List, Set
 
 import edgy
 import requests
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.base import BaseDBModel
+from app.services.config import bot_config
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -348,16 +349,52 @@ class NCUserList:
             for u in sorted(self.get_enabled_users(), key=lambda u: u.displayname or "")
         ]
 
+    # `(bot_config object, resolved group names)`. The bot config is cached by
+    # LazyBotConfig anyway, so resolving it once keeps membership checks from
+    # touching the config page (and its retries) for every user.
+    _required_groups_cache: ClassVar[tuple[object, List[str]] | None] = None
+
+    @classmethod
+    def required_authentik_groups(cls) -> List[str]:
+        """Authentik groups that decide who counts as a member.
+
+        `organisation.authentik_group_membership_required` on the bot-config
+        page wins; while it is empty (e.g. on an older config page) the legacy
+        `AUTH__MEMBER_GROUP_NAME` setting is used, so existing deployments keep
+        their previous behaviour. An empty list on both means "no filter".
+        """
+        source = bot_config
+        cached = NCUserList._required_groups_cache
+        if cached is not None and cached[0] is source:
+            return list(cached[1])
+
+        try:
+            raw_groups = source.organisation.authentik_group_membership_required
+            groups = list(raw_groups or [])
+        except Exception:
+            # The config page is not reachable (yet); fall back to the env var
+            # instead of turning the filter off.
+            groups = []
+
+        names = [
+            name.strip() for name in groups if isinstance(name, str) and name.strip()
+        ]
+        if not names:
+            legacy = (settings.auth.member_group_name or "").strip()
+            names = [legacy] if legacy else []
+
+        NCUserList._required_groups_cache = (source, list(names))
+        return list(names)
+
     @staticmethod
     def member_filter_configured() -> bool:
         """Whether the settings ask for membership to be restricted.
 
-        Off when no group is configured (`AUTH__MEMBER_GROUP_NAME=""`) or when
-        authentik is not connected at all — without it there is no group data
-        to filter on.
+        Off when no group is configured or when authentik is not connected at
+        all — without it there is no group data to filter on.
         """
         return bool(
-            settings.auth.member_group_name and settings.auth.authentik_base_url
+            NCUserList.required_authentik_groups() and settings.auth.authentik_base_url
         )
 
     def member_filter_enabled(self) -> bool:
@@ -373,10 +410,25 @@ class NCUserList:
         return any(u.authentik_groups for u in self.users.values())
 
     def is_member(self, user: NCUser) -> bool:
-        """Whether the user belongs to the configured authentik member group."""
+        """Whether the user belongs to a configured authentik member group."""
         if not self.member_filter_enabled():
             return True
-        return settings.auth.member_group_name in (user.authentik_groups or [])
+        groups = set(user.authentik_groups or [])
+        return any(name in groups for name in NCUserList.required_authentik_groups())
+
+    def filter_members(self, usernames: Iterable[str]) -> List[str]:
+        """Keep the usernames that count as members, preserving their order.
+
+        Used where a list of names comes from a wiki page (e.g. the members of
+        a group): people who are disabled or not in a required authentik group
+        are left out, and so are names the user sync does not know at all.
+        """
+        members: List[str] = []
+        for username in usernames:
+            user = self.users.get(username)
+            if user is not None and user.enabled and self.is_member(user):
+                members.append(username)
+        return members
 
     def get_member_users(self) -> List[NCUser]:
         """Enabled users that belong to the configured member group."""

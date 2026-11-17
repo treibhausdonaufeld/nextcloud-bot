@@ -14,7 +14,6 @@ from app.services.matrix_rooms import (
     group_channels,
     space_channel,
     sync_chat_structure,
-    sync_default_rooms,
     sync_group_rooms,
 )
 
@@ -181,6 +180,7 @@ def userlist():
         Mock(username="uuid-alice"),
         Mock(username="uuid-bob"),
     ]
+    users.filter_members.side_effect = lambda usernames: list(usernames)
     return users
 
 
@@ -304,6 +304,20 @@ class TestRoomSync:
         make_sync(client, userlist).sync_group(make_group())
 
         assert [user for _, user in client.invites] == ["@bob.builder:example.com"]
+
+    def test_only_required_authentik_group_members_are_invited(self, userlist):
+        userlist.filter_members.side_effect = lambda usernames: [
+            name for name in usernames if name == "uuid-alice"
+        ]
+        client = FakeClient()
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        assert userlist.filter_members.call_args.args[0] == [
+            "uuid-alice",
+            "uuid-bob",
+        ]
+        assert [user for _, user in client.invites] == ["@alice:example.com"]
 
     def test_extra_channels_get_the_same_members(self, userlist):
         client = FakeClient()
@@ -498,82 +512,6 @@ class TestRoomDirectory:
         assert len(client.invites) == 2
 
 
-class TestDefaultRooms:
-    """`MATRIX__DEFAULT_ROOMS`: rooms every member belongs to."""
-
-    def defaults(self, rooms, prefix=""):
-        """Patch the configured default rooms for one call."""
-        return patch.multiple(
-            "app.services.matrix_rooms.settings.matrix",
-            default_rooms=rooms,
-            room_prefix=prefix,
-        )
-
-    def test_rooms_are_created_and_all_members_invited(self, userlist):
-        client = FakeClient()
-        with self.defaults(["Allgemein", "Ankündigungen"]):
-            make_sync(client, userlist).sync_defaults()
-
-        assert client.created == [
-            ("allgemein", "Allgemein"),
-            ("ankuendigungen", "Ankündigungen"),
-        ]
-        assert [user for _, user in client.invites] == [
-            "@alice:example.com",
-            "@bob.builder:example.com",
-            "@alice:example.com",
-            "@bob.builder:example.com",
-        ]
-
-    def test_nothing_happens_without_configured_rooms(self, userlist):
-        client = FakeClient()
-        with self.defaults([]):
-            make_sync(client, userlist).sync_defaults()
-
-        assert client.created == []
-        assert client.invites == []
-
-    def test_existing_members_are_not_re_invited(self, userlist):
-        client = FakeClient(
-            rooms={"#allgemein:example.com": "!room:example.com"},
-            members={"!room:example.com": {"@alice:example.com": "join"}},
-        )
-        with self.defaults(["Allgemein"]):
-            make_sync(client, userlist).sync_defaults()
-
-        assert client.created == []
-        assert [user for _, user in client.invites] == ["@bob.builder:example.com"]
-
-    def test_room_prefix_applies(self, userlist):
-        client = FakeClient()
-        with self.defaults(["Allgemein"], prefix="thd-"):
-            make_sync(client, userlist).sync_defaults()
-
-        assert [slug for slug, _ in client.created] == ["thd-allgemein"]
-
-    def test_only_member_users_are_invited(self, userlist):
-        client = FakeClient()
-        userlist.get_member_users.return_value = [Mock(username="uuid-alice")]
-
-        with self.defaults(["Allgemein"]):
-            make_sync(client, userlist).sync_defaults()
-
-        assert [user for _, user in client.invites] == ["@alice:example.com"]
-
-    def test_entry_point_is_disabled_without_configured_rooms(self):
-        with patch("app.services.matrix_rooms.matrix_enabled", return_value=True):
-            with patch("app.services.matrix_rooms.MatrixRoomSync") as factory:
-                with self.defaults([]):
-                    sync_default_rooms()
-
-        factory.assert_not_called()
-
-    def test_entry_point_never_raises(self, userlist):
-        sync = make_sync(FakeClient(), userlist)
-        with patch.object(sync, "sync_defaults", side_effect=RuntimeError("boom")):
-            sync_default_rooms(sync=sync)
-
-
 class TestChatStructure:
     """The `chat` block: root space, root channels, group and custom spaces."""
 
@@ -622,6 +560,99 @@ class TestChatStructure:
             ("!treibhaus-allgemein:example.com", "!alle:example.com"),
             ("!wichtigstes:example.com", "!alle:example.com"),
         ]
+
+    def test_autojoin_invites_members_to_the_space_and_root_channels(self, userlist):
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            root_space="Alle",
+            root_channels=["Allgemein", "Tratsch"],
+            root_channels_autojoin=True,
+        )
+
+        rooms = {"!alle:example.com", "!allgemein:example.com", "!tratsch:example.com"}
+        assert {(room, user) for room, user in client.invites} == {
+            (room, user)
+            for room in rooms
+            for user in ("@alice:example.com", "@bob.builder:example.com")
+        }
+
+    def test_autojoin_is_off_by_default(self, userlist):
+        client = FakeClient()
+
+        self._run(client, userlist, root_space="Alle", root_channels=["Allgemein"])
+
+        assert client.invites == []
+
+    def test_autojoin_respects_existing_membership(self, userlist):
+        client = FakeClient(
+            rooms={
+                "#alle:example.com": "!alle:example.com",
+                "#allgemein:example.com": "!allgemein:example.com",
+            },
+            spaces={"!alle:example.com"},
+            members={
+                "!alle:example.com": {
+                    "@bot:example.com": "join",
+                    # alice left the space earlier and must stay out
+                    "@alice:example.com": "leave",
+                },
+                "!allgemein:example.com": {"@bot:example.com": "join"},
+            },
+        )
+
+        self._run(
+            client,
+            userlist,
+            root_space="Alle",
+            root_channels=["Allgemein"],
+            root_channels_autojoin=True,
+        )
+
+        assert [
+            invite for invite in client.invites if invite[0] == "!alle:example.com"
+        ] == [("!alle:example.com", "@bob.builder:example.com")]
+        assert [
+            invite for invite in client.invites if invite[0] == "!allgemein:example.com"
+        ] == [
+            ("!allgemein:example.com", "@alice:example.com"),
+            ("!allgemein:example.com", "@bob.builder:example.com"),
+        ]
+
+    def test_autojoin_only_invites_configured_members(self, userlist):
+        userlist.get_member_users.return_value = [Mock(username="uuid-alice")]
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            root_space="Alle",
+            root_channels=["Allgemein"],
+            root_channels_autojoin=True,
+        )
+
+        assert {user for _, user in client.invites} == {"@alice:example.com"}
+
+    def test_autojoin_leaves_group_and_extra_spaces_alone(self, userlist):
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            groups=self._groups(),
+            root_space="Alle",
+            root_channels=["Allgemein"],
+            root_channels_autojoin=True,
+            space_per_toplevel_group=True,
+            extra_spaces={"Sonstiges-Space": ["Katzen"]},
+        )
+
+        assert {room for room, _ in client.invites} == {
+            "!alle:example.com",
+            "!allgemein:example.com",
+        }
 
     def test_root_space_gets_the_permissive_policy(self, userlist):
         client = FakeClient()
@@ -833,40 +864,6 @@ class TestSyncEntryPoint:
         sync = make_sync(FakeClient(), userlist)
         with patch.object(sync, "sync_group", side_effect=RuntimeError("boom")):
             sync_group_rooms(make_group(), sync=sync)
-
-
-class TestDefaultRoomsSetting:
-    """`MATRIX__DEFAULT_ROOMS` is a comma-separated env var."""
-
-    def rooms(self, monkeypatch, value):
-        from app.settings import Settings
-
-        monkeypatch.setenv("MATRIX__DEFAULT_ROOMS", value)
-        return Settings().matrix.default_rooms
-
-    def test_comma_separated_list(self, monkeypatch):
-        assert self.rooms(monkeypatch, "Allgemein, Ankündigungen") == [
-            "Allgemein",
-            "Ankündigungen",
-        ]
-
-    def test_single_room(self, monkeypatch):
-        assert self.rooms(monkeypatch, "Allgemein") == ["Allgemein"]
-
-    def test_json_list_is_accepted_too(self, monkeypatch):
-        assert self.rooms(monkeypatch, '["Allgemein", "Termine"]') == [
-            "Allgemein",
-            "Termine",
-        ]
-
-    def test_empty_value_means_no_default_rooms(self, monkeypatch):
-        assert self.rooms(monkeypatch, "") == []
-
-    def test_unset_means_no_default_rooms(self, monkeypatch):
-        from app.settings import Settings
-
-        monkeypatch.delenv("MATRIX__DEFAULT_ROOMS", raising=False)
-        assert Settings().matrix.default_rooms == []
 
 
 class TestChatChannelParsing:

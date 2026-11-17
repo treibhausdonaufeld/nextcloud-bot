@@ -192,11 +192,6 @@ def parent_space_id(
     return ""
 
 
-def default_channels() -> List[Channel]:
-    """The rooms every member belongs to (`MATRIX__DEFAULT_ROOMS`)."""
-    return channels_for(settings.matrix.default_rooms)
-
-
 def group_channel_links(group: "Group") -> List[Dict[str, str]]:
     """Alias and matrix.to link of every chat channel of the group.
 
@@ -461,22 +456,12 @@ class MatrixRoomSync:
                 "Could not add %s to Matrix space %s: %s", child_id, parent_id, exc
             )
 
-    def sync_channel(self, channel: Channel, member_ids: List[str]) -> int:
-        """Create the room if needed and invite everyone who isn't in it yet.
+    def invite_members(self, room_id: str, alias: str, member_ids: List[str]) -> int:
+        """Invite everyone who has no membership event in the room yet.
 
         Returns the number of invitations sent.
         """
-        alias = self.client.room_alias(channel.slug)
-
-        room_id = self.ensure_room(channel)
-        if not room_id:
-            logger.warning("Could not create or resolve Matrix room %s", alias)
-            return 0
-
         members = self.room_members(room_id, alias)
-        self.ensure_permissions(room_id, alias)
-        self.check_room_policy(room_id, alias)
-
         invited = 0
         for user_id in member_ids:
             if members.get(user_id) in KNOWN_MEMBERSHIPS:
@@ -491,6 +476,22 @@ class MatrixRoomSync:
             logger.info("Invited %s to Matrix room %s", user_id, alias)
 
         return invited
+
+    def sync_channel(self, channel: Channel, member_ids: List[str]) -> int:
+        """Create the room if needed and invite everyone who isn't in it yet.
+
+        Returns the number of invitations sent.
+        """
+        alias = self.client.room_alias(channel.slug)
+
+        room_id = self.ensure_room(channel)
+        if not room_id:
+            logger.warning("Could not create or resolve Matrix room %s", alias)
+            return 0
+
+        self.ensure_permissions(room_id, alias)
+        self.check_room_policy(room_id, alias)
+        return self.invite_members(room_id, alias, member_ids)
 
     def sync_channels(
         self, channels: List[Channel], member_ids: List[str], context: str
@@ -507,31 +508,17 @@ class MatrixRoomSync:
         return invited
 
     def sync_group(self, group: "Group") -> int:
-        """Sync every channel of one group. Returns the invitations sent."""
+        """Sync every channel of one group. Returns the invitations sent.
+
+        Only people who are members according to the authentik group filter
+        (`organisation.authentik_group_membership_required`) are invited, even
+        when the wiki page still names former members.
+        """
         return self.sync_channels(
             group_channels(group),
-            self.matrix_ids(group.all_members),
+            self.matrix_ids(self.userlist.filter_members(group.all_members)),
             context=f"group {group.name}",
         )
-
-    def sync_defaults(self) -> int:
-        """Sync the rooms every member belongs to (`MATRIX__DEFAULT_ROOMS`).
-
-        Membership follows the same rule as the member overview: everyone in
-        the configured authentik member group, i.e. every enabled user when
-        `AUTH__MEMBER_GROUP_NAME` is empty (see `NCUserList.is_member`).
-        """
-        channels = default_channels()
-        if not channels:
-            return 0
-
-        member_ids = self.matrix_ids(
-            user.username for user in self.userlist.get_member_users()
-        )
-        if not member_ids:
-            logger.warning("No members to invite to the default Matrix rooms")
-
-        return self.sync_channels(channels, member_ids, context="default rooms")
 
     def sync_chat_structure(self) -> None:
         """Create the configured space hierarchy (the `chat` config block).
@@ -539,7 +526,9 @@ class MatrixRoomSync:
         Layout:
 
         - `root_space` at the top,
-        - `root_channels` directly inside it,
+        - `root_channels` directly inside it (and, with
+          `root_channels_autojoin`, every member is invited to the space and
+          the channels),
         - one automatic `<group>-space` per top-level organigram group (unless
           the group is listed in an `extra_spaces` entry), containing the
           group's rooms,
@@ -568,6 +557,30 @@ class MatrixRoomSync:
             logger.warning("Could not create/resolve root Matrix space %s", root.name)
             return
 
+        # With `root_channels_autojoin`, everyone in the configured authentik
+        # member groups is invited to the root space and to each root channel.
+        # The bot cannot make another user join, so this sends invites.
+        autojoin_ids: List[str] = []
+        if chat.root_channels_autojoin:
+            autojoin_ids = self.matrix_ids(
+                user.username for user in self.userlist.get_member_users()
+            )
+            if not autojoin_ids:
+                logger.warning(
+                    "No members to invite to the Matrix root space and channels"
+                )
+
+        def autojoin(room_id: str, channel: Channel) -> None:
+            if not autojoin_ids:
+                return
+            alias = self.client.room_alias(channel.slug)
+            try:
+                self.invite_members(room_id, alias, autojoin_ids)
+            except MatrixError:
+                logger.exception("Could not invite members to Matrix room %s", alias)
+
+        autojoin(root_id, root)
+
         order = 0
 
         # General rooms directly below the root space.
@@ -576,6 +589,7 @@ class MatrixRoomSync:
             if room_id:
                 order += 1
                 self.link_space_child(root_id, room_id, order=order)
+                autojoin(room_id, channel)
 
         extra_children = {
             plain_name(name).casefold()
@@ -706,28 +720,6 @@ def sync_group_rooms(group: "Group", sync: Optional[MatrixRoomSync] = None) -> N
         logger.exception("Matrix room sync failed for group %s", group.name)
 
 
-def sync_default_rooms(
-    userlist: Optional["NCUserList"] = None, sync: Optional[MatrixRoomSync] = None
-) -> None:
-    """Entry point used by the worker: keep the all-member rooms in sync.
-
-    Unlike the group rooms these are not tied to a wiki page, so they are
-    reconciled once per worker iteration. Does nothing while
-    `MATRIX__DEFAULT_ROOMS` is empty, and never raises.
-    """
-    if sync is None and not settings.matrix.default_rooms:
-        return
-
-    sync = sync or _room_sync(userlist)
-    if sync is None:
-        return
-
-    try:
-        sync.sync_defaults()
-    except Exception:
-        logger.exception("Matrix default room sync failed")
-
-
 def sync_chat_structure(sync: Optional[MatrixRoomSync] = None) -> None:
     """Entry point used by the worker: reconcile the configured space tree.
 
@@ -749,7 +741,7 @@ def sync_chat_structure(sync: Optional[MatrixRoomSync] = None) -> None:
 
 
 def sync_all_groups() -> int:
-    """Sync all group rooms, the default rooms and the configured space tree."""
+    """Sync all group rooms and the configured space tree."""
     from app.models.group import Group
 
     sync = _room_sync()
@@ -757,7 +749,6 @@ def sync_all_groups() -> int:
         logger.info("Matrix is not configured, skipping chat room sync")
         return 0
 
-    sync_default_rooms(sync=sync)
     sync_chat_structure(sync=sync)
 
     # Retired groups are skipped: their room stays where it is, but nobody is
