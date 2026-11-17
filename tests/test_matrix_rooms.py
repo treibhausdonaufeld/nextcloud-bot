@@ -6,12 +6,14 @@ import pytest
 
 from app.models.collective_page import CollectivePage
 from app.models.group import Group
-from app.services.config import OrganisationConfig
+from app.services.config import ChatConfig, OrganisationConfig
 from app.services.matrix import MatrixError
 from app.services.matrix_rooms import (
     MatrixRoomSync,
     channel_slug,
     group_channels,
+    space_channel,
+    sync_chat_structure,
     sync_default_rooms,
     sync_group_rooms,
 )
@@ -29,6 +31,7 @@ class FakeClient:
         invite_errors=(),
         published=(),
         power_levels=None,
+        spaces=(),
     ):
         # alias -> room id
         self.rooms = dict(rooms or {})
@@ -41,19 +44,30 @@ class FakeClient:
         self.power_levels = {
             room: dict(content) for room, content in (power_levels or {}).items()
         }
+        self.spaces = set(spaces)
+        self.create_content = {
+            room: {"m.federate": False, "type": "m.space"} for room in self.spaces
+        }
+        self.encryption: dict[str, dict] = {}
 
         self.server_name = SERVER
         self.user_domain = SERVER
 
         self.created: list[tuple[str, str]] = []
+        self.created_spaces: list[tuple[str, str]] = []
         self.invites: list[tuple[str, str]] = []
         self.joined: list[str] = []
+        self.space_children: list[tuple[str, str, str]] = []
+        self.space_parents: list[tuple[str, str]] = []
 
     def room_alias(self, localpart: str) -> str:
         return f"#{localpart}:{self.server_name}"
 
     def user_id(self, localpart: str) -> str:
         return f"@{localpart}:{self.user_domain}"
+
+    def whoami(self) -> str:
+        return "@bot:example.com"
 
     def resolve_alias(self, alias: str):
         return self.rooms.get(alias)
@@ -62,10 +76,48 @@ class FakeClient:
         alias = self.room_alias(localpart)
         room_id = f"!{localpart}:{self.server_name}"
         self.rooms[alias] = room_id
-        self.members.setdefault(room_id, {})
+        self.members.setdefault(room_id, {"@bot:example.com": "join"})
+        self.create_content[room_id] = {"m.federate": False}
         self.created.append((localpart, name))
         self.published.add(room_id)
         return room_id
+
+    def create_space(self, localpart: str, name: str, topic: str = ""):
+        alias = self.room_alias(localpart)
+        room_id = f"!{localpart}:{self.server_name}"
+        self.rooms[alias] = room_id
+        self.members.setdefault(room_id, {"@bot:example.com": "join"})
+        self.create_content[room_id] = {"m.federate": False, "type": "m.space"}
+        self.spaces.add(room_id)
+        self.created_spaces.append((localpart, name))
+        self.published.add(room_id)
+        return room_id
+
+    def room_is_space(self, room_id: str) -> bool:
+        return room_id in self.spaces
+
+    def room_policy_violations(self, room_id: str):
+        problems = []
+        if (
+            self.create_content.get(room_id, {"m.federate": False}).get(
+                "m.federate", True
+            )
+            is not False
+        ):
+            problems.append("room is federated")
+        if self.encryption.get(room_id):
+            problems.append("room is encrypted")
+        return problems
+
+    def add_space_child(self, space_id: str, child_id: str, order: str = "") -> None:
+        if (space_id, child_id, order) in self.space_children:
+            return
+        self.space_children.append((space_id, child_id, order))
+
+    def add_space_parent(self, child_id: str, parent_id: str) -> None:
+        if (child_id, parent_id) in self.space_parents:
+            return
+        self.space_parents.append((child_id, parent_id))
 
     def directory_visibility(self, room_id: str) -> str:
         return "public" if room_id in self.published else "private"
@@ -80,11 +132,35 @@ class FakeClient:
     def room_members(self, room_id: str):
         return dict(self.members.get(room_id, {}))
 
-    def get_state_event(self, room_id: str, event_type: str):
-        return dict(self.power_levels.get(room_id, {"users_default": 0}))
+    def get_state_event(self, room_id: str, event_type: str, state_key: str = ""):
+        if event_type == "m.room.power_levels":
+            return dict(self.power_levels.get(room_id, {}))
+        if event_type == "m.room.create":
+            return dict(self.create_content.get(room_id, {"m.federate": False}))
+        if event_type == "m.room.encryption":
+            return dict(self.encryption.get(room_id, {}))
+        if event_type == "m.space.child":
+            for parent, child, order in self.space_children:
+                if parent == room_id and child == state_key:
+                    content: dict[str, object] = {"via": [self.server_name]}
+                    if order:
+                        content["order"] = order
+                    return content
+            return {}
+        if event_type == "m.space.parent":
+            for child, parent in self.space_parents:
+                if child == room_id and parent == state_key:
+                    return {"via": [self.server_name]}
+            return {}
+        return {}
 
     def put_state_event(self, room_id: str, event_type: str, content) -> None:
-        self.power_levels[room_id] = dict(content)
+        if event_type == "m.room.power_levels":
+            self.power_levels[room_id] = dict(content)
+        elif event_type == "m.room.create":
+            self.create_content[room_id] = dict(content)
+        elif event_type == "m.room.encryption":
+            self.encryption[room_id] = dict(content)
 
     def invite(self, room_id: str, user_id: str) -> None:
         if user_id in self.invite_errors:
@@ -289,51 +365,80 @@ class TestRoomSync:
 
 
 class TestMemberRights:
-    """Bot-created rooms are administered by all members, not just the bot."""
+    """Bot-managed rooms share one permissive but address-safe policy."""
 
-    def test_new_rooms_grant_every_member_admin_rights(self, userlist):
+    def test_new_rooms_get_the_permissive_policy(self, userlist):
         client = FakeClient()
 
         make_sync(client, userlist).sync_group(make_group())
 
-        assert client.power_levels["!ag-struktur:example.com"]["users_default"] == 100
+        levels = client.power_levels["!ag-struktur:example.com"]
+        assert levels["users_default"] == 50
+        assert levels["invite"] == 0
+        assert levels["events"]["m.room.name"] == 0
+        assert levels["events"]["m.room.topic"] == 0
+        assert levels["events"]["m.room.canonical_alias"] == 100
+        assert levels["events"]["m.room.power_levels"] == 100
+        # newer room versions reject the creator inside `users`
+        assert "@bot:example.com" not in levels.get("users", {})
 
-    def test_existing_rooms_get_admin_rights_for_every_member(self, userlist):
+    def test_existing_rooms_are_upgraded_to_the_policy(self, userlist):
         client = FakeClient(
             rooms={"#ag-struktur:example.com": "!room:example.com"},
-            members={"!room:example.com": {}},
+            members={"!room:example.com": {"@bot:example.com": "join"}},
             power_levels={
                 "!room:example.com": {
                     "users_default": 0,
-                    "users": {"@bot:example.com": 100},
+                    "users": {"@bot:example.com": 100, "@carol:example.com": 100},
                 }
             },
         )
 
         make_sync(client, userlist).sync_group(make_group())
 
-        assert client.power_levels["!room:example.com"] == {
-            "users_default": 100,
-            "users": {"@bot:example.com": 100},
-        }
+        levels = client.power_levels["!room:example.com"]
+        assert levels["users_default"] == 50
+        assert levels["invite"] == 0
+        assert levels["events"]["m.room.canonical_alias"] == 100
+        # explicit per-user levels are kept
+        assert levels["users"]["@carol:example.com"] == 100
 
-    def test_rooms_that_already_grant_admin_rights_are_left_alone(self, userlist):
-        client = FakeClient(
-            rooms={"#ag-struktur:example.com": "!room:example.com"},
-            members={"!room:example.com": {}},
-            power_levels={"!room:example.com": {"users_default": 100}},
-        )
+    def test_rooms_that_already_have_the_policy_are_left_alone(self, userlist):
+        client = FakeClient()
+        sync = make_sync(client, userlist)
+        sync.sync_group(make_group())
+
         calls = []
         client.put_state_event = lambda *args: calls.append(args)
 
-        make_sync(client, userlist).sync_group(make_group())
+        sync.sync_group(make_group())
 
         assert calls == []
+
+    def test_event_levels_above_the_bots_own_are_kept(self, userlist):
+        client = FakeClient(
+            rooms={"#ag-struktur:example.com": "!room:example.com"},
+            members={"!room:example.com": {"@bot:example.com": "join"}},
+            power_levels={
+                "!room:example.com": {
+                    "users_default": 0,
+                    "users": {"@bot:example.com": 100},
+                    "events": {"m.room.tombstone": 150, "m.room.name": 50},
+                }
+            },
+        )
+
+        make_sync(client, userlist).sync_group(make_group())
+
+        levels = client.power_levels["!room:example.com"]
+        assert levels["events"]["m.room.tombstone"] == 150
+        assert levels["events"]["m.room.name"] == 0
+        assert levels["events"]["m.room.canonical_alias"] == 100
 
     def test_failing_power_level_update_does_not_stop_invites(self, userlist):
         client = FakeClient(
             rooms={"#ag-struktur:example.com": "!room:example.com"},
-            members={"!room:example.com": {}},
+            members={"!room:example.com": {"@bot:example.com": "join"}},
         )
 
         def refuse(room_id, event_type, content):
@@ -467,6 +572,253 @@ class TestDefaultRooms:
         sync = make_sync(FakeClient(), userlist)
         with patch.object(sync, "sync_defaults", side_effect=RuntimeError("boom")):
             sync_default_rooms(sync=sync)
+
+
+class TestChatStructure:
+    """The `chat` block: root space, root channels, group and custom spaces."""
+
+    def _config(self, **kwargs):
+        config = MagicMock()
+        config.chat = ChatConfig(**kwargs)
+        config.organisation = OrganisationConfig()
+        return patch("app.services.config.bot_config", config)
+
+    def _groups(self):
+        return [
+            Group(name="Koordinationskreis", page_id=1),
+            Group(name="AG Haus", page_id=2),
+            Group(name="AG Struktur", page_id=3),
+            Group(name="UG IT", page_id=4, parent_group="AG Struktur"),
+            Group(name="Vorstand", page_id=5),
+            Group(name="Großgruppe", page_id=6),
+        ]
+
+    def _run(self, client, userlist, groups=None, **config):
+        with self._config(**config):
+            with patch.object(Group, "fetch_active", return_value=groups or []):
+                make_sync(client, userlist).sync_chat_structure()
+        return client
+
+    def test_root_space_and_channels_are_created_and_linked(self, userlist):
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            root_space="Alle",
+            root_channels=["Treibhaus Allgemein", "Wichtigstes"],
+        )
+
+        assert client.created_spaces == [("alle", "Alle")]
+        assert client.created == [
+            ("treibhaus-allgemein", "Treibhaus Allgemein"),
+            ("wichtigstes", "Wichtigstes"),
+        ]
+        assert client.space_children == [
+            ("!alle:example.com", "!treibhaus-allgemein:example.com", "01"),
+            ("!alle:example.com", "!wichtigstes:example.com", "02"),
+        ]
+        assert client.space_parents == [
+            ("!treibhaus-allgemein:example.com", "!alle:example.com"),
+            ("!wichtigstes:example.com", "!alle:example.com"),
+        ]
+
+    def test_root_space_gets_the_permissive_policy(self, userlist):
+        client = FakeClient()
+
+        self._run(client, userlist, root_space="Alle")
+
+        levels = client.power_levels["!alle:example.com"]
+        assert levels["users_default"] == 50
+        assert levels["invite"] == 0
+        assert levels["events"]["m.room.canonical_alias"] == 100
+
+    def test_extra_spaces_become_spaces_with_regular_rooms(self, userlist):
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            root_space="Alle",
+            extra_spaces={"Sonstiges-Space": ["Katzen", "Musik"]},
+        )
+
+        spaces = {name for _, name in client.created_spaces}
+        rooms = {name for _, name in client.created}
+        assert spaces == {"Alle", "Sonstiges-Space"}
+        assert rooms == {"Katzen", "Musik"}
+
+        extra_id = "!sonstiges-space:example.com"
+        assert ("!alle:example.com", extra_id, "01") in client.space_children
+        assert (extra_id, "!katzen:example.com", "01") in client.space_children
+        assert (extra_id, "!musik:example.com", "02") in client.space_children
+
+    def test_toplevel_groups_get_spaces_unless_listed_in_extra_spaces(self, userlist):
+        client = FakeClient()
+        groups = self._groups()
+
+        self._run(
+            client,
+            userlist,
+            groups=groups,
+            root_space="Alle",
+            space_per_toplevel_group=True,
+            extra_spaces={"Koordinations-Space": ["Koordinationskreis", "Vorstand"]},
+        )
+
+        spaces = {name for _, name in client.created_spaces}
+        # Koordinationskreis and Vorstand are covered by the custom space;
+        # Großgruppe is not a top-level organigram group.
+        assert spaces == {
+            "Alle",
+            "AG Haus-space",
+            "AG Struktur-space",
+            "Koordinations-Space",
+        }
+        # The group's own room goes into its automatic space.
+        assert (
+            "!ag-haus-space:example.com",
+            "!ag-haus:example.com",
+            "01",
+        ) in client.space_children
+        # Custom space children are regular rooms, not spaces.
+        assert (
+            "!koordinations-space:example.com",
+            "!koordinationskreis:example.com",
+            "01",
+        ) in client.space_children
+
+    def test_no_group_spaces_when_disabled(self, userlist):
+        client = FakeClient()
+
+        self._run(
+            client,
+            userlist,
+            groups=self._groups(),
+            root_space="Alle",
+            space_per_toplevel_group=False,
+        )
+
+        assert client.created_spaces == [("alle", "Alle")]
+
+    def test_room_per_group_nests_subgroup_rooms_in_parent_spaces(self, userlist):
+        client = FakeClient()
+        groups = [
+            Group(name="Koordinationskreis", page_id=1),
+            Group(name="AG Haus", page_id=2),
+            Group(name="UG Mobilität", page_id=3, parent_group="AG Haus"),
+            Group(name="RT Bücher", page_id=4, parent_group="UG Mobilität"),
+            Group(name="UAG Test", page_id=5, parent_group="Koordinationskreis"),
+        ]
+
+        self._run(
+            client,
+            userlist,
+            groups=groups,
+            root_space="Alle",
+            space_per_toplevel_group=True,
+            room_per_group=True,
+            extra_spaces={"Koordinations-Space": ["Koordinationskreis"]},
+        )
+
+        created = {name for _, name in client.created}
+        assert {"AG Haus", "UG Mobilität", "RT Bücher", "UAG Test"} <= created
+
+        links = set(client.space_children)
+        assert (
+            "!ag-haus-space:example.com",
+            "!ug-mobilitaet:example.com",
+            "",
+        ) in links
+        # deeper levels use the nearest ancestor that has a space
+        assert (
+            "!ag-haus-space:example.com",
+            "!rt-buecher:example.com",
+            "",
+        ) in links
+        # a parent covered by extra_spaces uses that custom space
+        assert (
+            "!koordinations-space:example.com",
+            "!uag-test:example.com",
+            "",
+        ) in links
+
+    def test_room_per_group_disabled_leaves_subgroup_rooms_alone(self, userlist):
+        client = FakeClient()
+        groups = [
+            Group(name="Koordinationskreis", page_id=1),
+            Group(name="AG Haus", page_id=2),
+            Group(name="UG Mobilität", page_id=3, parent_group="AG Haus"),
+        ]
+
+        self._run(
+            client,
+            userlist,
+            groups=groups,
+            root_space="Alle",
+            space_per_toplevel_group=True,
+            room_per_group=False,
+        )
+
+        assert "UG Mobilität" not in {name for _, name in client.created}
+
+    def test_parent_space_walks_up_to_the_nearest_space(self):
+        from app.services.matrix_rooms import parent_space_id
+
+        groups = {
+            "ag haus": Group(name="AG Haus", page_id=1),
+            "ug mobilität": Group(
+                name="UG Mobilität", page_id=2, parent_group="AG Haus"
+            ),
+        }
+
+        assert (
+            parent_space_id("UG Mobilität", {"ag haus": "!space"}, {}, groups)
+            == "!space"
+        )
+
+    def test_existing_root_space_is_reused(self, userlist):
+        client = FakeClient(
+            rooms={"#alle:example.com": "!existing-root:example.com"},
+            members={"!existing-root:example.com": {"@bot:example.com": "join"}},
+            spaces={"!existing-root:example.com"},
+            power_levels={"!existing-root:example.com": {"users_default": 0}},
+        )
+
+        self._run(client, userlist, root_space="Alle")
+
+        assert client.created_spaces == []
+        assert client.power_levels["!existing-root:example.com"]["users_default"] == 50
+
+    def test_existing_regular_room_with_the_root_alias_is_left_alone(self, userlist):
+        client = FakeClient(
+            rooms={"#alle:example.com": "!not-a-space:example.com"},
+            members={"!not-a-space:example.com": {"@bot:example.com": "join"}},
+        )
+
+        self._run(client, userlist, root_space="Alle", root_channels=["Tratsch"])
+
+        assert client.created_spaces == []
+        assert client.created == []
+
+    def test_no_root_space_means_no_structure(self, userlist):
+        client = FakeClient()
+
+        self._run(client, userlist, root_space="", root_channels=["Tratsch"])
+
+        assert client.created == []
+        assert client.created_spaces == []
+
+    def test_entry_point_never_raises(self, userlist):
+        sync = make_sync(FakeClient(), userlist)
+        with patch.object(
+            sync, "sync_chat_structure", side_effect=RuntimeError("boom")
+        ):
+            sync_chat_structure(sync=sync)
+
+    def test_space_channel_uses_the_room_prefix(self):
+        with patch("app.services.matrix_rooms.settings.matrix.room_prefix", "thd-"):
+            assert space_channel("AG Haus-space").slug == "thd-ag-haus-space"
 
 
 class TestSyncEntryPoint:

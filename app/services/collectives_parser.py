@@ -12,6 +12,7 @@ from app.models.member_leave import MemberLeave
 from app.models.protocol import Protocol
 from app.services.config import BotConfig, bot_config
 from app.services.matrix_rooms import sync_group_rooms
+from app.textnorm import plain_name
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,24 @@ def retire_stale_groups() -> None:
 
         if Group.is_archived_path(page.full_path):
             logger.info("Retiring archived group %s (%s)", group.name, page.full_path)
+            group.retire()
+            continue
+
+        # The page id still exists but no longer describes this group: it was
+        # repurposed (e.g. turned into a protocol page, which keeps the id of
+        # the group page it replaces) or renamed out of the group namespace.
+        # Without this the row would stay active forever and keep its chat
+        # room, even though no group page backs it any more.
+        names = Group.valid_group_names(page.full_path)
+        current = plain_name(names[0]) if names else ""
+        if current.casefold() != plain_name(group.name).casefold():
+            logger.info(
+                "Retiring group %s: page %s (%s) now belongs to %s",
+                group.name,
+                group.page_id,
+                page.full_path,
+                current or "no group",
+            )
             group.retire()
 
 

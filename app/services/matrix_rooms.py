@@ -31,6 +31,7 @@ from urllib.parse import quote
 from app.services.matrix import (
     KNOWN_MEMBERSHIPS,
     MEMBER_POWER_LEVEL,
+    PERMISSIVE_EVENT_POWER_LEVELS,
     MatrixClient,
     MatrixError,
     matrix_enabled,
@@ -109,6 +110,86 @@ def channels_for(names: Iterable[str]) -> List[Channel]:
 def group_channels(group: "Group") -> List[Channel]:
     """All channels of a group: its own room plus the extra ones from the page."""
     return channels_for([group.name, *(group.chat_channels or [])])
+
+
+def room_channel(name: str) -> Optional[Channel]:
+    """One regular room from a config entry, or None when the name is empty."""
+    channels = channels_for([name])
+    return channels[0] if channels else None
+
+
+def space_channel(name: str) -> Optional[Channel]:
+    """A space from a display name, sharing the room prefix/slug rules.
+
+    Spaces use the same slug as a room would, so `root_space: Alle` becomes
+    `#alle:server` and `AG Haus-space` becomes `#ag-haus-space:server`.
+    """
+    channels = channels_for([name])
+    return channels[0] if channels else None
+
+
+# The organigram hides this special group and so does the automatic space
+# creation; it is a visual grouping, not a top-level group.
+EXCLUDED_TOPLEVEL_GROUPS = {"Großgruppe"}
+
+
+def toplevel_groups(groups: Iterable["Group"]) -> List["Group"]:
+    """The groups the organigram draws on the top level.
+
+    That is the top group itself (`organisation.top_group_name`) plus every
+    active group without a parent, excluding the visual "Großgruppe". These
+    are the groups that get an automatic `-space` when configured.
+    """
+    from app.services.config import bot_config
+
+    top_name = bot_config.organisation.top_group_name
+    candidates = sorted(
+        (group for group in groups if group.is_active),
+        key=lambda group: (group.name.casefold(), group.name),
+    )
+    top = next((group for group in candidates if group.name == top_name), None)
+
+    result: List["Group"] = [top] if top is not None else []
+    result.extend(
+        group
+        for group in candidates
+        if group is not top
+        and not group.parent_group
+        and group.name not in EXCLUDED_TOPLEVEL_GROUPS
+    )
+    return result
+
+
+def parent_space_id(
+    parent_name: str,
+    auto_spaces: Dict[str, str],
+    custom_spaces: Dict[str, str],
+    groups_by_name: Dict[str, "Group"],
+) -> str:
+    """Space id of the nearest ancestor that has a space.
+
+    `UG Mobilität` has no space of its own; its parent `AG Haus` has one, so
+    the room belongs in `AG Haus-space`. Deeper levels walk up until they find
+    an automatic top-level space or a custom `extra_spaces` entry.
+    """
+    seen: set[str] = set()
+    name = (parent_name or "").strip()
+
+    while name:
+        key = plain_name(name).casefold()
+        if not key or key in seen:
+            break
+        seen.add(key)
+
+        if key in auto_spaces:
+            return auto_spaces[key]
+        if key in custom_spaces:
+            return custom_spaces[key]
+
+        parent = groups_by_name.get(key)
+        name = parent.parent_group if parent and parent.parent_group else ""
+
+    return ""
 
 
 def default_channels() -> List[Channel]:
@@ -221,28 +302,163 @@ class MatrixRoomSync:
             self.client.join_room(alias)
             return self.client.room_members(room_id)
 
-    def ensure_member_admin(self, room_id: str, alias: str) -> None:
-        """Give every member the same rights as the bot (`users_default`).
+    def ensure_joined(self, room_id: str, alias: str) -> bool:
+        """Make sure the bot is joined, so it may manage the room.
 
-        New rooms are created with `users_default` set to `MEMBER_POWER_LEVEL`;
-        this updates rooms created before that rule, so their members become
-        full admins on the next sync. The rest of the `m.room.power_levels`
-        event (explicit per-user levels in particular) is kept as it is. A bot
-        that may not change the event (e.g. a room it did not create) only
-        logs the failure — the invitation sync must not stop because of it.
+        The bot is the creator of everything it creates, but root spaces,
+        channels and group spaces may already exist from an earlier setup or
+        from manual work. Joining is idempotent and also accepts a pending
+        invite. Returns False when joining was refused.
+        """
+        try:
+            members = self.client.room_members(room_id)
+            bot_id = self.client.whoami()
+            if not bot_id or members.get(bot_id) == "join":
+                return True
+            logger.info("Joining Matrix room %s to manage it", alias)
+            self.client.join_room(alias)
+            return True
+        except MatrixError as exc:
+            if exc.status in (401, 403):
+                try:
+                    self.client.join_room(alias)
+                    return True
+                except MatrixError as join_exc:
+                    logger.warning("Could not join Matrix room %s: %s", alias, join_exc)
+                    return False
+            logger.warning("Could not check membership of %s: %s", alias, exc)
+            return False
+
+    def ensure_permissions(self, room_id: str, alias: str) -> None:
+        """Apply the permissive room policy to an existing room or space.
+
+        Members may change name/topic/avatar, invite others and moderate
+        content, but the address (`m.room.canonical_alias`), power levels,
+        encryption and federation-related state stay with the bot. Existing
+        explicit user levels are preserved; the bot is always made an admin.
+        A bot that may not change the event (e.g. a room it did not create)
+        only logs the failure — the invitation sync must not stop because of
+        it.
         """
         try:
             content = self.client.get_state_event(room_id, "m.room.power_levels")
-            if content.get("users_default") == MEMBER_POWER_LEVEL:
+            desired = dict(content)
+
+            # Do not add the bot to `users`: newer room versions reject the
+            # creator appearing there ("Creator user ... must not appear in
+            # content.users") and the creator already has ADMIN_POWER_LEVEL
+            # implicitly. Explicit entries for other users are preserved.
+            users = dict(desired.get("users") or {})
+            bot_id = self.client.whoami()
+            bot_level = users.get(bot_id, desired.get("users_default", 0))
+
+            events = dict(desired.get("events") or {})
+            for event_type, target in PERMISSIVE_EVENT_POWER_LEVELS.items():
+                current = events.get(event_type)
+                if current is not None and current > bot_level:
+                    # Synapse refuses to change an event level above the
+                    # sender's own level (e.g. a pre-existing tombstone at
+                    # 150). Keeping the more restrictive value is safe.
+                    continue
+                events[event_type] = target
+
+            desired.update(
+                {
+                    "users_default": MEMBER_POWER_LEVEL,
+                    "invite": 0,
+                    "kick": MEMBER_POWER_LEVEL,
+                    "ban": MEMBER_POWER_LEVEL,
+                    "redact": MEMBER_POWER_LEVEL,
+                    "state_default": MEMBER_POWER_LEVEL,
+                    "events": events,
+                }
+            )
+
+            if desired == content:
                 return
-            content["users_default"] = MEMBER_POWER_LEVEL
-            self.client.put_state_event(room_id, "m.room.power_levels", content)
-            logger.info("Granted every member admin rights in Matrix room %s", alias)
+            self.client.put_state_event(room_id, "m.room.power_levels", desired)
+            logger.info("Updated permissions in Matrix room %s", alias)
         except MatrixError as exc:
             logger.warning(
-                "Could not grant member admin rights in Matrix room %s: %s",
-                alias,
-                exc,
+                "Could not update permissions in Matrix room %s: %s", alias, exc
+            )
+
+    def check_room_policy(self, room_id: str, alias: str) -> None:
+        """Warn about existing rooms that violate the local/unencrypted policy.
+
+        Federation and encryption are fixed when the room is created and
+        cannot be changed afterwards, so the sync can only report these.
+        """
+        try:
+            for problem in self.client.room_policy_violations(room_id):
+                logger.warning("Matrix room %s: %s", alias, problem)
+        except MatrixError as exc:
+            logger.warning("Could not inspect Matrix room %s: %s", alias, exc)
+
+    def ensure_chat_room(self, channel: Channel) -> Optional[str]:
+        """Create/resolve a room and apply the membership/permission policy.
+
+        Used for rooms that are not tied to a member list (root channels and
+        the children of custom spaces): no invitations are sent, but the room
+        is public, listed in the directory and carries the common power
+        levels.
+        """
+        alias = self.client.room_alias(channel.slug)
+        room_id = self.ensure_room(channel)
+        if not room_id:
+            logger.warning("Could not create or resolve Matrix room %s", alias)
+            return None
+
+        if not self.ensure_joined(room_id, alias):
+            return None
+        self.ensure_permissions(room_id, alias)
+        self.check_room_policy(room_id, alias)
+        return room_id
+
+    def ensure_space(self, channel: Channel) -> Optional[str]:
+        """Create/resolve a Matrix space and apply the shared room policy."""
+        alias = self.client.room_alias(channel.slug)
+        room_id = self.client.resolve_alias(alias)
+
+        if room_id:
+            if not self.ensure_joined(room_id, alias):
+                return None
+            try:
+                if not self.client.room_is_space(room_id):
+                    logger.warning(
+                        "Matrix alias %s exists but is not a space; leaving it alone",
+                        alias,
+                    )
+                    return None
+            except MatrixError as exc:
+                logger.warning("Could not inspect Matrix space %s: %s", alias, exc)
+                return None
+            self.ensure_published(room_id, alias)
+        else:
+            room_id = self.client.create_space(channel.slug, channel.name)
+            if not room_id:
+                logger.warning("Could not create Matrix space %s", alias)
+                return None
+            logger.info("Created Matrix space %s (%s)", alias, room_id)
+            if not self.ensure_joined(room_id, alias):
+                return None
+
+        self.ensure_permissions(room_id, alias)
+        self.check_room_policy(room_id, alias)
+        return room_id
+
+    def link_space_child(self, parent_id: str, child_id: str, order: int = 0) -> None:
+        """Put a room/space into a space and record the inverse parent link."""
+        if not parent_id or not child_id or parent_id == child_id:
+            return
+        try:
+            self.client.add_space_child(
+                parent_id, child_id, order=f"{order:02d}" if order else ""
+            )
+            self.client.add_space_parent(child_id, parent_id)
+        except MatrixError as exc:
+            logger.warning(
+                "Could not add %s to Matrix space %s: %s", child_id, parent_id, exc
             )
 
     def sync_channel(self, channel: Channel, member_ids: List[str]) -> int:
@@ -258,7 +474,8 @@ class MatrixRoomSync:
             return 0
 
         members = self.room_members(room_id, alias)
-        self.ensure_member_admin(room_id, alias)
+        self.ensure_permissions(room_id, alias)
+        self.check_room_policy(room_id, alias)
 
         invited = 0
         for user_id in member_ids:
@@ -316,6 +533,151 @@ class MatrixRoomSync:
 
         return self.sync_channels(channels, member_ids, context="default rooms")
 
+    def sync_chat_structure(self) -> None:
+        """Create the configured space hierarchy (the `chat` config block).
+
+        Layout:
+
+        - `root_space` at the top,
+        - `root_channels` directly inside it,
+        - one automatic `<group>-space` per top-level organigram group (unless
+          the group is listed in an `extra_spaces` entry), containing the
+          group's rooms,
+        - every `extra_spaces` key as a space, its children as regular rooms,
+          attached to the root space,
+        - with `room_per_group`, a room for every group, with subgroup rooms
+          nested in the nearest ancestor space ("UG Mobilität" under
+          "AG Haus-space").
+        """
+        from app.models.group import Group
+        from app.services.config import bot_config
+
+        try:
+            chat = bot_config.chat
+        except Exception:
+            logger.exception("Could not load the Matrix chat configuration")
+            return
+
+        root = space_channel(chat.root_space)
+        if root is None:
+            logger.debug("No Matrix root_space configured, skipping space sync")
+            return
+
+        root_id = self.ensure_space(root)
+        if not root_id:
+            logger.warning("Could not create/resolve root Matrix space %s", root.name)
+            return
+
+        order = 0
+
+        # General rooms directly below the root space.
+        for channel in channels_for(chat.root_channels):
+            room_id = self.ensure_chat_room(channel)
+            if room_id:
+                order += 1
+                self.link_space_child(root_id, room_id, order=order)
+
+        extra_children = {
+            plain_name(name).casefold()
+            for names in chat.extra_spaces.values()
+            for name in names
+            if plain_name(name)
+        }
+
+        active_groups = (
+            Group.fetch_active(limit=10000)
+            if chat.space_per_toplevel_group or chat.room_per_group
+            else []
+        )
+        groups_by_name = {group.name.casefold(): group for group in active_groups}
+        auto_spaces: Dict[str, str] = {}
+        custom_spaces: Dict[str, str] = {}
+        group_room_ids: Dict[str, str] = {}
+
+        # One space per top-level group, containing that group's rooms.
+        if chat.space_per_toplevel_group:
+            for group in toplevel_groups(active_groups):
+                if group.name.casefold() in extra_children:
+                    logger.info(
+                        "Skipping automatic space for %s: listed in extra_spaces",
+                        group.name,
+                    )
+                    continue
+
+                space = space_channel(f"{group.name}-space")
+                if space is None:
+                    continue
+                space_id = self.ensure_space(space)
+                if not space_id:
+                    continue
+                auto_spaces[group.name.casefold()] = space_id
+
+                child_order = 0
+                group_channels_list = group_channels(group)
+                for index, channel in enumerate(group_channels_list):
+                    room_id = self.ensure_chat_room(channel)
+                    if room_id:
+                        child_order += 1
+                        self.link_space_child(space_id, room_id, order=child_order)
+                        if index == 0:
+                            group_room_ids[group.name.casefold()] = room_id
+
+                order += 1
+                self.link_space_child(root_id, space_id, order=order)
+
+        # Manually curated spaces and their regular rooms.
+        for space_name, child_names in chat.extra_spaces.items():
+            extra_space = space_channel(space_name)
+            if extra_space is None:
+                continue
+            extra_space_id = self.ensure_space(extra_space)
+            if not extra_space_id:
+                continue
+
+            child_order = 0
+            for child_name in child_names:
+                child_channel = room_channel(child_name)
+                if child_channel is None:
+                    continue
+                room_id = self.ensure_chat_room(child_channel)
+                if room_id:
+                    child_order += 1
+                    self.link_space_child(extra_space_id, room_id, order=child_order)
+                    custom_spaces[plain_name(child_name).casefold()] = extra_space_id
+
+            order += 1
+            self.link_space_child(root_id, extra_space_id, order=order)
+
+        # Optionally create a room for every group and nest subgroup rooms
+        # under the nearest ancestor space ("UG Mobilität" -> AG Haus-space).
+        if chat.room_per_group:
+            for group in sorted(
+                active_groups, key=lambda item: (item.name.casefold(), item.name)
+            ):
+                group_channels_list = group_channels(group)
+                if not group_channels_list:
+                    continue
+
+                key = group.name.casefold()
+                room_id = group_room_ids.get(key)
+                if not room_id:
+                    room_id = self.ensure_chat_room(group_channels_list[0])
+                    if room_id:
+                        group_room_ids[key] = room_id
+                if not room_id or not group.parent_group:
+                    continue
+
+                target_space = parent_space_id(
+                    group.parent_group, auto_spaces, custom_spaces, groups_by_name
+                )
+                if target_space:
+                    self.link_space_child(target_space, room_id)
+                else:
+                    logger.debug(
+                        "No parent space for group %s, leaving its room unlinked",
+                        group.name,
+                    )
+
 
 def _room_sync(userlist: Optional["NCUserList"] = None) -> Optional[MatrixRoomSync]:
     """Build a sync, or None when Matrix is not configured/reachable."""
@@ -366,8 +728,28 @@ def sync_default_rooms(
         logger.exception("Matrix default room sync failed")
 
 
+def sync_chat_structure(sync: Optional[MatrixRoomSync] = None) -> None:
+    """Entry point used by the worker: reconcile the configured space tree.
+
+    The structure lives in the bot-config `chat` block and is independent of
+    a single group page, so it is reconciled once per worker iteration. Never
+    raises: a chat outage must not break the rest of the sync.
+    """
+    if sync is None and not matrix_enabled():
+        return
+
+    sync = sync or _room_sync()
+    if sync is None:
+        return
+
+    try:
+        sync.sync_chat_structure()
+    except Exception:
+        logger.exception("Matrix chat structure sync failed")
+
+
 def sync_all_groups() -> int:
-    """Sync all group rooms and the default rooms (manual/backfill run)."""
+    """Sync all group rooms, the default rooms and the configured space tree."""
     from app.models.group import Group
 
     sync = _room_sync()
@@ -376,6 +758,7 @@ def sync_all_groups() -> int:
         return 0
 
     sync_default_rooms(sync=sync)
+    sync_chat_structure(sync=sync)
 
     # Retired groups are skipped: their room stays where it is, but nobody is
     # invited into a group that no longer exists.

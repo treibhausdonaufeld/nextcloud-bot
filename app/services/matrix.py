@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 from uuid import uuid4
 
@@ -34,11 +34,45 @@ MAX_RATE_LIMIT_RETRIES = 3
 # left alone instead of being invited again on the next page edit.
 KNOWN_MEMBERSHIPS = ("join", "invite", "knock", "leave", "ban")
 
-# Power level of every member in a bot-created room. The homeserver grants the
-# creator 100; setting `users_default` to the same makes all members full
-# admins (change name/topic, kick, ban, redact, edit power levels), so the
-# rooms are not administered by the bot alone.
-MEMBER_POWER_LEVEL = 100
+# Power levels used in bot-managed rooms and spaces. Members are deliberately
+# trusted with day-to-day room management (title, topic, invites, kicking and
+# redacting) but not with changing the room address or the power levels
+# themselves — otherwise they could escalate or make the room unfindable.
+ADMIN_POWER_LEVEL = 100
+MEMBER_POWER_LEVEL = 50
+
+# State events a normal member may change. `m.room.canonical_alias` is pinned
+# to the admin level so the address stays stable.
+PERMISSIVE_EVENT_POWER_LEVELS: Dict[str, int] = {
+    "m.room.name": 0,
+    "m.room.topic": 0,
+    "m.room.avatar": 0,
+    "m.room.canonical_alias": ADMIN_POWER_LEVEL,
+    "m.room.power_levels": ADMIN_POWER_LEVEL,
+    "m.room.encryption": ADMIN_POWER_LEVEL,
+    "m.room.tombstone": ADMIN_POWER_LEVEL,
+    "m.room.server_acl": ADMIN_POWER_LEVEL,
+}
+
+
+def permissive_power_levels() -> Dict[str, Any]:
+    """The `m.room.power_levels` content shared by every managed room/space.
+
+    Members may rename the room, change its topic/avatar and invite others
+    (`invite: 0`); they can also kick/ban/redact. Only the bot (admin level
+    100) may change the address, power levels, encryption or federation
+    related state. Existing per-user entries are preserved by the caller when
+    this is merged into an existing event.
+    """
+    return {
+        "users_default": MEMBER_POWER_LEVEL,
+        "invite": 0,
+        "kick": MEMBER_POWER_LEVEL,
+        "ban": MEMBER_POWER_LEVEL,
+        "redact": MEMBER_POWER_LEVEL,
+        "state_default": MEMBER_POWER_LEVEL,
+        "events": dict(PERMISSIVE_EVENT_POWER_LEVELS),
+    }
 
 
 class MatrixError(RuntimeError):
@@ -213,24 +247,44 @@ class MatrixClient:
         outsiders), and `m.federate: false` keeps the room on this homeserver
         — note that this can only be decided at creation time.
 
-        `power_level_content_override` pins `invite` to 0 so every member can
-        add other users, and `users_default` to `MEMBER_POWER_LEVEL` so every
-        member is a full admin of the room just like the bot (the homeserver
-        grants the creator 100).
+        `power_level_content_override` follows `permissive_power_levels()`:
+        every member may change name/topic/avatar and invite others, while
+        only the bot may change the address or the power levels. No
+        `m.room.encryption` initial state is sent, so the room stays
+        unencrypted.
 
         Returns the new room id, or the existing one if another process won
         the race for the alias.
         """
+        return self._create_room(localpart, name, topic=topic)
+
+    def create_space(self, localpart: str, name: str, topic: str = "") -> Optional[str]:
+        """Create a public, server-local Matrix space (type `m.space`).
+
+        Spaces use the same permissive permissions and local-only/federated
+        policy as rooms; the only difference is the `type: m.space` creation
+        content. Children are attached afterwards with `add_space_child()`.
+        """
+        return self._create_room(localpart, name, topic=topic, room_type="m.space")
+
+    def _create_room(
+        self,
+        localpart: str,
+        name: str,
+        topic: str = "",
+        room_type: str = "",
+    ) -> Optional[str]:
+        creation_content: Dict[str, Any] = {"m.federate": False}
+        if room_type:
+            creation_content["type"] = room_type
+
         payload: Dict[str, Any] = {
             "room_alias_name": localpart,
             "name": name,
             "visibility": "public",
             "preset": "public_chat",
-            "creation_content": {"m.federate": False},
-            "power_level_content_override": {
-                "invite": 0,
-                "users_default": MEMBER_POWER_LEVEL,
-            },
+            "creation_content": creation_content,
+            "power_level_content_override": permissive_power_levels(),
             "initial_state": [
                 {
                     "type": "m.room.history_visibility",
@@ -278,6 +332,66 @@ class MatrixClient:
             {"visibility": "public"},
         )
 
+    # --- spaces -------------------------------------------------------------
+
+    def add_space_child(self, space_id: str, child_id: str, order: str = "") -> None:
+        """Attach a room or space to a space (`m.space.child`).
+
+        The current event is read first so an already-correct link is not
+        rewritten on every sync (each write would add another state event to
+        the room).
+        """
+        content: Dict[str, Any] = {"via": [self.server_name]}
+        if order:
+            content["order"] = order
+        existing = self.get_state_event(space_id, "m.space.child", child_id)
+        if existing.get("via") == content["via"] and existing.get(
+            "order"
+        ) == content.get("order"):
+            return
+        self._request(
+            "PUT",
+            f"{API}/rooms/{quote(space_id, safe='')}"
+            f"/state/m.space.child/{quote(child_id, safe='')}",
+            content,
+        )
+
+    def add_space_parent(self, child_id: str, parent_id: str) -> None:
+        """Record the inverse hierarchy link in the child (`m.space.parent`)."""
+        content: Dict[str, Any] = {"via": [self.server_name]}
+        existing = self.get_state_event(child_id, "m.space.parent", parent_id)
+        if existing.get("via") == content["via"]:
+            return
+        self._request(
+            "PUT",
+            f"{API}/rooms/{quote(child_id, safe='')}"
+            f"/state/m.space.parent/{quote(parent_id, safe='')}",
+            content,
+        )
+
+    def room_is_space(self, room_id: str) -> bool:
+        """Whether the room's creation event declares it as a Matrix space."""
+        create = self.get_state_event(room_id, "m.room.create")
+        return create.get("type") == "m.space"
+
+    def room_policy_violations(self, room_id: str) -> List[str]:
+        """Describe immutable room properties that do not match our policy.
+
+        Federation and encryption can only be *created* correctly: Matrix has
+        no supported way to un-federate or un-encrypt an existing room. This
+        helper lets the sync log violations instead of silently believing it
+        fixed them.
+        """
+        problems: List[str] = []
+        create = self.get_state_event(room_id, "m.room.create")
+        if create.get("m.federate", True) is not False:
+            problems.append(
+                "room is federated (m.federate can only be set at creation)"
+            )
+        if self.get_state_event(room_id, "m.room.encryption"):
+            problems.append("room is encrypted (encryption cannot be disabled)")
+        return problems
+
     def room_members(self, room_id: str) -> Dict[str, str]:
         """Map user id -> membership for every member event of the room."""
         body = self._request("GET", f"{API}/rooms/{quote(room_id, safe='')}/members")
@@ -289,14 +403,22 @@ class MatrixClient:
                 members[str(user_id)] = str(membership)
         return members
 
-    def get_state_event(self, room_id: str, event_type: str) -> Dict[str, Any]:
-        """Content of a room state event with an empty state key; `{}` if unset."""
+    def get_state_event(
+        self, room_id: str, event_type: str, state_key: str = ""
+    ) -> Dict[str, Any]:
+        """Content of a room state event; `{}` if unset.
+
+        With an empty `state_key` the endpoint for the empty-key event is
+        used; pass a state key for events such as `m.space.child` /
+        `m.space.parent`.
+        """
+        path = (
+            f"{API}/rooms/{quote(room_id, safe='')}/state/{quote(event_type, safe='')}"
+        )
+        if state_key:
+            path += f"/{quote(state_key, safe='')}"
         try:
-            return self._request(
-                "GET",
-                f"{API}/rooms/{quote(room_id, safe='')}"
-                f"/state/{quote(event_type, safe='')}",
-            )
+            return self._request("GET", path)
         except MatrixError as exc:
             if exc.status == 404 or exc.errcode == "M_NOT_FOUND":
                 return {}

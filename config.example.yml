@@ -46,6 +46,61 @@ organisation:
     - archiv
     - archive
 
+# Matrix space/room organisation. The bot creates/reconciles this tree on
+# every sync and CLI `sync-matrix` run. Spaces and rooms are public,
+# server-local (not federated), unencrypted, and let members change the
+# title/topic and invite others while keeping the room address and power
+# levels with the bot. Requires MATRIX__HOMESERVER_URL and MATRIX__ADMIN_TOKEN.
+chat:
+  # Top-level space; empty disables the whole structure sync.
+  root_space: Alle
+
+  # General rooms created directly inside the root space.
+  root_channels:
+    - Treibhaus Allgemein
+    - Wichtigstes
+    - Tratsch
+    - Computer Hilfe
+    - Dinge Teilen
+    - Füreinander da
+    - Protokolle
+
+  # Give each top-level group from the organigram (the configured top group
+  # plus parentless groups, excluding the visual "Großgruppe") its own
+  # "<group>-space" containing the group's rooms.
+  space_per_toplevel_group: true
+
+  # Create a room for every group (including subgroups) and put subgroup
+  # rooms into the nearest ancestor space: "UG Mobilität" -> "AG Haus-space".
+  # Parents covered by an extra_spaces entry use that custom space instead.
+  room_per_group: true
+
+  # Manually curated spaces. Each key becomes a space, each listed child
+  # becomes a regular room inside it; all of them hang below root_space.
+  # A top-level group listed here does not get an automatic "-space"; its
+  # normal group room is put into this custom space instead.
+  extra_spaces:
+    Koordinations-Space:
+      - Koordinationskreis
+      - Vorstand
+    Sonstiges-Space:
+      - Gemeinsame Aktivitäten
+      - Hausmeisterei
+      - Treibhäusl
+      - Werkzeugkoordination
+      - Radreparatur
+      - Beschaffung
+      - Katzen
+      - Kindergärten und Schulen
+      - GeLa Ochsenherz
+      - Kinder und Jugendliche
+      - Kleinkindkollektiv
+      - Lindy Hop
+      - Bouldern und Klettern
+      - Eisbaden
+      - Gemeinsam Kochen
+      - Musik
+
 deck_reminder:
   enabled: true
   cards_processed_storage: processed_cards.json

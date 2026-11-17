@@ -13,6 +13,7 @@ Features:
 - Protocol summaries
 - Logbook
 - Matrix chat rooms per group
+- Matrix spaces for general channels and top-level groups
 - Read-only external API for current group/member assignments
 
 A single [Ravyn](https://www.ravyn.dev/) application serves the web UI
@@ -86,17 +87,70 @@ left alone, so nobody is removed or pestered with a second invitation.
 The rooms are public, listed in this homeserver's room directory (so every
 local user can find them by searching) and created with `m.federate: false`,
 which keeps them on this server. Membership is not restricted: every member
-may add other users (`invite` is pinned to power level 0), and anyone on the
-server may join a room on their own. Every member is also a full admin of the
-room (`users_default` is 100, the same level the homeserver gives the bot as
-creator): members can change name and topic, kick or ban, redact messages and
-edit the power levels. Rooms created before that rule are upgraded on the next
-sync; explicit per-user levels in an existing `m.room.power_levels` event are
-kept. Every sync re-checks the directory listing and restores it if a room was
-unlisted, but federation is fixed when a room is created and cannot be changed
-afterwards — rooms created before this existed stay federated. If the
-homeserver refuses the listing, the sync logs a warning and carries on
-inviting.
+may invite other users (`invite` is pinned to power level 0), and anyone on the
+server may join a room on their own. Members may also change the room title,
+topic and avatar, kick or ban, and redact messages. The room **address**
+(`m.room.canonical_alias`), power levels, encryption and federation-related
+state stay with the bot (admin power level 100). Rooms created before this
+policy are upgraded on the next sync; explicit per-user levels in an existing
+`m.room.power_levels` event are kept. Every sync re-checks the directory
+listing and restores it if a room was unlisted.
+
+Federation and encryption are fixed when a room is created: Matrix has no
+supported way to un-federate or un-encrypt an existing room. New rooms are
+created local-only (`m.federate: false`) and unencrypted; if an existing room
+violates that, the sync logs a warning but cannot change it.
+
+### Spaces
+
+The optional `chat` block on the bot-config page organises the rooms into
+Matrix spaces:
+
+```yaml
+chat:
+  root_space: Alle
+  root_channels:
+    - Treibhaus Allgemein
+    - Wichtigstes
+  space_per_toplevel_group: true
+  extra_spaces:
+    Koordinations-Space:
+      - Koordinationskreis
+      - Vorstand
+    Sonstiges-Space:
+      - Katzen
+      - Musik
+```
+
+- `root_space` becomes the top-level space (`#alle`). The bot joins it; when
+  the bot creates it, it is the owner/admin. An existing space created by
+  somebody else must grant the bot admin first — Matrix doesn't let a normal
+  user promote itself, so the sync logs a warning instead.
+- `root_channels` are created as regular public rooms if needed and placed
+  directly in the root space.
+- With `space_per_toplevel_group: true`, every top-level group from the
+  organigram gets `<group>-space` (e.g. `AG Haus-space`). "Top-level" here
+  means the configured top group (`organisation.top_group_name`, default
+  `Koordinationskreis`) plus groups without a parent, excluding the visual
+  `Großgruppe` — the same set the organigram draws at the top. The group's
+  own room(s) are placed in that space.
+- With `room_per_group: true`, every group also gets a room, and subgroup
+  rooms are placed in the nearest ancestor space: `UG Mobilität` goes into
+  `AG Haus-space`, and a group below `Koordinationskreis` goes into the
+  custom `Koordinations-Space` when that is where its parent is listed.
+  Deeper levels walk up until they find an automatic or custom space.
+- Every `extra_spaces` entry becomes a space; its children become regular
+  rooms and are placed inside it. All extra spaces and automatic group spaces
+  are attached to the root space.
+- A top-level group listed as a child of an `extra_spaces` entry does not get
+  an automatic `-space`; its normal group room is placed in the custom space
+  instead (e.g. `Koordinationskreis` in `Koordinations-Space`).
+
+The structure is reconciled with `uv run python cli.py sync-matrix` and once
+per worker iteration. Existing links are only written when they actually
+changed, so the sync does not flood the rooms with state events. Rooms created
+this way are public and not auto-joined by every member; users can join them
+through their space or the room directory.
 
 #### Letting the bot publish rooms (Synapse)
 

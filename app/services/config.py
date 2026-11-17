@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import Dict, List, Optional
 
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.settings import settings
 
@@ -445,6 +445,53 @@ class NotifierConfig(BaseModel):
     channels: Dict[str, List[str]] = Field(default_factory=dict)
 
 
+class ChatConfig(BaseModel):
+    """Matrix space/room organisation configured on the bot-config page.
+
+    The ``chat`` block is optional. When ``root_space`` is empty the structure
+    sync is disabled; otherwise the bot creates the root space, the root
+    channels and the configured extra spaces, and keeps the group spaces and
+    their rooms nested below them.
+    """
+
+    # Name of the root space that contains the general channels and every
+    # other space. Empty disables the whole structure sync.
+    root_space: str = ""
+
+    # General rooms placed directly in the root space.
+    root_channels: List[str] = Field(default_factory=list)
+
+    # Give every top-level group from the organigram its own space
+    # ("AG Haus" -> "AG Haus-space").
+    space_per_toplevel_group: bool = False
+
+    # Create a room for every group (including subgroups) and place subgroup
+    # rooms in the space of their parent group ("UG Mobilität" under
+    # "AG Haus-space"). Parent spaces come from `space_per_toplevel_group`
+    # or from an `extra_spaces` entry listing the parent.
+    room_per_group: bool = False
+
+    # Manually curated spaces: space display name -> regular room names that
+    # belong in it. A top-level group listed here does not get an automatic
+    # space; its existing group room is placed in the custom space instead.
+    extra_spaces: Dict[str, List[str]] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_kebab_case(cls, data):
+        """Accept both `root_space` and `root-space` spellings."""
+        if not isinstance(data, dict):
+            return data
+        aliases = {
+            "root-space": "root_space",
+            "root-channels": "root_channels",
+            "space-per-toplevel-group": "space_per_toplevel_group",
+            "room-per-group": "room_per_group",
+            "extra-spaces": "extra_spaces",
+        }
+        return {aliases.get(key, key): value for key, value in data.items()}
+
+
 class BotConfig(BaseModel):
     # time to sleep between runs in minutes
     sleep_minutes: int = 30
@@ -463,6 +510,7 @@ class BotConfig(BaseModel):
     # file for the host-side mailbox provisioner; see app/services/mailbox_sync.
     mailbox: Dict[str, MailboxItem] = Field(default_factory=dict)
     notifier: NotifierConfig = NotifierConfig()
+    chat: ChatConfig = ChatConfig()
 
     data: Dict = {}
 

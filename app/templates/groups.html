@@ -10,7 +10,6 @@
     <input type="hidden" name="limit_group" value="{{ limit_group }}" />
     <input type="hidden" name="limit_user" value="{{ limit_user }}" />
     <input type="hidden" name="solver" value="{{ solver }}" />
-    <input type="hidden" name="height" value="{{ height }}" />
     <label>
       <input type="checkbox" name="with_members" value="true" {% if with_members %}checked{% endif %} onchange="this.form.submit()" />
       {{ _("With Members") }}
@@ -18,6 +17,19 @@
     <label>
       <input type="checkbox" name="with_subgroups" value="true" {% if with_subgroups %}checked{% endif %} onchange="this.form.submit()" />
       {{ _("With Subgroups") }}
+    </label>
+    <label>
+      {{ _("Graph Height") }}
+      <input
+        id="graph-height"
+        type="number"
+        name="height"
+        value="{{ height }}"
+        min="300"
+        max="1200"
+        step="1"
+        style="width: 6rem"
+      />
     </label>
   </form>
 
@@ -64,16 +76,71 @@
         {% endfor %}
       </select>
     </label>
-    <label>
-      {{ _("Graph Height") }}
-      <input type="number" name="height" value="{{ height }}" min="300" max="1200" step="100" onchange="this.form.submit()" style="width: 6rem" />
-    </label>
   </form>
 
   {% include "partials/detail_dialog.html" %}
 
   <script src="/static/vis-network.min.js"></script>
   <script>
+    // The graph is drawn client-side, so its height needs no server round
+    // trip. The chosen value is kept in sessionStorage (per browser tab) and
+    // re-applied after every form submission or reload; the hidden `height`
+    // fields of the other forms are kept in sync so a submission does not
+    // reset it either.
+    let groupNetwork = null;
+    (function () {
+      const storageKey = 'groupsGraphHeight';
+      const defaultHeight = {{ height | tojson }};
+      const minHeight = 300;
+      const maxHeight = 1200;
+      const input = document.getElementById('graph-height');
+      const graph = document.getElementById('graph');
+      const hiddenHeightInputs = document.querySelectorAll(
+        'input[type="hidden"][name="height"]'
+      );
+
+      function clampHeight(value) {
+        const parsed = Number.parseInt(value, 10);
+        if (!Number.isFinite(parsed)) return defaultHeight;
+        return Math.min(maxHeight, Math.max(minHeight, parsed));
+      }
+
+      function applyHeight(value, persist) {
+        const height = clampHeight(value);
+        graph.style.height = height + 'px';
+        input.value = height;
+        hiddenHeightInputs.forEach(function (field) {
+          field.value = height;
+        });
+        // vis-network sizes its canvas when it is created; after a change the
+        // canvas has to be told about the new container height explicitly.
+        if (groupNetwork) {
+          groupNetwork.setSize('100%', height + 'px');
+        }
+        if (persist) {
+          try {
+            sessionStorage.setItem(storageKey, String(height));
+          } catch (error) {
+            /* storage unavailable: the height still applies for this view */
+          }
+        }
+      }
+
+      let storedHeight = null;
+      try {
+        storedHeight = sessionStorage.getItem(storageKey);
+      } catch (error) {
+        /* ignore unavailable storage */
+      }
+      if (storedHeight !== null) {
+        applyHeight(storedHeight, false);
+      }
+
+      input.addEventListener('change', function () {
+        applyHeight(input.value, true);
+      });
+    })();
+
     {# tojson JSON-encodes each value (and HTML-escapes the JSON for safe
        embedding in <script>), unlike raw string interpolation below — which
        would have Jinja's autoescaping turn a "&" in the name into "&amp;",
@@ -108,6 +175,8 @@
             interaction: { hover: true },
           }
         );
+        groupNetwork = network;
+        groupNetwork.setSize('100%', container.style.height);
         // 'click' rather than 'selectNode': the latter only fires when the
         // selection actually changes, so reopening the dialog for the node
         // that is already selected would do nothing.

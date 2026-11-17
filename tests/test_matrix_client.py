@@ -120,7 +120,7 @@ class TestCreateRoom:
         _, _, payload = responses(client)[0]
         assert payload["power_level_content_override"]["invite"] == 0
 
-    def test_every_member_is_a_room_admin(self, client):
+    def test_members_may_manage_but_not_change_the_address(self, client):
         client.session.request.return_value = FakeResponse(
             body={"room_id": "!new:example.com"}
         )
@@ -128,7 +128,40 @@ class TestCreateRoom:
         client.create_public_room("ag-struktur", "AG Struktur")
 
         _, _, payload = responses(client)[0]
-        assert payload["power_level_content_override"]["users_default"] == 100
+        levels = payload["power_level_content_override"]
+        assert levels["users_default"] == 50
+        assert levels["events"]["m.room.name"] == 0
+        assert levels["events"]["m.room.topic"] == 0
+        assert levels["events"]["m.room.canonical_alias"] == 100
+        assert levels["events"]["m.room.power_levels"] == 100
+
+    def test_room_is_created_without_encryption(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!new:example.com"}
+        )
+
+        client.create_public_room("ag-struktur", "AG Struktur")
+
+        _, _, payload = responses(client)[0]
+        initial_types = {state["type"] for state in payload["initial_state"]}
+        assert "m.room.encryption" not in initial_types
+
+    def test_creates_a_space(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"room_id": "!space:example.com"}
+        )
+
+        room_id = client.create_space("alle", "Alle")
+
+        assert room_id == "!space:example.com"
+        _, url, payload = responses(client)[0]
+        assert url.endswith("/_matrix/client/v3/createRoom")
+        assert payload["creation_content"] == {
+            "m.federate": False,
+            "type": "m.space",
+        }
+        assert payload["preset"] == "public_chat"
+        assert payload["power_level_content_override"]["users_default"] == 50
 
     def test_taken_alias_falls_back_to_the_existing_room(self, client):
         client.session.request.side_effect = [
@@ -140,6 +173,66 @@ class TestCreateRoom:
             client.create_public_room("ag-struktur", "AG Struktur")
             == "!existing:example.com"
         )
+
+
+class TestSpaces:
+    def test_child_is_attached_with_server_via(self, client):
+        client.session.request.side_effect = [
+            FakeResponse(status_code=404, body={"errcode": "M_NOT_FOUND"}),
+            FakeResponse(body={}),
+        ]
+
+        client.add_space_child("!space:example.com", "!room:example.com", order="01")
+
+        method, url, payload = responses(client)[-1]
+        assert method == "PUT"
+        assert url.endswith(
+            "/_matrix/client/v3/rooms/%21space%3Aexample.com"
+            "/state/m.space.child/%21room%3Aexample.com"
+        )
+        assert payload == {"via": ["example.com"], "order": "01"}
+
+    def test_an_unchanged_child_link_is_not_rewritten(self, client):
+        client.session.request.return_value = FakeResponse(
+            body={"via": ["example.com"], "order": "01"}
+        )
+
+        client.add_space_child("!space:example.com", "!room:example.com", order="01")
+
+        assert [method for method, _, _ in responses(client)] == ["GET"]
+
+    def test_parent_link_is_written_to_the_child(self, client):
+        client.session.request.side_effect = [
+            FakeResponse(status_code=404, body={"errcode": "M_NOT_FOUND"}),
+            FakeResponse(body={}),
+        ]
+
+        client.add_space_parent("!room:example.com", "!space:example.com")
+
+        method, url, payload = responses(client)[-1]
+        assert method == "PUT"
+        assert url.endswith(
+            "/_matrix/client/v3/rooms/%21room%3Aexample.com"
+            "/state/m.space.parent/%21space%3Aexample.com"
+        )
+        assert payload == {"via": ["example.com"]}
+
+    def test_room_is_space_reads_the_create_event(self, client):
+        client.session.request.return_value = FakeResponse(body={"type": "m.space"})
+
+        assert client.room_is_space("!space:example.com") is True
+
+    def test_policy_violations_report_federation_and_encryption(self, client):
+        client.session.request.side_effect = [
+            FakeResponse(body={"m.federate": True}),
+            FakeResponse(body={"algorithm": "m.megolm.v1.aes-sha2"}),
+        ]
+
+        problems = client.room_policy_violations("!room:example.com")
+
+        assert len(problems) == 2
+        assert any("federated" in problem for problem in problems)
+        assert any("encrypted" in problem for problem in problems)
 
 
 class TestRoomDirectory:

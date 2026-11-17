@@ -165,6 +165,27 @@ class TestRetireStaleGroups:
 
         assert group.coordination == ["alice"]
 
+    def test_a_page_repurposed_as_protocol_retires_the_ghost(self, patched_config):
+        # The room-team page was turned into a protocol page; the page id now
+        # resolves to a different (protocol) page, so the group it used to
+        # describe must not stay active and keep its chat room.
+        ghost = Group(name="RT Bibliothek", page_id=4)
+        protocol = page(4, "2026-01-23 Protokoll", "AG Haus/RT Bücher/Protokolle")
+        protocol.file_name = "2026-01-23 Protokoll.md"
+
+        retired = self._run([ghost], [protocol], patched_config)
+
+        assert retired == [ghost]
+        assert ghost.end_date is not None
+
+    def test_a_page_renamed_out_of_the_group_namespace_is_retired(self, patched_config):
+        group = Group(name="AG Haus", page_id=1)
+        renamed = page(1, "Ideen", "Koordinationskreis/Ideen")
+
+        retired = self._run([group], [renamed], patched_config)
+
+        assert retired == [group]
+
 
 class TestRetire:
     def test_the_end_date_is_never_before_the_start(self):
